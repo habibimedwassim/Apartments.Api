@@ -1,0 +1,6 @@
+@RenTN.API_HostAddress = http://localhost:5246
+
+GET {{RenTN.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
