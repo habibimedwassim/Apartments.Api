@@ -51,5 +51,6 @@ internal class ApplicationDbContext(DbContextOptions<ApplicationDbContext> optio
                     .WithMany()
                     .HasForeignKey(rh => rh.ApartmentID)
                     .OnDelete(DeleteBehavior.Restrict);
+        //test test
     }
 }
