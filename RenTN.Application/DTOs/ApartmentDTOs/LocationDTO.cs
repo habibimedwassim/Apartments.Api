@@ -1,6 +1,6 @@
-﻿namespace RenTN.Domain.Entities;
+﻿namespace RenTN.Application.DTOs.ApartmentDTOs;
 
-public class Location
+public class LocationDTO
 {
     public string City { get; set; } = default!;
     public string Street { get; set; } = default!;
