@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RenTN.Domain.Entities;
+using RenTN.Domain.Interfaces;
 using RenTN.Infrastructure.Data;
+using RenTN.Infrastructure.Repositories;
+using RenTN.Infrastructure.Seeders;
 
 namespace RenTN.Infrastructure.Extensions;
 
@@ -17,6 +20,9 @@ public static class ServiceCollectionExtensions
         services.AddIdentityApiEndpoints<User>()
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+        services.AddScoped<IApartmentSeeder, ApartmentSeeder>();
+        services.AddScoped<IApartmentsRepository, ApartmentsRepository>();
 
     }
 }
