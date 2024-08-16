@@ -1,3 +1,4 @@
+using RenTN.API.Extensions;
 using RenTN.API.Middlewares;
 using RenTN.Application.Extensions;
 using RenTN.Infrastructure.Extensions;
@@ -7,8 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
-
+builder.AddPresentation();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -20,7 +20,7 @@ var seeder = scope.ServiceProvider.GetRequiredService<IApartmentSeeder>();
 await seeder.Seed();
 
 // Configure the HTTP request pipeline.
-//app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
