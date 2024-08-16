@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using RenTN.Application.DTOs.ApartmentDTOs;
+using RenTN.Application.Users;
 using RenTN.Domain.Entities;
 using RenTN.Domain.Exceptions;
 using RenTN.Domain.Interfaces;
@@ -10,7 +11,8 @@ namespace RenTN.Application.Services.ApartmentsService;
 internal class ApartmentsService(
     ILogger<ApartmentsService> _logger,
     IMapper _mapper,
-    IApartmentsRepository _apartmentsRepository) : IApartmentsService
+    IApartmentsRepository _apartmentsRepository,
+    IUserContext _userContext) : IApartmentsService
 {
     public async Task<IEnumerable<ApartmentDTO>> GetApartments()
     {
@@ -33,10 +35,17 @@ internal class ApartmentsService(
 
     public async Task<int> CreateApartment(CreateApartmentDTO createApartmentDTO)
     {
+        var currentUser = _userContext.GetCurrentUser();
+        if (currentUser == null)
+        {
+            _logger.LogWarning("User not found!");
+            return -99;
+        };
+
         _logger.LogInformation("Creating a new Apartment");
 
         var apartment = _mapper.Map<Apartment>(createApartmentDTO);
-        apartment.OwnerID = "0e0f9d35-e5fa-4e56-86cf-c1e2f1cfe2a5";
+        apartment.OwnerID = currentUser.Id;
 
         int id = await _apartmentsRepository.CreateAsync(apartment);
         return id;

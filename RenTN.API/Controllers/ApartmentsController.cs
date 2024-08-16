@@ -38,6 +38,8 @@ public class ApartmentsController(IApartmentsService _apartmentsService) : Contr
     {
         var id = await _apartmentsService.CreateApartment(createApartmentDTO);
 
+        if(id < 0) return BadRequest();
+
         return CreatedAtAction(nameof(GetApartmentByID), new {id}, null);
     }
 
