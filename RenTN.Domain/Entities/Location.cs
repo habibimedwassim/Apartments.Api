@@ -1,8 +1,0 @@
-﻿namespace RenTN.Domain.Entities;
-
-public class Location
-{
-    public string City { get; set; } = default!;
-    public string Street { get; set; } = default!;
-    public string PostalCode { get; set; } = default!;
-}

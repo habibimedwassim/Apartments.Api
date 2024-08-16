@@ -16,9 +16,6 @@ internal class ApplicationDbContext(DbContextOptions<ApplicationDbContext> optio
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<Apartment>()
-                    .OwnsOne(x => x.Location);
-
-        modelBuilder.Entity<Apartment>()
                     .HasMany(x => x.ApartmentPhotos)
                     .WithOne(x => x.Apartment)
                     .HasForeignKey(x => x.ApartmentID);

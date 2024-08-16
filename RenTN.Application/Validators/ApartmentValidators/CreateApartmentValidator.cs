@@ -26,5 +26,13 @@ public class CreateApartmentValidator : AbstractValidator<CreateApartmentDTO>
         RuleFor(x => x.PostalCode)
             .NotEmpty().WithMessage("PostalCode is required.")
             .Matches(@"^\d{4}$").WithMessage("PostalCode must be a 4-digit number.");
+
+        RuleFor(x => x.ApartmentPhotoUrls)
+            .ForEach(photo =>
+            {
+                photo.NotEmpty().WithMessage("Photo URL cannot be empty.");
+                photo.Must(url => Uri.IsWellFormedUriString(url, UriKind.Absolute)).WithMessage("Photo URL must be a valid URL.");
+            })
+            .When(x => x.ApartmentPhotoUrls != null && x.ApartmentPhotoUrls.Count > 0);
     }
 }

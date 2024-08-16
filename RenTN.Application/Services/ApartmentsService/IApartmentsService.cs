@@ -7,4 +7,6 @@ public interface IApartmentsService
     Task<IEnumerable<ApartmentDTO>> GetApartments();
     Task<ApartmentDTO?> GetApartmentByID(int id);
     Task<int> CreateApartment(CreateApartmentDTO createApartmentDTO);
+    Task UpdateApartment(UpdateApartmentDTO updateApartmentDTO);
+    Task DeleteApartment(int id);
 }
