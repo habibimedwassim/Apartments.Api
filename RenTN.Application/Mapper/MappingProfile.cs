@@ -8,6 +8,9 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
+        // Map from ApartmentPhoto to ApartmentPhotoDTO
+        CreateMap<ApartmentPhoto, ApartmentPhotoDTO>();
+
         // Map from Apartment to ApartmentDTO
         CreateMap<Apartment, ApartmentDTO>()
             .ForMember(dest => dest.ApartmentPhotoUrls, opt => opt.MapFrom(src => src.ApartmentPhotos.Select(photo => photo.Url).ToList()));

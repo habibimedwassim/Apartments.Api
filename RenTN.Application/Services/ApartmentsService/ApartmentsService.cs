@@ -62,4 +62,16 @@ internal class ApartmentsService(
 
         await _apartmentsRepository.DeleteAsync(existingApartment);
     }
+
+    public async Task<List<ApartmentPhotoDTO>> GetApartmentPhotos(int id)
+    {
+        _logger.LogInformation($"Getting Apartment with ID = {id} Photos");
+        var apartment = await _apartmentsRepository.GetByIdAsync(id)
+                              ?? throw new NotFoundException(nameof(Apartment), id.ToString());
+        var apartmentPhotos = apartment.ApartmentPhotos;
+
+        var apartmentPhotoDTOs = _mapper.Map<List<ApartmentPhotoDTO>>(apartmentPhotos);
+
+        return apartmentPhotoDTOs;
+    }
 }
