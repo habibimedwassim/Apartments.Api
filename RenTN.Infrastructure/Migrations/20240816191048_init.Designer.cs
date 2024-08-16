@@ -12,7 +12,7 @@ using RenTN.Infrastructure.Data;
 namespace RenTN.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240816112120_init")]
+    [Migration("20240816191048_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -304,6 +304,14 @@ namespace RenTN.Infrastructure.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
