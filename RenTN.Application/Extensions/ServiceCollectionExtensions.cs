@@ -2,6 +2,7 @@
 using FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
 using RenTN.Application.Services.ApartmentsService;
+using RenTN.Application.Services.IdentityService;
 using RenTN.Application.Users;
 
 namespace RenTN.Application.Extensions;
@@ -15,6 +16,7 @@ public static class ServiceCollectionExtensions
         services.AddValidatorsFromAssembly(applicationAssembly).AddFluentValidationAutoValidation();
 
         services.AddScoped<IApartmentsService, ApartmentsService>();
+        services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IUserContext, UserContext>();
 
         services.AddHttpContextAccessor();
