@@ -21,7 +21,7 @@ public static class ServiceCollectionExtensions
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-        services.AddScoped<IApartmentSeeder, ApartmentSeeder>();
+        services.AddScoped<IApplicationSeeder, ApplicationSeeder>();
         services.AddScoped<IApartmentsRepository, ApartmentsRepository>();
 
     }
