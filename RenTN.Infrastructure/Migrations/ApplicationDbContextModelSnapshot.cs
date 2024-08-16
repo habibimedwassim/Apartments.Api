@@ -163,6 +163,10 @@ namespace RenTN.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -174,11 +178,19 @@ namespace RenTN.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Size")
                         .HasColumnType("int");
+
+                    b.Property<string>("Street")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("ID");
 
@@ -393,34 +405,6 @@ namespace RenTN.Infrastructure.Migrations
                         .WithMany("OwnedApartments")
                         .HasForeignKey("OwnerID")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.OwnsOne("RenTN.Domain.Entities.Location", "Location", b1 =>
-                        {
-                            b1.Property<int>("ApartmentID")
-                                .HasColumnType("int");
-
-                            b1.Property<string>("City")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("PostalCode")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("Street")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.HasKey("ApartmentID");
-
-                            b1.ToTable("Apartments");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ApartmentID");
-                        });
-
-                    b.Navigation("Location")
                         .IsRequired();
 
                     b.Navigation("Owner");
