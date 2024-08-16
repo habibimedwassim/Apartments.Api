@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RenTN.Application.DTOs.ApartmentDTOs;
 using RenTN.Application.Services.ApartmentsService;
+using RenTN.Domain.Entities;
 
 namespace RenTN.API.Controllers;
 
@@ -31,5 +32,22 @@ public class ApartmentsController(IApartmentsService _apartmentsService) : Contr
         var id = await _apartmentsService.CreateApartment(createApartmentDTO);
 
         return CreatedAtAction(nameof(GetByID), new {id}, null);
+    }
+
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> UpdateApartment([FromRoute] int id, [FromBody] UpdateApartmentDTO updateApartmentDTO)
+    {
+        updateApartmentDTO.ID = id;
+        await _apartmentsService.UpdateApartment(updateApartmentDTO);
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteApartment([FromRoute] int id)
+    {
+        await _apartmentsService.DeleteApartment(id);
+
+        return NoContent();
     }
 }

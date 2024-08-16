@@ -24,4 +24,17 @@ internal class ApartmentsRepository(ApplicationDbContext _dbContext) : IApartmen
         await _dbContext.SaveChangesAsync();
         return apartment.ID;
     }
+
+
+    public async Task DeleteAsync(Apartment existingApartment)
+    {
+        var apartmentPhotos = await _dbContext.ApartmentPhotos.Where(x => x.ApartmentID == existingApartment.ID).ToListAsync();
+        if (apartmentPhotos.Any()) 
+        { 
+            _dbContext.RemoveRange(apartmentPhotos);
+        }
+        _dbContext.Remove(existingApartment);
+        await _dbContext.SaveChangesAsync();
+    }
+    public Task SaveChangesAsync() => _dbContext.SaveChangesAsync();
 }

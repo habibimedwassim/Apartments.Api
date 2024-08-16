@@ -22,7 +22,7 @@ internal class ApartmentSeeder(ApplicationDbContext _dbContext) : IApartmentSeed
     {
         User owner = new User()
         {
-            Email = "test-owner@test.com"
+            Email = "test@test.com"
         };
 
         List<Apartment> apartments = new()
@@ -30,12 +30,9 @@ internal class ApartmentSeeder(ApplicationDbContext _dbContext) : IApartmentSeed
             new()
             {
                 Owner = owner,
-                Location = new Location
-                {
-                    City = "Zaghouan",
-                    Street = "Cité des Nymphes",
-                    PostalCode = "1100"
-                },
+                City = "Zaghouan",
+                Street = "Cité des Nymphes",
+                PostalCode = "1100",
                 Description = "Apartment on the 2nd floor with 3 beds (S+3)",
                 Size = 3,
                 Price = 550M,
@@ -55,12 +52,9 @@ internal class ApartmentSeeder(ApplicationDbContext _dbContext) : IApartmentSeed
             new()
             {
                 Owner = owner,
-                Location = new Location
-                {
-                    City = "Zaghouan",
-                    Street = "Cité Ennozha",
-                    PostalCode = "1100"
-                },
+                City = "Zaghouan",
+                Street = "Cité Ennozha",
+                PostalCode = "1100",
                 Description = "Apartment on the 1st floor with 2 beds (S+2)",
                 Size = 2,
                 Price = 400M,
