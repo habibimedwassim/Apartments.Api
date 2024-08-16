@@ -51,7 +51,7 @@ internal class ApartmentsService(
 
         _mapper.Map(updateApartmentDTO, existingApartment);
 
-        await _apartmentsRepository.SaveChangesAsync();
+        await _apartmentsRepository.UpdateAsync(existingApartment, updateApartmentDTO.ApartmentPhotoUrls);
     }
 
     public async Task DeleteApartment(int id)
