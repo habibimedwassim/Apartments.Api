@@ -25,16 +25,32 @@ internal class ApartmentsRepository(ApplicationDbContext _dbContext) : IApartmen
         return apartment.ID;
     }
 
+    public async Task UpdateAsync(Apartment updatedApartment, List<string>? apartmentPhotoUrls)
+    {
+        if (apartmentPhotoUrls != null && apartmentPhotoUrls.Count > 0)
+        {
+            _dbContext.ApartmentPhotos.RemoveRange(updatedApartment.ApartmentPhotos);
+
+            var photosToAdd = apartmentPhotoUrls.Select(url => new ApartmentPhoto
+            {
+                ApartmentID = updatedApartment.ID,
+                Url = url
+            }).ToList();
+
+            await _dbContext.ApartmentPhotos.AddRangeAsync(photosToAdd);
+        }
+
+        await _dbContext.SaveChangesAsync();
+    }
 
     public async Task DeleteAsync(Apartment existingApartment)
     {
-        var apartmentPhotos = await _dbContext.ApartmentPhotos.Where(x => x.ApartmentID == existingApartment.ID).ToListAsync();
-        if (apartmentPhotos.Any()) 
-        { 
-            _dbContext.RemoveRange(apartmentPhotos);
+        var apartmentPhotos = existingApartment.ApartmentPhotos;
+        if (apartmentPhotos.Count > 0)
+        {
+            _dbContext.ApartmentPhotos.RemoveRange(apartmentPhotos);
         }
-        _dbContext.Remove(existingApartment);
+        _dbContext.Apartments.Remove(existingApartment);
         await _dbContext.SaveChangesAsync();
     }
-    public Task SaveChangesAsync() => _dbContext.SaveChangesAsync();
 }
