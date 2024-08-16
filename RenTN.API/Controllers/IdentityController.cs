@@ -8,6 +8,37 @@ namespace RenTN.API.Controllers;
 [Route("api/identity")]
 public class IdentityController(IIdentityService _identityService) : ControllerBase
 {
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
+    {
+        var (success, response, message) = await _identityService.LoginAsync(loginDTO);
+
+        if(!success) return BadRequest(message);
+
+        return Ok(response);
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterDTO registerDTO)
+    {
+        var (success, message) = await _identityService.RegisterAsync(registerDTO);
+
+        if (!success) return BadRequest(message);
+
+        return Ok(message);
+    }
+
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDTO verifyEmailDTO)
+    {
+        var (success, message) = await _identityService.VerifyEmailAsync(verifyEmailDTO);
+
+        if (!success) return BadRequest(message);
+
+        return Ok(message);
+    }
+
     [HttpPost("userRole")]
     public async Task<IActionResult> AssignUserRole([FromBody] AssignRoleDTO assignRoleDTO)
     {
