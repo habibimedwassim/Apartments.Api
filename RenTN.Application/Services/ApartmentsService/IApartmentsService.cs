@@ -9,4 +9,5 @@ public interface IApartmentsService
     Task<int> CreateApartment(CreateApartmentDTO createApartmentDTO);
     Task UpdateApartment(UpdateApartmentDTO updateApartmentDTO);
     Task DeleteApartment(int id);
+    Task<List<ApartmentPhotoDTO>> GetApartmentPhotos(int id);
 }

@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RenTN.Application.DTOs.ApartmentDTOs;
 using RenTN.Application.Services.ApartmentsService;
-using RenTN.Domain.Entities;
 
 namespace RenTN.API.Controllers;
 
@@ -10,14 +9,14 @@ namespace RenTN.API.Controllers;
 public class ApartmentsController(IApartmentsService _apartmentsService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAllApartments()
     {
         var apartments = await _apartmentsService.GetApartments();
         return Ok(apartments);
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetByID([FromRoute] int id)
+    public async Task<IActionResult> GetApartmentByID([FromRoute] int id)
     {
         var apartment = await _apartmentsService.GetApartmentByID(id);
 
@@ -26,12 +25,20 @@ public class ApartmentsController(IApartmentsService _apartmentsService) : Contr
         return Ok(apartment);
     }
 
+    [HttpGet("{id}/photos")]
+    public async Task<IActionResult> GetPhotosByApartmentID([FromRoute] int id)
+    {
+        var apartmentPhotos = await _apartmentsService.GetApartmentPhotos(id);
+
+        return Ok(apartmentPhotos);
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateApartment([FromBody] CreateApartmentDTO createApartmentDTO)
     {
         var id = await _apartmentsService.CreateApartment(createApartmentDTO);
 
-        return CreatedAtAction(nameof(GetByID), new {id}, null);
+        return CreatedAtAction(nameof(GetApartmentByID), new {id}, null);
     }
 
     [HttpPatch("{id}")]
