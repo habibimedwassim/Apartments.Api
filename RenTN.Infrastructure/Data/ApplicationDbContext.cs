@@ -48,5 +48,13 @@ internal class ApplicationDbContext(DbContextOptions<ApplicationDbContext> optio
                     .WithMany()
                     .HasForeignKey(rh => rh.ApartmentID)
                     .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Apartment>()
+                .Property(a => a.Price)
+                .HasPrecision(8, 2);
+
+        modelBuilder.Entity<RentHistory>()
+                .Property(rh => rh.Amount)
+                .HasPrecision(8, 2);
     }
 }
