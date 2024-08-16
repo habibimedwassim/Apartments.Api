@@ -16,7 +16,7 @@ var app = builder.Build();
 
 // Seeding apartments to an empty DB
 var scope = app.Services.CreateScope();
-var seeder = scope.ServiceProvider.GetRequiredService<IApartmentSeeder>();
+var seeder = scope.ServiceProvider.GetRequiredService<IApplicationSeeder>();
 await seeder.Seed();
 
 // Configure the HTTP request pipeline.

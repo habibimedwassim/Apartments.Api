@@ -1,9 +1,11 @@
-﻿using RenTN.Domain.Entities;
+﻿using Microsoft.AspNetCore.Identity;
+using RenTN.Domain.Common;
+using RenTN.Domain.Entities;
 using RenTN.Infrastructure.Data;
 
 namespace RenTN.Infrastructure.Seeders;
 
-internal class ApartmentSeeder(ApplicationDbContext _dbContext) : IApartmentSeeder
+internal class ApplicationSeeder(ApplicationDbContext _dbContext) : IApplicationSeeder
 {
     public async Task Seed()
     {
@@ -12,12 +14,29 @@ internal class ApartmentSeeder(ApplicationDbContext _dbContext) : IApartmentSeed
             if (!_dbContext.Apartments.Any())
             {
                 var apartments = GetApartments();
-                _dbContext.Apartments.AddRange(apartments);
+                await _dbContext.Apartments.AddRangeAsync(apartments);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            if (!_dbContext.Roles.Any())
+            {
+                var roles = GetRoles();
+                await _dbContext.Roles.AddRangeAsync(roles);
                 await _dbContext.SaveChangesAsync();
             }
         }
     }
+    private IEnumerable<IdentityRole> GetRoles()
+    {
+        List<IdentityRole> roles =
+            [
+                new (UserRoles.User){ NormalizedName = UserRoles.User.ToUpper()},
+                new (UserRoles.Owner){ NormalizedName = UserRoles.Owner.ToUpper()},
+                new (UserRoles.Admin){ NormalizedName = UserRoles.Admin.ToUpper()}
+            ];
 
+        return roles;
+    }
     private IEnumerable<Apartment> GetApartments()
     {
         User owner = new User()
