@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -8,7 +7,6 @@ using RenTN.Application.Services.EmailService;
 using RenTN.Domain.Common;
 using RenTN.Domain.Entities;
 using RenTN.Domain.Exceptions;
-using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -37,14 +35,7 @@ public class IdentityService(
 
         if (result.Succeeded)
         {
-            var verificationCode = GenerateVerificationCode();
-            user.VerificationCode = verificationCode;
-            user.VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(15);
-            await _userManager.UpdateAsync(user);
-
-            await _emailService.SendEmailAsync(user.Email, "Email Verification", $"Your verification code is: {verificationCode}");
-
-            return (true, "User registered successfully. Please verify your email.");
+            return await SendVerificationCodeAsync(user, VerificationCodeOperation.EmailVerification);
         }
 
         return (false, string.Join(", ", result.Errors.Select(e => e.Description)));
@@ -60,13 +51,7 @@ public class IdentityService(
 
         if (!user.EmailConfirmed)
         {
-            var verificationCode = GenerateVerificationCode();
-            user.VerificationCode = verificationCode;
-            user.VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(15);
-            await _userManager.UpdateAsync(user);
-
-            await _emailService.SendEmailAsync(user.Email!, "Email Verification", $"Your new verification code is: {verificationCode}");
-
+            var resendResult = await SendVerificationCodeAsync(user, VerificationCodeOperation.EmailVerification);
             return (false, null, "Email is not verified. A new verification code has been sent to your email.");
         }
 
@@ -107,6 +92,106 @@ public class IdentityService(
         return (true, "Email verified successfully.");
     }
 
+    public async Task<(bool success, string message)> ResendEmailAsync(EmailDTO email)
+    {
+        var user = await _userManager.FindByEmailAsync(email.Email);
+        if (user == null)
+        {
+            return (false, "Email not found.");
+        }
+
+        return await SendVerificationCodeAsync(user, VerificationCodeOperation.EmailVerification);
+    }
+
+    public async Task<(bool success, string message)> ForgotPasswordAsync(EmailDTO email)
+    {
+        var user = await _userManager.FindByEmailAsync(email.Email);
+        if (user == null)
+        {
+            return (false, "Email not found.");
+        }
+
+        if (!user.EmailConfirmed)
+        {
+            return await SendVerificationCodeAsync(user, VerificationCodeOperation.EmailVerification);
+        }
+
+        return await SendVerificationCodeAsync(user, VerificationCodeOperation.PasswordReset);
+    }
+    public async Task<(bool Success, string Message)> ResetPasswordAsync(ResetPasswordDTO resetPasswordDTO)
+    {
+        var user = await _userManager.FindByEmailAsync(resetPasswordDTO.Email);
+        if (user == null)
+        {
+            return (false, "Email not found.");
+        }
+
+        if (user.VerificationCode != resetPasswordDTO.VerificationCode || user.VerificationCodeExpiration < DateTime.UtcNow)
+        {
+            return (false, "Invalid or expired verification code.");
+        }
+
+        var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await _userManager.ResetPasswordAsync(user, resetToken, resetPasswordDTO.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            return (false, string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        user.VerificationCode = null;
+        user.VerificationCodeExpiration = null;
+        await _userManager.UpdateAsync(user);
+
+        return (true, "Password has been reset successfully.");
+    }
+    public async Task AssignRole(AssignRoleDTO assignRoleDTO)
+    {
+        _logger.LogInformation("Assigning user role: {@Request}", assignRoleDTO);
+
+        var user = await _userManager.FindByEmailAsync(assignRoleDTO.UserEmail) ??
+                   throw new NotFoundException(nameof(User), assignRoleDTO.UserEmail);
+
+        var role = await _roleManager.FindByNameAsync(assignRoleDTO.RoleName) ??
+                   throw new NotFoundException(nameof(IdentityRole), assignRoleDTO.RoleName);
+
+        await _userManager.AddToRoleAsync(user, role.Name!);
+    }
+
+    public async Task UnassignRole(AssignRoleDTO unassignRoleDTO)
+    {
+        _logger.LogInformation("Unassigning user role: {@Request}", unassignRoleDTO);
+
+        var user = await _userManager.FindByEmailAsync(unassignRoleDTO.UserEmail) ??
+                   throw new NotFoundException(nameof(User), unassignRoleDTO.UserEmail);
+
+        var role = await _roleManager.FindByNameAsync(unassignRoleDTO.RoleName) ??
+                   throw new NotFoundException(nameof(IdentityRole), unassignRoleDTO.RoleName);
+
+        await _userManager.RemoveFromRoleAsync(user, role.Name!);
+    }
+
+    private async Task<(bool success, string message)> SendVerificationCodeAsync(User user, VerificationCodeOperation context)
+    {
+        var verificationCode = GenerateVerificationCode();
+        user.VerificationCode = verificationCode;
+        user.VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(Constants.CodeExpiration);
+        await _userManager.UpdateAsync(user);
+
+        string subject = context switch
+        {
+            VerificationCodeOperation.EmailVerification => "Email Verification Code",
+            VerificationCodeOperation.PasswordReset => "Password Reset Code",
+            _ => "Verification Code"
+        };
+
+        string message = $"Your {subject.ToLower()} is: {verificationCode}";
+
+        await _emailService.SendEmailAsync(user.Email!, subject, message);
+
+        return (true, $"{subject} has been sent to your email.");
+    }
+
     private string GenerateVerificationCode()
     {
         var random = new Random();
@@ -118,11 +203,11 @@ public class IdentityService(
         var roles = await _userManager.GetRolesAsync(user);
 
         var claims = new List<Claim>
-    {
-        new Claim(JwtRegisteredClaimNames.Sub, user.UserName!),
-        new Claim(JwtRegisteredClaimNames.Email, user.Email!),
-        new Claim(ClaimTypes.NameIdentifier, user.Id)
-    };
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.UserName!),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email!),
+            new Claim(ClaimTypes.NameIdentifier, user.Id)
+        };
 
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
@@ -137,31 +222,5 @@ public class IdentityService(
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    public async Task AssignRole(AssignRoleDTO assignRoleDTO)
-    {
-        _logger.LogInformation("Assigning user role: {@Request}", assignRoleDTO);
-
-        var user = await _userManager.FindByEmailAsync(assignRoleDTO.UserEmail) ??
-                   throw new NotFoundException(nameof(User), assignRoleDTO.UserEmail);
-
-        var role = await _roleManager.FindByNameAsync(assignRoleDTO.RoleName) ??
-                  throw new NotFoundException(nameof(IdentityRole), assignRoleDTO.RoleName);
-
-        await _userManager.AddToRoleAsync(user, role.Name!);
-    }
-
-    public async Task UnassignRole(AssignRoleDTO unassignRoleDTO)
-    {
-        _logger.LogInformation("Unassigning user role: {@Request}", unassignRoleDTO);
-
-        var user = await _userManager.FindByEmailAsync(unassignRoleDTO.UserEmail) ??
-                   throw new NotFoundException(nameof(User), unassignRoleDTO.UserEmail);
-
-        var role = await _roleManager.FindByNameAsync(unassignRoleDTO.RoleName) ??
-                  throw new NotFoundException(nameof(IdentityRole), unassignRoleDTO.RoleName);
-
-        await _userManager.RemoveFromRoleAsync(user, role.Name!);
     }
 }

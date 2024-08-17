@@ -39,6 +39,35 @@ public class IdentityController(IIdentityService _identityService) : ControllerB
         return Ok(message);
     }
 
+    [HttpPost("resend-code")]
+    public async Task<IActionResult> ResendVerificationEmail([FromBody] EmailDTO email)
+    {
+        var (success, message) = await _identityService.ResendEmailAsync(email);
+
+        if (!success) return BadRequest(message);
+
+        return Ok(message);
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] EmailDTO email)
+    {
+        var (success, message) = await _identityService.ForgotPasswordAsync(email);
+
+        if (!success) return BadRequest(message);
+
+        return Ok(message);
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO resetPasswordDTO)
+    {
+        var (success, message) = await _identityService.ResetPasswordAsync(resetPasswordDTO);
+
+        if (!success) return BadRequest(message);
+
+        return Ok(message);
+    }
     [HttpPost("userRole")]
     public async Task<IActionResult> AssignUserRole([FromBody] AssignRoleDTO assignRoleDTO)
     {
