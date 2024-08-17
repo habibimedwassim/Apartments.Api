@@ -11,11 +11,12 @@ public class EmailService(IOptions<SmtpSettings> smtpSettings) : IEmailService
 
     public async Task SendEmailAsync(string to, string subject, string body)
     {
-        var smtpClient = new SmtpClient(_smtpSettings.Host)
+        using var smtpClient = new SmtpClient(_smtpSettings.Host)
         {
             Port = _smtpSettings.Port,
             Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password),
             EnableSsl = true,
+            UseDefaultCredentials = false
         };
 
         var mailMessage = new MailMessage
@@ -27,6 +28,13 @@ public class EmailService(IOptions<SmtpSettings> smtpSettings) : IEmailService
         };
         mailMessage.To.Add(to);
 
-        await smtpClient.SendMailAsync(mailMessage);
+        try
+        {
+            await smtpClient.SendMailAsync(mailMessage);
+        }
+        catch (SmtpException ex)
+        {
+            throw new Exception($"Failed to send email: {ex.Message}", ex);
+        }
     }
 }
