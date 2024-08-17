@@ -23,10 +23,11 @@ public class IdentityService(
     private readonly JwtSettings _jwtSettings = jwtSettings.Value;
     public async Task<(bool Success, string Message)> RegisterAsync(RegisterDTO registerDTO)
     {
+        var normalizedEmail = EmailNormalizer.NormalizeEmail(registerDTO.Email);
         var user = new User
         {
             UserName = registerDTO.UserName,
-            Email = registerDTO.Email,
+            Email = normalizedEmail,
             FirstName = registerDTO.FirstName,
             LastName = registerDTO.LastName
         };
@@ -43,7 +44,8 @@ public class IdentityService(
 
     public async Task<(bool Success, AuthResponse? Response, string Message)> LoginAsync(LoginDTO loginDTO)
     {
-        var user = await _userManager.FindByNameAsync(loginDTO.UserName);
+        var normalizedEmail = EmailNormalizer.NormalizeEmail(loginDTO.Email);
+        var user = await _userManager.FindByEmailAsync(normalizedEmail);
         if (user == null || !await _userManager.CheckPasswordAsync(user, loginDTO.Password))
         {
             return (false, null, "Invalid username or password.");
@@ -73,7 +75,8 @@ public class IdentityService(
 
     public async Task<(bool Success, string Message)> VerifyEmailAsync(VerifyEmailDTO verifyEmailDTO)
     {
-        var user = await _userManager.FindByEmailAsync(verifyEmailDTO.Email);
+        var normalizedEmail = EmailNormalizer.NormalizeEmail(verifyEmailDTO.Email);
+        var user = await _userManager.FindByEmailAsync(normalizedEmail);
         if (user == null)
         {
             return (false, "Invalid email.");
@@ -94,7 +97,8 @@ public class IdentityService(
 
     public async Task<(bool success, string message)> ResendEmailAsync(EmailDTO email)
     {
-        var user = await _userManager.FindByEmailAsync(email.Email);
+        var normalizedEmail = EmailNormalizer.NormalizeEmail(email.Email);
+        var user = await _userManager.FindByEmailAsync(normalizedEmail);
         if (user == null)
         {
             return (false, "Email not found.");
@@ -105,7 +109,8 @@ public class IdentityService(
 
     public async Task<(bool success, string message)> ForgotPasswordAsync(EmailDTO email)
     {
-        var user = await _userManager.FindByEmailAsync(email.Email);
+        var normalizedEmail = EmailNormalizer.NormalizeEmail(email.Email);
+        var user = await _userManager.FindByEmailAsync(normalizedEmail);
         if (user == null)
         {
             return (false, "Email not found.");
@@ -120,7 +125,8 @@ public class IdentityService(
     }
     public async Task<(bool Success, string Message)> ResetPasswordAsync(ResetPasswordDTO resetPasswordDTO)
     {
-        var user = await _userManager.FindByEmailAsync(resetPasswordDTO.Email);
+        var normalizedEmail = EmailNormalizer.NormalizeEmail(resetPasswordDTO.Email);
+        var user = await _userManager.FindByEmailAsync(normalizedEmail);
         if (user == null)
         {
             return (false, "Email not found.");
@@ -149,7 +155,8 @@ public class IdentityService(
     {
         _logger.LogInformation("Assigning user role: {@Request}", assignRoleDTO);
 
-        var user = await _userManager.FindByEmailAsync(assignRoleDTO.UserEmail) ??
+        var normalizedEmail = EmailNormalizer.NormalizeEmail(assignRoleDTO.UserEmail);
+        var user = await _userManager.FindByEmailAsync(normalizedEmail) ??
                    throw new NotFoundException(nameof(User), assignRoleDTO.UserEmail);
 
         var role = await _roleManager.FindByNameAsync(assignRoleDTO.RoleName) ??
@@ -162,7 +169,8 @@ public class IdentityService(
     {
         _logger.LogInformation("Unassigning user role: {@Request}", unassignRoleDTO);
 
-        var user = await _userManager.FindByEmailAsync(unassignRoleDTO.UserEmail) ??
+        var normalizedEmail = EmailNormalizer.NormalizeEmail(unassignRoleDTO.UserEmail);
+        var user = await _userManager.FindByEmailAsync(normalizedEmail) ??
                    throw new NotFoundException(nameof(User), unassignRoleDTO.UserEmail);
 
         var role = await _roleManager.FindByNameAsync(unassignRoleDTO.RoleName) ??
