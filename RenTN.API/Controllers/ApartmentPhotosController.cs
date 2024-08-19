@@ -17,7 +17,7 @@ public class ApartmentPhotosController(IApartmentPhotosService _apartmentPhotosS
     }
 
     [HttpGet("{photoId:int}")]
-    public async Task<ActionResult<ApartmentDTO>> GetByIdForApartment([FromRoute] int apartmentId, [FromRoute] int photoId)
+    public async Task<ActionResult<ApartmentPhotoDTO>> GetByIdForApartment([FromRoute] int apartmentId, [FromRoute] int photoId)
     {
         var apartmentPhoto = await _apartmentPhotosService.GetByIdForApartment(apartmentId, photoId);
         return Ok(apartmentPhoto);
