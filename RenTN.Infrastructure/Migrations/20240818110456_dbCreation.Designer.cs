@@ -12,8 +12,8 @@ using RenTN.Infrastructure.Data;
 namespace RenTN.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240816192512_init")]
-    partial class init
+    [Migration("20240818110456_dbCreation")]
+    partial class dbCreation
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -177,6 +177,9 @@ namespace RenTN.Infrastructure.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("OwnerID")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -214,6 +217,9 @@ namespace RenTN.Infrastructure.Migrations
                     b.Property<int>("ApartmentID")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Url")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -223,6 +229,40 @@ namespace RenTN.Infrastructure.Migrations
                     b.HasIndex("ApartmentID");
 
                     b.ToTable("ApartmentPhotos");
+                });
+
+            modelBuilder.Entity("RenTN.Domain.Entities.ChangeLog", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ChangedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PropertyName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("ChangeLogs");
                 });
 
             modelBuilder.Entity("RenTN.Domain.Entities.RentHistory", b =>
@@ -240,14 +280,21 @@ namespace RenTN.Infrastructure.Migrations
                     b.Property<int>("ApartmentID")
                         .HasColumnType("int");
 
-                    b.Property<bool>("IsLate")
-                        .HasColumnType("bit");
-
-                    b.Property<DateOnly>("PaymentDate")
+                    b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
 
-                    b.Property<int>("TenantID")
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<string>("TenantID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("ID");
 
@@ -258,7 +305,7 @@ namespace RenTN.Infrastructure.Migrations
                     b.ToTable("RentHistories");
                 });
 
-            modelBuilder.Entity("RenTN.Domain.Entities.Tenant", b =>
+            modelBuilder.Entity("RenTN.Domain.Entities.RentalRequest", b =>
                 {
                     b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
@@ -269,13 +316,16 @@ namespace RenTN.Infrastructure.Migrations
                     b.Property<int>("ApartmentID")
                         .HasColumnType("int");
 
-                    b.Property<DateOnly?>("EndDate")
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateOnly>("RequestDate")
                         .HasColumnType("date");
 
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
-                    b.Property<string>("UserID")
+                    b.Property<string>("TenantID")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
@@ -283,9 +333,9 @@ namespace RenTN.Infrastructure.Migrations
 
                     b.HasIndex("ApartmentID");
 
-                    b.HasIndex("UserID");
+                    b.HasIndex("TenantID");
 
-                    b.ToTable("Tenants");
+                    b.ToTable("RentalRequests");
                 });
 
             modelBuilder.Entity("RenTN.Domain.Entities.User", b =>
@@ -300,6 +350,9 @@ namespace RenTN.Infrastructure.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("CurrentApartmentID")
+                        .HasColumnType("int");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -310,6 +363,9 @@ namespace RenTN.Infrastructure.Migrations
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -355,6 +411,8 @@ namespace RenTN.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CurrentApartmentID");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -421,9 +479,9 @@ namespace RenTN.Infrastructure.Migrations
             modelBuilder.Entity("RenTN.Domain.Entities.Apartment", b =>
                 {
                     b.HasOne("RenTN.Domain.Entities.User", "Owner")
-                        .WithMany("OwnedApartments")
+                        .WithMany()
                         .HasForeignKey("OwnerID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Owner");
@@ -448,8 +506,8 @@ namespace RenTN.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RenTN.Domain.Entities.Tenant", "Tenant")
-                        .WithMany("RentHistory")
+                    b.HasOne("RenTN.Domain.Entities.User", "Tenant")
+                        .WithMany()
                         .HasForeignKey("TenantID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -459,7 +517,7 @@ namespace RenTN.Infrastructure.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("RenTN.Domain.Entities.Tenant", b =>
+            modelBuilder.Entity("RenTN.Domain.Entities.RentalRequest", b =>
                 {
                     b.HasOne("RenTN.Domain.Entities.Apartment", "Apartment")
                         .WithMany()
@@ -467,30 +525,29 @@ namespace RenTN.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RenTN.Domain.Entities.User", "User")
+                    b.HasOne("RenTN.Domain.Entities.User", "Tenant")
                         .WithMany()
-                        .HasForeignKey("UserID")
+                        .HasForeignKey("TenantID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Apartment");
 
-                    b.Navigation("User");
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("RenTN.Domain.Entities.User", b =>
+                {
+                    b.HasOne("RenTN.Domain.Entities.Apartment", "CurrentApartment")
+                        .WithMany()
+                        .HasForeignKey("CurrentApartmentID");
+
+                    b.Navigation("CurrentApartment");
                 });
 
             modelBuilder.Entity("RenTN.Domain.Entities.Apartment", b =>
                 {
                     b.Navigation("ApartmentPhotos");
-                });
-
-            modelBuilder.Entity("RenTN.Domain.Entities.Tenant", b =>
-                {
-                    b.Navigation("RentHistory");
-                });
-
-            modelBuilder.Entity("RenTN.Domain.Entities.User", b =>
-                {
-                    b.Navigation("OwnedApartments");
                 });
 #pragma warning restore 612, 618
         }

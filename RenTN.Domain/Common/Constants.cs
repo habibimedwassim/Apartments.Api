@@ -9,7 +9,6 @@ public class Constants
 
 public static class UserRoles
 {
-    public const string User = "User";
     public const string Owner = "Owner";
     public const string Admin = "Admin";
 }
@@ -22,4 +21,18 @@ public enum VerificationCodeOperation
 {
     EmailVerification,
     PasswordReset
+}
+public enum RentalRequestStatus
+{
+    Pending,
+    MeetingRequested,
+    MeetingScheduled,
+    Approved,
+    Rejected
+}
+public enum PaymentStatus
+{
+    Pending,
+    Paid,
+    Late
 }
