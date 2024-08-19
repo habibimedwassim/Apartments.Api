@@ -1,12 +1,13 @@
 ﻿using AutoMapper;
 using RenTN.Application.DTOs.ApartmentDTOs;
+using RenTN.Application.DTOs.ApartmentPhotoDTOs;
 using RenTN.Domain.Entities;
 
 namespace RenTN.Application.Mapper;
 
-public class MappingProfile : Profile
+public class ApartmentProfile : Profile
 {
-    public MappingProfile()
+    public ApartmentProfile()
     {
         // Map from ApartmentPhoto to ApartmentPhotoDTO
         CreateMap<ApartmentPhoto, ApartmentPhotoDTO>();
@@ -35,5 +36,20 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Street, opt => opt.Condition(src => !string.IsNullOrEmpty(src.Street)))
             .ForMember(dest => dest.PostalCode, opt => opt.Condition(src => !string.IsNullOrEmpty(src.PostalCode)))
             .ForMember(dest => dest.ApartmentPhotos, opt => opt.Condition(src => src.ApartmentPhotoUrls != null && src.ApartmentPhotoUrls.Count > 0));
+
+        // Map from Apartment to CreateApartmentDTO
+        CreateMap<Apartment, CreateApartmentDTO>()
+            .ForMember(dest => dest.ApartmentPhotoUrls, opt => opt.MapFrom(src => src.ApartmentPhotos.Select(photo => photo.Url).ToList()));
+
+        // Map from Apartment to UpdateApartmentDTO
+        CreateMap<Apartment, UpdateApartmentDTO>()
+            .ForMember(dest => dest.ApartmentPhotoUrls, opt => opt.MapFrom(src => src.ApartmentPhotos.Select(photo => photo.Url).ToList()))
+            .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+            .ForMember(dest => dest.Street, opt => opt.MapFrom(src => src.Street))
+            .ForMember(dest => dest.PostalCode, opt => opt.MapFrom(src => src.PostalCode))
+            .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
+            .ForMember(dest => dest.Size, opt => opt.MapFrom(src => src.Size))
+            .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
+            .ForMember(dest => dest.IsAvailable, opt => opt.MapFrom(src => src.IsAvailable));
     }
 }

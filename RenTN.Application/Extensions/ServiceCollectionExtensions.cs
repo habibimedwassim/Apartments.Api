@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using RenTN.Application.Services.ApartmentPhotosService;
 using RenTN.Application.Services.ApartmentsService;
+using RenTN.Application.Services.Authentication;
 using RenTN.Application.Services.EmailService;
 using RenTN.Application.Services.IdentityService;
 using RenTN.Application.Users;
@@ -22,9 +24,11 @@ public static class ServiceCollectionExtensions
         services.AddValidatorsFromAssembly(applicationAssembly).AddFluentValidationAutoValidation();
 
         services.AddScoped<IUserContext, UserContext>();
+        services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IApartmentsService, ApartmentsService>();
+        services.AddScoped<IApartmentPhotosService, ApartmentPhotosService>();
 
         services.AddHttpContextAccessor();
 

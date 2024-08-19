@@ -12,5 +12,24 @@ public class Apartment
     public int Size { get; set; }
     public decimal Price { get; set; }
     public bool IsAvailable { get; set; }
-    public List<ApartmentPhoto> ApartmentPhotos { get; set; } = new();
+    public List<ApartmentPhoto> ApartmentPhotos { get; set; } = [];
+    public bool IsDeleted { get; set; }
+
+    public static Apartment Clone(Apartment apartment)
+    {
+        return new Apartment
+        {
+            ID = apartment.ID,
+            OwnerID = apartment.OwnerID,
+            Street = apartment.Street,
+            City = apartment.City,
+            PostalCode = apartment.PostalCode,
+            Description = apartment.Description,
+            Size = apartment.Size,
+            Price = apartment.Price,
+            IsAvailable = apartment.IsAvailable,
+            ApartmentPhotos = apartment.ApartmentPhotos.Select(x => ApartmentPhoto.Clone(x)).ToList(),
+            IsDeleted = apartment.IsDeleted,
+        };
+    }
 }
