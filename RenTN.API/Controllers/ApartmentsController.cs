@@ -25,14 +25,6 @@ public class ApartmentsController(IApartmentsService _apartmentsService) : Contr
         return Ok(apartment);
     }
 
-    [HttpGet("{id}/photos")]
-    public async Task<IActionResult> GetPhotosByApartmentID([FromRoute] int id)
-    {
-        var apartmentPhotos = await _apartmentsService.GetApartmentPhotos(id);
-
-        return Ok(apartmentPhotos);
-    }
-
     [HttpPost]
     public async Task<IActionResult> CreateApartment([FromBody] CreateApartmentDTO createApartmentDTO)
     {

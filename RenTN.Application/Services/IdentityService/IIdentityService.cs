@@ -5,7 +5,7 @@ namespace RenTN.Application.Services.IdentityService;
 
 public interface IIdentityService
 {
-    Task AssignRole(AssignRoleDTO assignRoleDTO);
     Task<object?> GetCurrentUserProfile();
+    Task AssignRole(AssignRoleDTO assignRoleDTO);
     Task UnassignRole(AssignRoleDTO unassignRoleDTO);
 }

@@ -11,7 +11,6 @@ internal class ChangeLogsRepository(ApplicationDbContext _dbContext) : IChangeLo
         if (changeLogs.Count > 0)
         {
             await _dbContext.ChangeLogs.AddRangeAsync(changeLogs);
-            await _dbContext.SaveChangesAsync();
         }
     }
 }
