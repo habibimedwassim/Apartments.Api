@@ -1,17 +1,20 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using RenTN.Application.DTOs.ApartmentDTOs;
+using RenTN.Application.DTOs.ApartmentPhotoDTOs;
 using RenTN.Application.Users;
+using RenTN.Application.Utilities;
 using RenTN.Domain.Entities;
 using RenTN.Domain.Exceptions;
 using RenTN.Domain.Interfaces;
 
 namespace RenTN.Application.Services.ApartmentsService;
 
-internal class ApartmentsService(
+public class ApartmentsService(
     ILogger<ApartmentsService> _logger,
     IMapper _mapper,
     IApartmentsRepository _apartmentsRepository,
+    IChangeLogsRepository _changeLogsRepository,
     IUserContext _userContext) : IApartmentsService
 {
     public async Task<IEnumerable<ApartmentDTO>> GetApartments()
@@ -33,13 +36,13 @@ internal class ApartmentsService(
         return apartmentDTO;
     }
 
-    public async Task<int> CreateApartment(CreateApartmentDTO createApartmentDTO)
+    public async Task<CreateApartmentDTO?> CreateApartment(CreateApartmentDTO createApartmentDTO)
     {
         var currentUser = _userContext.GetCurrentUser();
         if (currentUser == null)
         {
             _logger.LogWarning("User not found!");
-            return -99;
+            return null;
         };
 
         _logger.LogInformation("Creating a new Apartment");
@@ -47,29 +50,62 @@ internal class ApartmentsService(
         var apartment = _mapper.Map<Apartment>(createApartmentDTO);
         apartment.OwnerID = currentUser.Id;
 
-        int id = await _apartmentsRepository.CreateAsync(apartment);
-        return id;
+        var createdApartment = await _apartmentsRepository.CreateAsync(apartment);
+        var createdApartmentDTO = _mapper.Map<CreateApartmentDTO>(createdApartment);
+        return createdApartmentDTO;
     }
 
-    public async Task UpdateApartment(UpdateApartmentDTO updateApartmentDTO)
+    public async Task<UpdateApartmentDTO?> UpdateApartment(UpdateApartmentDTO updateApartmentDTO)
     {
+        var currentUser = _userContext.GetCurrentUser();
+        if (currentUser == null)
+        {
+            _logger.LogWarning("User not found!");
+            return null;
+        }
+
         _logger.LogInformation("Updating Apartment with Id = {ApartmentId}", updateApartmentDTO.ID);
 
         var existingApartment = await _apartmentsRepository.GetByIdAsync(updateApartmentDTO.ID) 
                                       ?? throw new NotFoundException(nameof(Apartment), updateApartmentDTO.ID.ToString());
 
-        _mapper.Map(updateApartmentDTO, existingApartment);
+        var originalApartment = Apartment.Clone(existingApartment);
 
+        _mapper.Map(updateApartmentDTO, existingApartment);
+        
         await _apartmentsRepository.UpdateAsync(existingApartment, updateApartmentDTO.ApartmentPhotoUrls);
+
+        var changeLogs = CoreUtilities.GenerateChangeLogs(originalApartment, existingApartment, currentUser.Email);
+        await _changeLogsRepository.AddChangeLogs(changeLogs);
+
+        var mappedApartment = _mapper.Map<UpdateApartmentDTO>(existingApartment);
+
+        return mappedApartment;
     }
 
     public async Task DeleteApartment(int id)
     {
+        var currentUser = _userContext.GetCurrentUser();
+        if (currentUser == null)
+        {
+            _logger.LogWarning("User not found!");
+            return;
+        }
+
         _logger.LogInformation("Deleting Apartment with id : {ApartmentID}", id);
         var existingApartment = await _apartmentsRepository.GetByIdAsync(id) 
                                       ?? throw new NotFoundException(nameof(Apartment), id.ToString());
 
+        var originalApartment = Apartment.Clone(existingApartment);
+     
         await _apartmentsRepository.DeleteAsync(existingApartment);
+
+        var apartmentsChangeLogs = CoreUtilities.GenerateChangeLogs(originalApartment, existingApartment, currentUser.Email);
+        var apartmentPhotosChangeLogs = CoreUtilities.GenerateChangeLogs(originalApartment.ApartmentPhotos, existingApartment.ApartmentPhotos, currentUser.Email, ["Apartment"]);
+
+        var changeLogs = apartmentsChangeLogs.ToList();
+        changeLogs.AddRange(apartmentPhotosChangeLogs);
+        await _changeLogsRepository.AddChangeLogs(changeLogs);
     }
 
     public async Task<List<ApartmentPhotoDTO>> GetApartmentPhotos(int id)

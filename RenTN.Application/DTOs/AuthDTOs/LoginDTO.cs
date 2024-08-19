@@ -1,4 +1,4 @@
-﻿namespace RenTN.Application.DTOs.IdentityDTO;
+﻿namespace RenTN.Application.DTOs.AuthDTOs;
 
 public class LoginDTO
 {
