@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IApplicationSeeder, ApplicationSeeder>();
         services.AddScoped<IApartmentsRepository, ApartmentsRepository>();
+        services.AddScoped<IChangeLogsRepository, ChangeLogsRepository>();
 
     }
 }

@@ -36,11 +36,11 @@ public class ApartmentsController(IApartmentsService _apartmentsService) : Contr
     [HttpPost]
     public async Task<IActionResult> CreateApartment([FromBody] CreateApartmentDTO createApartmentDTO)
     {
-        var id = await _apartmentsService.CreateApartment(createApartmentDTO);
+        var createdApartment = await _apartmentsService.CreateApartment(createApartmentDTO);
 
-        if(id < 0) return BadRequest();
+        if(createdApartment == null) return BadRequest();
 
-        return CreatedAtAction(nameof(GetApartmentByID), new {id}, null);
+        return Ok(createdApartment);
     }
 
     [HttpPatch("{id}")]

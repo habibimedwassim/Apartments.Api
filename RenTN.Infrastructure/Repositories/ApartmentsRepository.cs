@@ -18,11 +18,11 @@ internal class ApartmentsRepository(ApplicationDbContext _dbContext) : IApartmen
         var apartment = await _dbContext.Apartments.Include(x => x.ApartmentPhotos).FirstOrDefaultAsync(x => x.ID == id);
         return apartment;
     }
-    public async Task<int> CreateAsync(Apartment apartment)
+    public async Task<Apartment> CreateAsync(Apartment apartment)
     {
         await _dbContext.Apartments.AddAsync(apartment);
         await _dbContext.SaveChangesAsync();
-        return apartment.ID;
+        return apartment;
     }
 
     public async Task UpdateAsync(Apartment updatedApartment, List<string>? apartmentPhotoUrls)
@@ -48,9 +48,21 @@ internal class ApartmentsRepository(ApplicationDbContext _dbContext) : IApartmen
         var apartmentPhotos = existingApartment.ApartmentPhotos;
         if (apartmentPhotos.Count > 0)
         {
-            _dbContext.ApartmentPhotos.RemoveRange(apartmentPhotos);
+            foreach (var photo in apartmentPhotos)
+            {
+                photo.IsDeleted = true;
+            }
         }
-        _dbContext.Apartments.Remove(existingApartment);
+        existingApartment.IsDeleted = true;
         await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<Apartment>> GetApartmentsByOwnerIdAsync(string ownerID)
+    {
+        var apartments = await _dbContext.Apartments
+                                         .Include(x => x.ApartmentPhotos)
+                                         .Where(x => x.OwnerID == ownerID)
+                                         .ToListAsync();
+        return apartments;
     }
 }

@@ -8,5 +8,7 @@ public class User : IdentityUser
     public string LastName { get; set; } = string.Empty;
     public string? VerificationCode { get; set; }
     public DateTime? VerificationCodeExpiration { get; set; }
-    public List<Apartment> OwnedApartments { get; set; } = [];
+    public int? CurrentApartmentID { get; set; }
+    public Apartment? CurrentApartment { get; set; }
+    public bool IsDeleted { get; set; }
 }

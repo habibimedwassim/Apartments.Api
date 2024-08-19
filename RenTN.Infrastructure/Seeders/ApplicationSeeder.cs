@@ -30,7 +30,6 @@ internal class ApplicationSeeder(ApplicationDbContext _dbContext) : IApplication
     {
         List<IdentityRole> roles =
             [
-                new (UserRoles.User){ NormalizedName = UserRoles.User.ToUpper()},
                 new (UserRoles.Owner){ NormalizedName = UserRoles.Owner.ToUpper()},
                 new (UserRoles.Admin){ NormalizedName = UserRoles.Admin.ToUpper()}
             ];

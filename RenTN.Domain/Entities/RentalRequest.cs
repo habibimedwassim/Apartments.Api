@@ -2,22 +2,14 @@
 
 namespace RenTN.Domain.Entities;
 
-public class RentHistory
+public class RentalRequest
 {
     public int ID { get; set; }
     public string TenantID { get; set; } = default!;
     public User Tenant { get; set; } = default!;
     public int ApartmentID { get; set; }
     public Apartment Apartment { get; set; } = default!;
-    public DateOnly StartDate { get; set; }
-
-    private DateOnly _endDate;
-    public DateOnly EndDate
-    {
-        get => _endDate;
-        set => _endDate = StartDate.AddDays(30);
-    }
-    public decimal Amount { get; set; }
-    public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
+    public DateOnly RequestDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+    public RentalRequestStatus Status { get; set; } = RentalRequestStatus.Pending;
     public bool IsDeleted { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿namespace RenTN.Application.DTOs.ApartmentDTOs;
+﻿namespace RenTN.Application.DTOs.ApartmentPhotoDTOs;
 
 public class ApartmentPhotoDTO
 {
