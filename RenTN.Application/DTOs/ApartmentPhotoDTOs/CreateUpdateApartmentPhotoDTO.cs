@@ -1,6 +1,6 @@
 ﻿namespace RenTN.Application.DTOs.ApartmentPhotoDTOs;
 
-public class CreateApartmentPhotoDTO
+public class CreateUpdateApartmentPhotoDTO
 {
     public string Url { get; set; } = default!;
 }

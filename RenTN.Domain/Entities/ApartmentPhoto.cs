@@ -8,14 +8,14 @@ public class ApartmentPhoto
     public string Url { get; set; } = default!;
     public bool IsDeleted { get; set; }
 
-    public static ApartmentPhoto Clone(ApartmentPhoto apartmentPhoto)
+    public static ApartmentPhoto Clone(ApartmentPhoto apartment)
     {
-        return new ApartmentPhoto()
+        return new ApartmentPhoto
         {
-            ID = apartmentPhoto.ID,
-            ApartmentID = apartmentPhoto.ApartmentID,
-            Url = apartmentPhoto.Url,
-            IsDeleted = apartmentPhoto.IsDeleted,
+            ID = apartment.ID,
+            ApartmentID = apartment.ApartmentID,
+            Url = apartment.Url,
+            IsDeleted = apartment.IsDeleted,
         };
     }
 }
