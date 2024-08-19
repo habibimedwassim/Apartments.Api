@@ -9,5 +9,6 @@ public class ApartmentPhotoProfile : Profile
     public ApartmentPhotoProfile()
     {
         CreateMap<ApartmentPhoto, ApartmentPhotoDTO>().ReverseMap();
+        CreateMap<CreateUpdateApartmentPhotoDTO, ApartmentPhoto>().ReverseMap();
     }
 }

@@ -13,43 +13,18 @@ public class ApartmentProfile : Profile
         CreateMap<ApartmentPhoto, ApartmentPhotoDTO>();
 
         // Map from Apartment to ApartmentDTO
-        CreateMap<Apartment, ApartmentDTO>()
-            .ForMember(dest => dest.ApartmentPhotoUrls, opt => opt.MapFrom(src => src.ApartmentPhotos.Select(photo => photo.Url).ToList()));
+        CreateMap<Apartment, ApartmentDTO>();
 
         // Map from CreateApartmentDTO to Apartment
-        CreateMap<CreateApartmentDTO, Apartment>()
-            .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
-            .ForMember(dest => dest.Street, opt => opt.MapFrom(src => src.Street))
-            .ForMember(dest => dest.PostalCode, opt => opt.MapFrom(src => src.PostalCode))
-            .ForMember(dest => dest.ApartmentPhotos, opt => opt.MapFrom(src => src.ApartmentPhotoUrls.Select(url => new ApartmentPhoto
-            {
-                Url = url
-            }).ToList()));
+        CreateMap<CreateApartmentDTO, Apartment>();
 
         // Map from UpdateApartmentDTO to Apartment
-        CreateMap<UpdateApartmentDTO, Apartment>()
-            .ForMember(dest => dest.Description, opt => opt.Condition(src => !string.IsNullOrEmpty(src.Description)))
-            .ForMember(dest => dest.Size, opt => opt.Condition(src => src.Size.HasValue))
-            .ForMember(dest => dest.Price, opt => opt.Condition(src => src.Price.HasValue))
-            .ForMember(dest => dest.IsAvailable, opt => opt.Condition(src => src.IsAvailable.HasValue))
-            .ForMember(dest => dest.City, opt => opt.Condition(src => !string.IsNullOrEmpty(src.City)))
-            .ForMember(dest => dest.Street, opt => opt.Condition(src => !string.IsNullOrEmpty(src.Street)))
-            .ForMember(dest => dest.PostalCode, opt => opt.Condition(src => !string.IsNullOrEmpty(src.PostalCode)))
-            .ForMember(dest => dest.ApartmentPhotos, opt => opt.Condition(src => src.ApartmentPhotoUrls != null && src.ApartmentPhotoUrls.Count > 0));
+        CreateMap<UpdateApartmentDTO, Apartment>();
 
         // Map from Apartment to CreateApartmentDTO
-        CreateMap<Apartment, CreateApartmentDTO>()
-            .ForMember(dest => dest.ApartmentPhotoUrls, opt => opt.MapFrom(src => src.ApartmentPhotos.Select(photo => photo.Url).ToList()));
+        CreateMap<Apartment, CreateApartmentDTO>();
 
         // Map from Apartment to UpdateApartmentDTO
-        CreateMap<Apartment, UpdateApartmentDTO>()
-            .ForMember(dest => dest.ApartmentPhotoUrls, opt => opt.MapFrom(src => src.ApartmentPhotos.Select(photo => photo.Url).ToList()))
-            .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
-            .ForMember(dest => dest.Street, opt => opt.MapFrom(src => src.Street))
-            .ForMember(dest => dest.PostalCode, opt => opt.MapFrom(src => src.PostalCode))
-            .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
-            .ForMember(dest => dest.Size, opt => opt.MapFrom(src => src.Size))
-            .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
-            .ForMember(dest => dest.IsAvailable, opt => opt.MapFrom(src => src.IsAvailable));
+        CreateMap<Apartment, UpdateApartmentDTO>();
     }
 }

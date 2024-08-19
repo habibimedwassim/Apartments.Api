@@ -24,25 +24,6 @@ internal class ApartmentsRepository(ApplicationDbContext _dbContext) : IApartmen
         await _dbContext.SaveChangesAsync();
         return apartment;
     }
-
-    public async Task UpdateAsync(Apartment updatedApartment, List<string>? apartmentPhotoUrls)
-    {
-        if (apartmentPhotoUrls != null && apartmentPhotoUrls.Count > 0)
-        {
-            _dbContext.ApartmentPhotos.RemoveRange(updatedApartment.ApartmentPhotos);
-
-            var photosToAdd = apartmentPhotoUrls.Select(url => new ApartmentPhoto
-            {
-                ApartmentID = updatedApartment.ID,
-                Url = url
-            }).ToList();
-
-            await _dbContext.ApartmentPhotos.AddRangeAsync(photosToAdd);
-        }
-
-        await _dbContext.SaveChangesAsync();
-    }
-
     public async Task DeleteAsync(Apartment existingApartment)
     {
         var apartmentPhotos = existingApartment.ApartmentPhotos;
@@ -65,4 +46,6 @@ internal class ApartmentsRepository(ApplicationDbContext _dbContext) : IApartmen
                                          .ToListAsync();
         return apartments;
     }
+
+    public async Task SaveChangesAsync() => await _dbContext.SaveChangesAsync();
 }
