@@ -73,10 +73,11 @@ public class ApartmentsService(
 
         _mapper.Map(updateApartmentDTO, existingApartment);
         
-        await _apartmentsRepository.UpdateAsync(existingApartment, updateApartmentDTO.ApartmentPhotoUrls);
+        var changeLogs = CoreUtilities.GenerateChangeLogs(originalApartment, existingApartment, currentUser.Email, updateApartmentDTO.ID.ToString());
 
-        var changeLogs = CoreUtilities.GenerateChangeLogs(originalApartment, existingApartment, currentUser.Email);
         await _changeLogsRepository.AddChangeLogs(changeLogs);
+
+        await _apartmentsRepository.SaveChangesAsync();
 
         var mappedApartment = _mapper.Map<UpdateApartmentDTO>(existingApartment);
 
@@ -97,15 +98,16 @@ public class ApartmentsService(
                                       ?? throw new NotFoundException(nameof(Apartment), id.ToString());
 
         var originalApartment = Apartment.Clone(existingApartment);
-     
-        await _apartmentsRepository.DeleteAsync(existingApartment);
 
-        var apartmentsChangeLogs = CoreUtilities.GenerateChangeLogs(originalApartment, existingApartment, currentUser.Email);
-        var apartmentPhotosChangeLogs = CoreUtilities.GenerateChangeLogs(originalApartment.ApartmentPhotos, existingApartment.ApartmentPhotos, currentUser.Email, ["Apartment"]);
+        existingApartment.IsDeleted = true;
+
+        var apartmentsChangeLogs = CoreUtilities.GenerateChangeLogs(originalApartment, existingApartment, currentUser.Email, id.ToString());
 
         var changeLogs = apartmentsChangeLogs.ToList();
-        changeLogs.AddRange(apartmentPhotosChangeLogs);
+
         await _changeLogsRepository.AddChangeLogs(changeLogs);
+
+        await _apartmentsRepository.SaveChangesAsync();
     }
 
     public async Task<List<ApartmentPhotoDTO>> GetApartmentPhotos(int id)

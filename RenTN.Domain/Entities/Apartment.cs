@@ -28,7 +28,6 @@ public class Apartment
             Size = apartment.Size,
             Price = apartment.Price,
             IsAvailable = apartment.IsAvailable,
-            ApartmentPhotos = apartment.ApartmentPhotos.Select(x => ApartmentPhoto.Clone(x)).ToList(),
             IsDeleted = apartment.IsDeleted,
         };
     }
