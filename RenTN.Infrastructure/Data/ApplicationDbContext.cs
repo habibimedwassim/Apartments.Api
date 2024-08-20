@@ -1,6 +1,7 @@
 ﻿using RenTN.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace RenTN.Infrastructure.Data;
 
@@ -23,7 +24,8 @@ internal class ApplicationDbContext(DbContextOptions<ApplicationDbContext> optio
 
         modelBuilder.Entity<User>()
                     .Property(u => u.SysID)
-                    .ValueGeneratedOnAdd();
+                    .ValueGeneratedOnAdd()
+                    .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
 
         modelBuilder.Entity<User>()
                     .HasIndex(u => u.SysID)
