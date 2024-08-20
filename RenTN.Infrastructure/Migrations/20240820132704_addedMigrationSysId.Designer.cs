@@ -12,8 +12,8 @@ using RenTN.Infrastructure.Data;
 namespace RenTN.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240818110456_dbCreation")]
-    partial class dbCreation
+    [Migration("20240820132704_addedMigrationSysId")]
+    partial class addedMigrationSysId
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -256,6 +256,10 @@ namespace RenTN.Infrastructure.Migrations
                     b.Property<string>("OldValue")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PropertyID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PropertyName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -397,6 +401,12 @@ namespace RenTN.Infrastructure.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("SysID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SysID"));
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -421,6 +431,9 @@ namespace RenTN.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("SysID")
+                        .IsUnique();
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
