@@ -27,4 +27,11 @@ public class AdminController(IAdminService _adminService) : ControllerBase
         var users = await _adminService.GetUsersAsync();
         return Ok(users);
     }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetActiveUsers([FromRoute] int id)
+    {
+        object users = await _adminService.GetUserByIdAsync(id);
+        return Ok(users);
+    }
 }
