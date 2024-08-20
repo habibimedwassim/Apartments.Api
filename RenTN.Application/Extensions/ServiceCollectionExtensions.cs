@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using RenTN.Application.Services.AdminService;
 using RenTN.Application.Services.ApartmentPhotosService;
 using RenTN.Application.Services.ApartmentsService;
 using RenTN.Application.Services.Authentication;
@@ -25,6 +26,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IUserContext, UserContext>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IApartmentsService, ApartmentsService>();
