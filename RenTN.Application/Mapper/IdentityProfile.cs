@@ -10,6 +10,7 @@ public class IdentityProfile : Profile
     {
         // Mapping for User to UserProfileDTO
         CreateMap<User, UserProfileDTO>()
+            .ForMember(dest => dest.ID, opt => opt.MapFrom(src => src.SysID))
             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName))
             .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))
             .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName))
@@ -20,6 +21,7 @@ public class IdentityProfile : Profile
 
         // Mapping for User to OwnerProfileDTO
         CreateMap<User, OwnerProfileDTO>()
+            .ForMember(dest => dest.ID, opt => opt.MapFrom(src => src.SysID))
             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName))
             .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))
             .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName))

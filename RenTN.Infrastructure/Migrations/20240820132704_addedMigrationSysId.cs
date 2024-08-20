@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace RenTN.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class dbCreation : Migration
+    public partial class addedMigrationSysId : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -33,6 +33,7 @@ namespace RenTN.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EntityType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PropertyName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PropertyID = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     OldValue = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     NewValue = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ChangedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -105,6 +106,8 @@ namespace RenTN.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    SysID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     VerificationCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -327,6 +330,12 @@ namespace RenTN.Infrastructure.Migrations
                 name: "IX_AspNetUsers_CurrentApartmentID",
                 table: "AspNetUsers",
                 column: "CurrentApartmentID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_SysID",
+                table: "AspNetUsers",
+                column: "SysID",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",

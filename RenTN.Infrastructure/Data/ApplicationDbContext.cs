@@ -21,6 +21,14 @@ internal class ApplicationDbContext(DbContextOptions<ApplicationDbContext> optio
         modelBuilder.Entity<RentalRequest>().HasQueryFilter(x => !x.IsDeleted);
         modelBuilder.Entity<ApartmentPhoto>().HasQueryFilter(x => !x.IsDeleted);
 
+        modelBuilder.Entity<User>()
+                    .Property(u => u.SysID)
+                    .ValueGeneratedOnAdd();
+
+        modelBuilder.Entity<User>()
+                    .HasIndex(u => u.SysID)
+                    .IsUnique();
+
         modelBuilder.Entity<Apartment>()
                     .HasMany(x => x.ApartmentPhotos)
                     .WithOne(x => x.Apartment)
