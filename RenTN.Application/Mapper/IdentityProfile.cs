@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using RenTN.Application.DTOs.IdentityDTO;
+using RenTN.Application.DTOs.IdentityDTOs;
 using RenTN.Domain.Entities;
 
 namespace RenTN.Application.Mapper;
@@ -28,5 +29,8 @@ public class IdentityProfile : Profile
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
             .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
             .ForMember(dest => dest.OwnedApartments, opt => opt.Ignore());  // Populate this manually if needed
+
+        CreateMap<User, AdminProfileDTO>()
+            .ForMember(dest => dest.ID, opt => opt.MapFrom(src => src.SysID));
     }
 }
