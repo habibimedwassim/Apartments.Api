@@ -19,7 +19,8 @@ public class ApartmentProfile : Profile
         CreateMap<CreateApartmentDTO, Apartment>();
 
         // Map from UpdateApartmentDTO to Apartment
-        CreateMap<UpdateApartmentDTO, Apartment>();
+        CreateMap<UpdateApartmentDTO, Apartment>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
         // Map from Apartment to CreateApartmentDTO
         CreateMap<Apartment, CreateApartmentDTO>();
