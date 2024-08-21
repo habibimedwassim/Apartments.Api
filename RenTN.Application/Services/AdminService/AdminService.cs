@@ -2,19 +2,36 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using RenTN.Application.DTOs.ApartmentDTOs;
+using RenTN.Application.DTOs.ChangeLogDTOs;
 using RenTN.Application.DTOs.IdentityDTO;
 using RenTN.Application.DTOs.IdentityDTOs;
 using RenTN.Domain.Common;
 using RenTN.Domain.Entities;
 using RenTN.Domain.Exceptions;
+using RenTN.Domain.Interfaces;
 
 namespace RenTN.Application.Services.AdminService;
 
 public class AdminService(
     ILogger<AdminService> _logger,
     IMapper _mapper,
-    UserManager<User> _userManager) : IAdminService
+    UserManager<User> _userManager,
+    IApartmentsRepository _apartmentsRepository,
+    IChangeLogsRepository _changeLogsRepository) : IAdminService
 {
+    public Task<IEnumerable<ChangeLog>> GetChangeLogs(DateRangeDTO dateRange)
+    {
+        var endDate = dateRange.EndDate ?? DateTime.UtcNow;
+
+        _logger.LogInformation("Retrieving change logs for entity {EntityName} between {StartDate} and {EndDate}.",
+                              dateRange.EntityName, dateRange.StartDate, endDate);
+
+        var changeLogs = _changeLogsRepository.GetChangeLogsAsync(dateRange.EntityName, dateRange.StartDate, endDate);
+
+        return changeLogs;
+    }
+
     public async Task<object> GetUserByIdAsync(int id)
     {
         var user = await _userManager.Users
@@ -30,7 +47,11 @@ public class AdminService(
         }
         else if(userRole.Contains(UserRoles.Owner))
         {
-            return _mapper.Map<OwnerProfileDTO>(user);
+            var ownedApartments = await _apartmentsRepository.GetApartmentsByOwnerIdAsync(user.Id);
+            var ownedApartmentDTO = _mapper.Map<List<ApartmentDTO>>(ownedApartments);
+            var userRecord = _mapper.Map<OwnerProfileDTO>(user);
+            userRecord.OwnedApartments.AddRange(ownedApartmentDTO);
+            return userRecord;
         }
         else
         {

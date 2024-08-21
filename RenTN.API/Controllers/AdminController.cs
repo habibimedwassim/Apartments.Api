@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RenTN.Application.DTOs.ChangeLogDTOs;
 using RenTN.Application.Services.AdminService;
 using RenTN.Domain.Common;
 
@@ -33,5 +34,13 @@ public class AdminController(IAdminService _adminService) : ControllerBase
     {
         object users = await _adminService.GetUserByIdAsync(id);
         return Ok(users);
+    }
+
+    [HttpPost("changelogs")]
+    public async Task<IActionResult> GetChangeLogs([FromBody] DateRangeDTO dateRange)
+    {
+        var changeLogs = await _adminService.GetChangeLogs(dateRange);
+
+        return Ok(changeLogs);
     }
 }
