@@ -1,4 +1,6 @@
-﻿namespace RenTN.Application.DTOs.ApartmentDTOs;
+﻿using RenTN.Application.DTOs.ApartmentPhotoDTOs;
+
+namespace RenTN.Application.DTOs.ApartmentDTOs;
 
 public class ApartmentDTO
 {
@@ -10,4 +12,5 @@ public class ApartmentDTO
     public int Size { get; set; }
     public decimal Price { get; set; }
     public bool IsAvailable { get; set; }
+    public List<ApartmentPhotoDTO> ApartmentPhotos { get; set; } = [];
 }

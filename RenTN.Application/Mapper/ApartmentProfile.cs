@@ -13,7 +13,8 @@ public class ApartmentProfile : Profile
         CreateMap<ApartmentPhoto, ApartmentPhotoDTO>();
 
         // Map from Apartment to ApartmentDTO
-        CreateMap<Apartment, ApartmentDTO>();
+        CreateMap<Apartment, ApartmentDTO>()
+            .ForMember(dest => dest.ApartmentPhotos, opt => opt.MapFrom(src => src.ApartmentPhotos));
 
         // Map from CreateApartmentDTO to Apartment
         CreateMap<CreateApartmentDTO, Apartment>();
