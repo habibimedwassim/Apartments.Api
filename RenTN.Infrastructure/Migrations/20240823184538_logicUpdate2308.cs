@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace RenTN.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class addedMigrationSysId : Migration
+    public partial class logicUpdate2308 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -113,6 +113,9 @@ namespace RenTN.Infrastructure.Migrations
                     VerificationCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     VerificationCodeExpiration = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CurrentApartmentID = table.Column<int>(type: "int", nullable: true),
+                    Gender = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DateOfBirth = table.Column<DateOnly>(type: "date", nullable: true),
+                    Role = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -232,8 +235,9 @@ namespace RenTN.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     TenantID = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ApartmentID = table.Column<int>(type: "int", nullable: false),
+                    OwnerID = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     RequestDate = table.Column<DateOnly>(type: "date", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -245,6 +249,12 @@ namespace RenTN.Infrastructure.Migrations
                         principalTable: "Apartments",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_RentalRequests_AspNetUsers_OwnerID",
+                        column: x => x.OwnerID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_RentalRequests_AspNetUsers_TenantID",
                         column: x => x.TenantID,
@@ -348,6 +358,11 @@ namespace RenTN.Infrastructure.Migrations
                 name: "IX_RentalRequests_ApartmentID",
                 table: "RentalRequests",
                 column: "ApartmentID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RentalRequests_OwnerID",
+                table: "RentalRequests",
+                column: "OwnerID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RentalRequests_TenantID",

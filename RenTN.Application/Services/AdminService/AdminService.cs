@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -6,6 +7,7 @@ using RenTN.Application.DTOs.ApartmentDTOs;
 using RenTN.Application.DTOs.ChangeLogDTOs;
 using RenTN.Application.DTOs.IdentityDTO;
 using RenTN.Application.DTOs.IdentityDTOs;
+using RenTN.Application.Utilities;
 using RenTN.Domain.Common;
 using RenTN.Domain.Entities;
 using RenTN.Domain.Exceptions;
@@ -20,77 +22,66 @@ public class AdminService(
     IApartmentsRepository _apartmentsRepository,
     IChangeLogsRepository _changeLogsRepository) : IAdminService
 {
-    public Task<IEnumerable<ChangeLog>> GetChangeLogs(DateRangeDTO dateRange)
+    public async Task<ApplicationResponse> GetChangeLogs(DateRangeDTO dateRange)
     {
         var endDate = dateRange.EndDate ?? DateTime.UtcNow;
 
         _logger.LogInformation("Retrieving change logs for entity {EntityName} between {StartDate} and {EndDate}.",
                               dateRange.EntityName, dateRange.StartDate, endDate);
 
-        var changeLogs = _changeLogsRepository.GetChangeLogsAsync(dateRange.EntityName, dateRange.StartDate, endDate);
+        var changeLogs = await _changeLogsRepository.GetChangeLogsAsync(dateRange.EntityName, dateRange.StartDate, endDate);
 
-        return changeLogs;
+        return new ApplicationResponse(true, StatusCodes.Status200OK, $"{changeLogs.Count()} records found", changeLogs);
     }
 
-    public async Task<object> GetUserByIdAsync(int id)
+    public async Task<ApplicationResponse> GetUserByIdAsync(int id)
     {
         var user = await _userManager.Users
                                      .Include(x => x.CurrentApartment)
                                      .FirstOrDefaultAsync(x => x.SysID == id)
                                      ?? throw new NotFoundException(nameof(User), id.ToString());
 
-        var userRole = await _userManager.GetRolesAsync(user);
+        var userRole = user.Role;
 
-        if (userRole.Contains(UserRoles.Admin))
+        switch (userRole)
         {
-            return _mapper.Map<AdminProfileDTO>(user);
+            case UserRoles.Admin:
+                return new ApplicationResponse(true, StatusCodes.Status200OK, "OK", _mapper.Map<BaseProfileDTO>(user));
+            case UserRoles.Owner:
+                var ownedApartments = await _apartmentsRepository.GetApartmentsByOwnerIdAsync(user.Id);
+                var ownedApartmentDTO = _mapper.Map<List<ApartmentDTO>>(ownedApartments);
+                var userRecord = _mapper.Map<OwnerProfileDTO>(user);
+                userRecord.OwnedApartments.AddRange(ownedApartmentDTO);
+                return new ApplicationResponse(true, StatusCodes.Status200OK, "OK", userRecord);
+            default:
+                return new ApplicationResponse(true, StatusCodes.Status200OK, "OK", _mapper.Map<UserProfileDTO>(user));
         }
-        else if(userRole.Contains(UserRoles.Owner))
-        {
-            var ownedApartments = await _apartmentsRepository.GetApartmentsByOwnerIdAsync(user.Id);
-            var ownedApartmentDTO = _mapper.Map<List<ApartmentDTO>>(ownedApartments);
-            var userRecord = _mapper.Map<OwnerProfileDTO>(user);
-            userRecord.OwnedApartments.AddRange(ownedApartmentDTO);
-            return userRecord;
-        }
-        else
-        {
-            return _mapper.Map<UserProfileDTO>(user);
-        }
-
     }
 
-    public async Task<IEnumerable<object>> GetUsersAsync(string? userRole = null)
+    public async Task<ApplicationResponse> GetUsersAsync(string? userRole = null)
     {
         _logger.LogInformation("Retrieving {UserRole}s", userRole ?? "Users");
 
-        List<User> users;
+        var baseQuery = _userManager.Users
+                                    .Include(x => x.CurrentApartment)
+                                    .AsQueryable();
 
-        if (userRole == UserRoles.Admin)
+        if (userRole == null)
         {
-            users = (await _userManager.GetUsersInRoleAsync(UserRoles.Admin)).ToList();
-            return _mapper.Map<List<AdminProfileDTO>>(users);
-        }
-        else if (userRole == UserRoles.Owner)
-        {
-            users = (await _userManager.GetUsersInRoleAsync(UserRoles.Owner)).ToList();
-            return _mapper.Map<List<OwnerProfileDTO>>(users);
+            baseQuery = baseQuery.Where(x => x.Role != UserRoles.Admin && x.Role != UserRoles.Owner);
         }
         else
         {
-            var admins = await _userManager.GetUsersInRoleAsync(UserRoles.Admin);
-            var owners = await _userManager.GetUsersInRoleAsync(UserRoles.Owner);
-
-            users = await _userManager.Users
-                .Include(x => x.CurrentApartment)
-                .Where(user => !user.IsDeleted)
-                .ToListAsync();
-
-            var filteredUsers = users
-                .Except(admins.Concat(owners))
-                .ToList();
-
-            return _mapper.Map<List<UserProfileDTO>>(filteredUsers);
+            baseQuery = baseQuery.Where(x => x.Role == userRole);
         }
+
+        var users = await baseQuery.ToListAsync();
+
+        return userRole switch
+        {
+            UserRoles.Admin => new ApplicationResponse(true, StatusCodes.Status200OK, $"{users.Count} records found", _mapper.Map<List<BaseProfileDTO>>(users)),
+            UserRoles.Owner => new ApplicationResponse(true, StatusCodes.Status200OK, $"{users.Count} records found", _mapper.Map<List<OwnerProfileDTO>>(users)),
+            _ => new ApplicationResponse(true, StatusCodes.Status200OK, $"{users.Count} records found", _mapper.Map<List<UserProfileDTO>>(users)),
+        };
     }
 }

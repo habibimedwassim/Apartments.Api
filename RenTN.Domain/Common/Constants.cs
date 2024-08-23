@@ -36,3 +36,12 @@ public enum PaymentStatus
     Paid,
     Late
 }
+public enum Gender
+{
+    Male,
+    Female
+}
+public enum RentalRequestType
+{
+    Sent, Received
+}

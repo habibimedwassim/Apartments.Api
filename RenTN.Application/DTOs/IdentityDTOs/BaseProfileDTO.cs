@@ -1,8 +1,8 @@
-﻿using RenTN.Application.DTOs.ApartmentDTOs;
+﻿using RenTN.Domain.Common;
 
-namespace RenTN.Application.DTOs.IdentityDTO;
+namespace RenTN.Application.DTOs.IdentityDTOs;
 
-public class UserProfileDTO
+public class BaseProfileDTO
 {
     public int ID { get; set; }
     public string UserName { get; set; } = string.Empty;
@@ -12,5 +12,4 @@ public class UserProfileDTO
     public string? PhoneNumber { get; set; }
     public string? Gender { get; set; }
     public DateOnly? DateOfBirth { get; set; }
-    public ApartmentDTO? CurrentApartment { get; set; }
 }

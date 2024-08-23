@@ -1,13 +1,14 @@
 ﻿using RenTN.Application.DTOs.AuthDTOs;
+using RenTN.Application.Utilities;
 
 namespace RenTN.Application.Services.Authentication;
 
 public interface IAuthService
 {
-    Task<(bool success, string message)> ResendEmailAsync(EmailDTO email);
-    Task<(bool success, string message)> ForgotPasswordAsync(EmailDTO email);
-    Task<(bool Success, string Message)> RegisterAsync(RegisterDTO registerDTO);
-    Task<(bool Success, string Message)> VerifyEmailAsync(VerifyEmailDTO verifyEmailDTO);
-    Task<(bool Success, AuthResponse? Response, string Message)> LoginAsync(LoginDTO loginDTO);
-    Task<(bool Success, string Message)> ResetPasswordAsync(ResetPasswordDTO resetPasswordDTO);
+    Task<ApplicationResponse> ResendEmailAsync(EmailDTO email);
+    Task<ApplicationResponse> ForgotPasswordAsync(EmailDTO email);
+    Task<ApplicationResponse> RegisterAsync(RegisterDTO registerDTO);
+    Task<ApplicationResponse> VerifyEmailAsync(VerifyEmailDTO verifyEmailDTO);
+    Task<ApplicationResponse> LoginAsync(LoginDTO loginDTO);
+    Task<ApplicationResponse> ResetPasswordAsync(ResetPasswordDTO resetPasswordDTO);
 }

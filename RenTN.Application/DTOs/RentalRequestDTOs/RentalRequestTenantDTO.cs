@@ -1,6 +1,6 @@
-﻿namespace RenTN.Application.DTOs.IdentityDTOs;
+﻿namespace RenTN.Application.DTOs.RentalRequestDTOs;
 
-public class AdminProfileDTO
+public class RentalRequestTenantDTO
 {
     public int ID { get; set; }
     public string UserName { get; set; } = string.Empty;
