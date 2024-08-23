@@ -1,12 +1,11 @@
 ﻿using RenTN.Application.DTOs.ChangeLogDTOs;
-using RenTN.Application.DTOs.IdentityDTO;
-using RenTN.Domain.Entities;
+using RenTN.Application.Utilities;
 
 namespace RenTN.Application.Services.AdminService;
 
 public interface IAdminService
 {
-    Task<object> GetUserByIdAsync(int id);
-    Task<IEnumerable<object>> GetUsersAsync(string? userRole = null);
-    Task<IEnumerable<ChangeLog>> GetChangeLogs(DateRangeDTO dateRange);
+    Task<ApplicationResponse> GetUserByIdAsync(int id);
+    Task<ApplicationResponse> GetUsersAsync(string? userRole = null);
+    Task<ApplicationResponse> GetChangeLogs(DateRangeDTO dateRange);
 }

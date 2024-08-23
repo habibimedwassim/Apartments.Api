@@ -1,4 +1,6 @@
-﻿namespace RenTN.Application.DTOs.AuthDTOs;
+﻿using RenTN.Domain.Common;
+
+namespace RenTN.Application.DTOs.AuthDTOs;
 
 public class RegisterDTO
 {
@@ -8,6 +10,8 @@ public class RegisterDTO
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
+    public Gender? Gender { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
     public string? Role { get; set; }
 
 }

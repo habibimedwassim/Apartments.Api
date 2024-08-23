@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RenTN.API.Utilities;
 using RenTN.Application.DTOs.ChangeLogDTOs;
 using RenTN.Application.Services.AdminService;
 using RenTN.Domain.Common;
@@ -11,36 +12,46 @@ public class AdminController(IAdminService _adminService) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetActiveAdmins()
     {
-        var admins = await _adminService.GetUsersAsync(UserRoles.Admin);
-        return Ok(admins);
+        var result = await _adminService.GetUsersAsync(UserRoles.Admin);
+        if (!result.Success) return ApiResponse.Error(result);
+
+        return ApiResponse.Success(result);
     }
 
     [HttpGet("owners")]
     public async Task<IActionResult> GetActiveOwners()
     {
-        var owners = await _adminService.GetUsersAsync(UserRoles.Owner);
-        return Ok(owners);
+        var result = await _adminService.GetUsersAsync(UserRoles.Owner);
+        if (!result.Success) return ApiResponse.Error(result);
+
+        return ApiResponse.Success(result);
     }
 
     [HttpGet("users")]
     public async Task<IActionResult> GetActiveUsers()
     {
-        var users = await _adminService.GetUsersAsync();
-        return Ok(users);
+        var result = await _adminService.GetUsersAsync();
+        if (!result.Success) return ApiResponse.Error(result);
+
+        return ApiResponse.Success(result);
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetActiveUsers([FromRoute] int id)
     {
-        object users = await _adminService.GetUserByIdAsync(id);
-        return Ok(users);
+        var result = await _adminService.GetUserByIdAsync(id);
+        if (!result.Success) return ApiResponse.Error(result);
+
+        return ApiResponse.Success(result);
     }
 
     [HttpPost("changelogs")]
     public async Task<IActionResult> GetChangeLogs([FromBody] DateRangeDTO dateRange)
     {
-        var changeLogs = await _adminService.GetChangeLogs(dateRange);
+        var result = await _adminService.GetChangeLogs(dateRange);
 
-        return Ok(changeLogs);
+        if (!result.Success) return ApiResponse.Error(result);
+
+        return ApiResponse.Success(result);
     }
 }

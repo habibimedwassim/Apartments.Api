@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RenTN.API.Utilities;
 using RenTN.Application.DTOs.ApartmentDTOs;
 using RenTN.Application.Services.ApartmentsService;
 
@@ -11,44 +12,51 @@ public class ApartmentsController(IApartmentsService _apartmentsService) : Contr
     [HttpGet]
     public async Task<IActionResult> GetAllApartments()
     {
-        var apartments = await _apartmentsService.GetApartments();
-        return Ok(apartments);
+        var result = await _apartmentsService.GetApartments();
+
+        if (!result.Success) return ApiResponse.Error(result);
+
+        return ApiResponse.Success(result);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetApartmentByID([FromRoute] int id)
     {
-        var apartment = await _apartmentsService.GetApartmentByID(id);
+        var result = await _apartmentsService.GetApartmentByID(id);
 
-        if (apartment == null) return NotFound();
+        if (!result.Success) return ApiResponse.Error(result);
 
-        return Ok(apartment);
+        return ApiResponse.Success(result);
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateApartment([FromBody] CreateApartmentDTO createApartmentDTO)
     {
-        var createdApartment = await _apartmentsService.CreateApartment(createApartmentDTO);
+        var result = await _apartmentsService.CreateApartment(createApartmentDTO);
 
-        if(createdApartment == null) return BadRequest();
+        if (!result.Success) return ApiResponse.Error(result);
 
-        return Ok(createdApartment);
+        return ApiResponse.Success(result);
     }
 
     [HttpPatch("{id}")]
     public async Task<IActionResult> UpdateApartment([FromRoute] int id, [FromBody] UpdateApartmentDTO updateApartmentDTO)
     {
         updateApartmentDTO.ID = id;
-        await _apartmentsService.UpdateApartment(updateApartmentDTO);
+        var result = await _apartmentsService.UpdateApartment(updateApartmentDTO);
 
-        return NoContent();
+        if (!result.Success) return ApiResponse.Error(result);
+
+        return ApiResponse.Success(result);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteApartment([FromRoute] int id)
     {
-        await _apartmentsService.DeleteApartment(id);
+        var result = await _apartmentsService.DeleteApartment(id);
 
-        return NoContent();
+        if (!result.Success) return ApiResponse.Error(result);
+
+        return ApiResponse.Success(result);
     }
 }

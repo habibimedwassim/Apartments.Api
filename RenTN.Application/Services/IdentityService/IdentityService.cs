@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RenTN.Application.DTOs.ApartmentDTOs;
 using RenTN.Application.DTOs.IdentityDTO;
@@ -44,17 +43,12 @@ public class IdentityService(
             return null;
         }
 
-        var user = await _userManager.FindByEmailAsync(currentUser.Email);
-
-        if (user == null) 
-        {
-            _logger.LogWarning("User not found!");
-            return null;
-        }
+        var user = await _userManager.FindByEmailAsync(currentUser.Email) ??
+                   throw new NotFoundException(nameof(User), currentUser.Id);
 
         var roles = currentUser.Roles;
 
-        if (roles.Contains("Owner"))
+        if (roles.Contains(UserRoles.Owner))
         {
             var ownerProfile = _mapper.Map<OwnerProfileDTO>(user);
             var ownedApartments = await _apartmentsRepository.GetApartmentsByOwnerIdAsync(user.Id);

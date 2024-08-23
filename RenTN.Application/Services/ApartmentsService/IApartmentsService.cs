@@ -1,14 +1,15 @@
 ﻿using RenTN.Application.DTOs.ApartmentDTOs;
 using RenTN.Application.DTOs.ApartmentPhotoDTOs;
+using RenTN.Application.Utilities;
 
 namespace RenTN.Application.Services.ApartmentsService;
 
 public interface IApartmentsService
 {
-    Task DeleteApartment(int id);
-    Task<ApartmentDTO?> GetApartmentByID(int id);
-    Task<IEnumerable<ApartmentDTO>> GetApartments();
-    Task<List<ApartmentPhotoDTO>> GetApartmentPhotos(int id);
-    Task<CreateApartmentDTO?> CreateApartment(CreateApartmentDTO createApartmentDTO);
-    Task<UpdateApartmentDTO?> UpdateApartment(UpdateApartmentDTO updateApartmentDTO);
+    Task<ApplicationResponse> DeleteApartment(int id);
+    Task<ApplicationResponse> GetApartmentByID(int id);
+    Task<ApplicationResponse> GetApartments();
+    Task<ApplicationResponse> GetApartmentPhotos(int id);
+    Task<ApplicationResponse> CreateApartment(CreateApartmentDTO createApartmentDTO);
+    Task<ApplicationResponse> UpdateApartment(UpdateApartmentDTO updateApartmentDTO);
 }

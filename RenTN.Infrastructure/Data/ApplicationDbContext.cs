@@ -73,5 +73,13 @@ internal class ApplicationDbContext(DbContextOptions<ApplicationDbContext> optio
         modelBuilder.Entity<RentHistory>()
                     .Property(x => x.Amount)
                     .HasPrecision(8, 2);
+
+        modelBuilder.Entity<User>()
+                    .Property(u => u.Gender)
+                    .HasConversion<string>();
+
+        modelBuilder.Entity<RentalRequest>()
+                    .Property(r => r.Status)
+                    .HasConversion<string>();
     }
 }

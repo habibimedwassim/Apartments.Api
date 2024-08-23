@@ -12,8 +12,8 @@ using RenTN.Infrastructure.Data;
 namespace RenTN.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240820132704_addedMigrationSysId")]
-    partial class addedMigrationSysId
+    [Migration("20240823184538_logicUpdate2308")]
+    partial class logicUpdate2308
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -323,11 +323,16 @@ namespace RenTN.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("OwnerID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<DateOnly>("RequestDate")
                         .HasColumnType("date");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TenantID")
                         .IsRequired()
@@ -336,6 +341,8 @@ namespace RenTN.Infrastructure.Migrations
                     b.HasKey("ID");
 
                     b.HasIndex("ApartmentID");
+
+                    b.HasIndex("OwnerID");
 
                     b.HasIndex("TenantID");
 
@@ -357,6 +364,9 @@ namespace RenTN.Infrastructure.Migrations
                     b.Property<int?>("CurrentApartmentID")
                         .HasColumnType("int");
 
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -366,6 +376,9 @@ namespace RenTN.Infrastructure.Migrations
 
                     b.Property<string>("FirstName")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Gender")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
@@ -397,6 +410,9 @@ namespace RenTN.Infrastructure.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("Role")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -538,6 +554,12 @@ namespace RenTN.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("RenTN.Domain.Entities.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("RenTN.Domain.Entities.User", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantID")
@@ -545,6 +567,8 @@ namespace RenTN.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Apartment");
+
+                    b.Navigation("Owner");
 
                     b.Navigation("Tenant");
                 });
