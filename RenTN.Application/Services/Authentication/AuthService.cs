@@ -34,6 +34,7 @@ public class AuthService(
         var user = CreateUser(registerDTO);
         _logger.LogInformation("Creating User : {User}", user);
 
+        user.LockoutEnabled = false;
         var result = await _userManager.CreateAsync(user, registerDTO.Password);
 
         if (result.Succeeded)
@@ -74,6 +75,8 @@ public class AuthService(
             UserName = user.UserName!,
             FirstName = user.FirstName,
             LastName = user.LastName,
+            DateOfBirth = user.DateOfBirth,
+            Gender = user.Gender,
             Role = user.Role
         };
 

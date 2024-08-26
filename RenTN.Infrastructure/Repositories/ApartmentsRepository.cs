@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using RenTN.Domain.Entities;
 using RenTN.Domain.Interfaces;
 using RenTN.Infrastructure.Data;
@@ -47,5 +48,10 @@ internal class ApartmentsRepository(ApplicationDbContext _dbContext) : IApartmen
         return apartments;
     }
 
+    public async Task<IDbContextTransaction> BeginTransactionAsync() => await _dbContext.Database.BeginTransactionAsync();
+
+    public async Task CommitTransactionAsync(IDbContextTransaction transaction) => await transaction.CommitAsync();
+
+    public async Task RollbackTransactionAsync(IDbContextTransaction transaction) => await transaction.RollbackAsync();
     public async Task SaveChangesAsync() => await _dbContext.SaveChangesAsync();
 }

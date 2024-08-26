@@ -13,6 +13,12 @@ public static class UserRoles
     public const string Admin = "Admin";
 }
 
+public class Gender
+{
+    public const string Male = "Male";
+    public const string Female = "Female";
+}
+
 public enum ResourceOperation
 {
     Create, Update, Delete, Read
@@ -35,11 +41,6 @@ public enum PaymentStatus
     Pending,
     Paid,
     Late
-}
-public enum Gender
-{
-    Male,
-    Female
 }
 public enum RentalRequestType
 {

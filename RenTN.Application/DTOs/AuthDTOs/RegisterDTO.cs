@@ -10,7 +10,7 @@ public class RegisterDTO
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
-    public Gender? Gender { get; set; }
+    public string? Gender { get; set; }
     public DateOnly? DateOfBirth { get; set; }
     public string? Role { get; set; }
 
