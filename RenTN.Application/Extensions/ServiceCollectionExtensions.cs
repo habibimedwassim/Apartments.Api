@@ -10,6 +10,7 @@ using RenTN.Application.Services.ApartmentsService;
 using RenTN.Application.Services.Authentication;
 using RenTN.Application.Services.EmailService;
 using RenTN.Application.Services.IdentityService;
+using RenTN.Application.Services.StorageService;
 using RenTN.Application.Users;
 using RenTN.Domain.Common;
 using System.Text;
@@ -31,11 +32,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IApartmentsService, ApartmentsService>();
         services.AddScoped<IApartmentPhotosService, ApartmentPhotosService>();
+        services.AddScoped<IAzureBlobStorageService, AzureBlobStorageService>();
 
         services.AddHttpContextAccessor();
 
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
         services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
+        services.Configure<AzureBlobStorageSettings>(configuration.GetSection("AzureStorage"));
 
         services.AddAuthentication(options =>
         {

@@ -30,9 +30,9 @@ public class ApartmentsController(IApartmentsService _apartmentsService) : Contr
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateApartment([FromBody] CreateApartmentDTO createApartmentDTO)
+    public async Task<IActionResult> CreateApartment([FromForm] CreateApartmentDTO createApartmentDTO)
     {
-        var result = await _apartmentsService.CreateApartment(createApartmentDTO);
+        var result = await _apartmentsService.CreateApartmentWithPhotosAsync(createApartmentDTO);
 
         if (!result.Success) return ApiResponse.Error(result);
 

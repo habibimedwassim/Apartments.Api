@@ -16,3 +16,9 @@ public class SmtpSettings
     public string Password { get; set; } = default!;
     public string From { get; set; } = default!;
 }
+
+public class AzureBlobStorageSettings
+{
+    public string ConnectionString { get; set; } = default!;
+    public string ContainerName { get; set; } = default!;
+}
