@@ -17,7 +17,8 @@ public class ApartmentProfile : Profile
             .ForMember(dest => dest.ApartmentPhotos, opt => opt.MapFrom(src => src.ApartmentPhotos));
 
         // Map from CreateApartmentDTO to Apartment
-        CreateMap<CreateApartmentDTO, Apartment>();
+        CreateMap<CreateApartmentDTO, Apartment>()
+            .ForMember(dest => dest.ApartmentPhotos, opt => opt.Ignore());
 
         // Map from UpdateApartmentDTO to Apartment
         CreateMap<UpdateApartmentDTO, Apartment>()

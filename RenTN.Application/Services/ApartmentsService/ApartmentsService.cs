@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using RenTN.Application.DTOs.ApartmentDTOs;
 using RenTN.Application.DTOs.ApartmentPhotoDTOs;
+using RenTN.Application.Services.StorageService;
 using RenTN.Application.Users;
 using RenTN.Application.Utilities;
 using RenTN.Domain.Entities;
@@ -16,7 +17,9 @@ public class ApartmentsService(
     IMapper _mapper,
     IApartmentsRepository _apartmentsRepository,
     IChangeLogsRepository _changeLogsRepository,
-    IUserContext _userContext) : IApartmentsService
+    IUserContext _userContext,
+    IAzureBlobStorageService _azureBlobStorageService,
+    IApartmentPhotosRepository _apartmentPhotosRepository) : IApartmentsService
 {
     public async Task<ApplicationResponse> GetApartments()
     {
@@ -67,7 +70,70 @@ public class ApartmentsService(
         var createdApartmentDTO = _mapper.Map<CreateApartmentDTO>(createdApartment);
         return new ApplicationResponse(true, StatusCodes.Status201Created, "Apartment created successfully.", createdApartmentDTO);
     }
+    public async Task<ApplicationResponse> CreateApartmentWithPhotosAsync(CreateApartmentDTO createApartmentDTO)
+    {
+        try
+        {
+            var currentUser = GetCurrentUser();
 
+            // Start a transaction at the service layer
+            using var transaction = await _apartmentsRepository.BeginTransactionAsync();
+
+            // Map apartment details and save to the database
+            var apartment = _mapper.Map<Apartment>(createApartmentDTO);
+            apartment.OwnerID = currentUser.Id;
+
+            var createdApartment = await _apartmentsRepository.CreateAsync(apartment);
+            if (createdApartment == null)
+            {
+                var message = "An error occurred while attempting to create an Apartment.";
+                _logger.LogWarning(message);
+                return new ApplicationResponse(false, StatusCodes.Status500InternalServerError, message);
+            }
+
+            // Upload photos to Azure Blob Storage and save URLs in the database
+            var apartmentPhotos = new List<ApartmentPhoto>();
+
+            foreach (var photo in createApartmentDTO.ApartmentPhotos)
+            {
+                var photoUrl = await _azureBlobStorageService.UploadAsync(photo);
+
+                if (string.IsNullOrEmpty(photoUrl))
+                {
+                    var message = "Failed to upload one or more photos.";
+                    _logger.LogWarning(message);
+
+                    // Rollback the transaction if photo upload fails
+                    await _apartmentsRepository.RollbackTransactionAsync(transaction);
+
+                    return new ApplicationResponse(false, StatusCodes.Status500InternalServerError, message);
+                }
+
+                var apartmentPhoto = new ApartmentPhoto
+                {
+                    ApartmentID = createdApartment.ID,
+                    Url = photoUrl
+                };
+                apartmentPhotos.Add(apartmentPhoto);
+            }
+
+            await _apartmentPhotosRepository.CreateListAsync(apartmentPhotos);
+
+            // Commit the transaction
+            await _apartmentsRepository.CommitTransactionAsync(transaction);
+
+            // Map to the DTO to return as a response
+            var createdApartmentDTO = _mapper.Map<ApartmentDTO>(createdApartment);
+            createdApartmentDTO.ApartmentPhotos = _mapper.Map<List<ApartmentPhotoDTO>>(apartmentPhotos);
+
+            return new ApplicationResponse(true, StatusCodes.Status201Created, "Apartment created with photos.", createdApartmentDTO);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while creating the apartment with photos.");
+            return new ApplicationResponse(false, StatusCodes.Status500InternalServerError, "An error occurred while creating the apartment with photos.");
+        }
+    }
     public async Task<ApplicationResponse> UpdateApartment(UpdateApartmentDTO updateApartmentDTO)
     {
         var currentUser = GetCurrentUser();

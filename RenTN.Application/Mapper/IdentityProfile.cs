@@ -13,9 +13,11 @@ public class IdentityProfile : Profile
             .ForMember(dest => dest.ID, opt => opt.MapFrom(src => src.SysID));
 
         CreateMap<User, UserProfileDTO>()
+            .ForMember(dest => dest.ID, opt => opt.MapFrom(src => src.SysID))
             .ForMember(dest => dest.CurrentApartment, opt => opt.NullSubstitute(null));
 
         CreateMap<User, OwnerProfileDTO>()
+            .ForMember(dest => dest.ID, opt => opt.MapFrom(src => src.SysID))
             .ForMember(dest => dest.OwnedApartments, opt => opt.Ignore());
     }
 }

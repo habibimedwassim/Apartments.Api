@@ -12,4 +12,5 @@ public interface IApartmentsService
     Task<ApplicationResponse> GetApartmentPhotos(int id);
     Task<ApplicationResponse> CreateApartment(CreateApartmentDTO createApartmentDTO);
     Task<ApplicationResponse> UpdateApartment(UpdateApartmentDTO updateApartmentDTO);
+    Task<ApplicationResponse> CreateApartmentWithPhotosAsync(CreateApartmentDTO createApartmentDTO);
 }
