@@ -19,8 +19,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
     }
-    public IQueryable<T> ByPassIsDeletedFilter<T>(IQueryable<T> query) where T : class
+    public IQueryable<T> ApplyIsDeletedFilter<T>(IQueryable<T> query) where T : class
     {
-        return userContext.IsUser() ? query : query.IgnoreQueryFilters();
+        if (userContext.IsUser())
+        {
+            return query.Where(x => EF.Property<bool>(x, "IsDeleted") == false);
+        }
+        return query;
     }
 }

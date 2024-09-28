@@ -19,7 +19,5 @@ public class ApartmentConfiguration : IEntityTypeConfiguration<Apartment>
 
         builder.Property(x => x.RentAmount)
                .HasPrecision(8, 2);
-
-        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

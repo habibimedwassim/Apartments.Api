@@ -22,7 +22,6 @@ public class BaseRepository<T>(ApplicationDbContext dbContext) where T : class
         try
         {
             IQueryable<T> baseQuery = dbContext.Set<T>().AsQueryable();
-            baseQuery = dbContext.ByPassIsDeletedFilter(baseQuery);
 
             return typeof(T) switch
             {

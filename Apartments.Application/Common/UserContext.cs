@@ -40,7 +40,8 @@ public class UserContext(IHttpContextAccessor httpContextAccessor) : IUserContex
     }
     public bool IsUser()
     {
-        return httpContextAccessor.HttpContext?.User?.IsInRole(UserRoles.User) ?? false;
+        var currentUser = GetCurrentUser();
+        return currentUser.IsUser;
     }
 }
 

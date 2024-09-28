@@ -15,7 +15,5 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.SysId)
                .ValueGeneratedOnAdd()
                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
-
-        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

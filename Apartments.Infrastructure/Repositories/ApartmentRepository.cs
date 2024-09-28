@@ -28,7 +28,7 @@ public class ApartmentRepository : BaseRepository<Apartment>, IApartmentReposito
 
         var baseQuery = dbContext.Apartments.AsQueryable();
 
-        baseQuery = dbContext.ByPassIsDeletedFilter(baseQuery);
+        baseQuery = dbContext.ApplyIsDeletedFilter(baseQuery);
 
         // Apply filters
         if (!string.IsNullOrEmpty(cityLower))

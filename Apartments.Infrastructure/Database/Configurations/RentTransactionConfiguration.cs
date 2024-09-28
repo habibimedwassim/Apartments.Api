@@ -25,7 +25,5 @@ public class RentTransactionConfiguration : IEntityTypeConfiguration<RentTransac
 
         builder.Property(x => x.RentAmount)
                .HasPrecision(8, 2);
-
-        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }
