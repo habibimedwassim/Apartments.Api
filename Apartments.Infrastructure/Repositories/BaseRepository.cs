@@ -31,7 +31,6 @@ public class BaseRepository<T>(ApplicationDbContext dbContext) where T : class
                 Type t when t == typeof(ApartmentPhoto) => await GetApartmentPhotoById(baseQuery as IQueryable<ApartmentPhoto>, (int)id) as T,
                 Type t when t == typeof(ApartmentRequest) => await GetApartmentRequestById(baseQuery as IQueryable<ApartmentRequest>, (int)id) as T,
                 Type t when t == typeof(RentTransaction) => await GetRentTransactionById(baseQuery as IQueryable<RentTransaction>, (int)id) as T,
-                Type t when t == typeof(UserReport) => await GetUserReportById(baseQuery as IQueryable<UserReport>, (int)id) as T,
                 _ => await dbContext.Set<T>().FindAsync(id)
             };
         }
@@ -88,13 +87,7 @@ public class BaseRepository<T>(ApplicationDbContext dbContext) where T : class
                           .Include(x => x.Owner)
                           .FirstOrDefaultAsync(x => x.Id == id);
     }
-    private async Task<UserReport?> GetUserReportById(IQueryable<UserReport>? query, int id)
-    {
-        if (query is null) return null;
 
-        return await query.Include(x => x.Reporter)
-                          .FirstOrDefaultAsync(x => x.Id == id);
-    }
     //public async Task<T?> GetByIdAsync(object id)
     //{
     //    try
