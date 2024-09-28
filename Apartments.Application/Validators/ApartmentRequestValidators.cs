@@ -22,7 +22,7 @@ public class ApartmentRequestQueryFilterValidator : AbstractValidator<ApartmentR
 
         RuleFor(x => x.type)
             .NotEmpty()
-            .Must(x => allowedApartmentRequestTypes.Contains(x))
+            .Must(x => allowedApartmentRequestTypes.Contains(x, StringComparer.OrdinalIgnoreCase))
             .WithMessage($"Type is mandatory and must be in [{string.Join(",", allowedApartmentRequestTypes)}]");
 
         RuleFor(x => x.sortBy)

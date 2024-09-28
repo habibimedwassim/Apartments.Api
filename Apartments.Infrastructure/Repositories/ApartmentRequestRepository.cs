@@ -61,7 +61,7 @@ public class ApartmentRequestRepository : BaseRepository<ApartmentRequest>, IApa
 
         var baseQuery = dbContext.ApartmentRequests
                                  .IgnoreQueryFilters()
-                                 .Where(x => x.RequestType.Contains(typeLower, StringComparison.CurrentCultureIgnoreCase))
+                                 .Where(x => x.RequestType.ToLower() == typeLower)
                                  .AsQueryable();
 
         if (requestType == RequestType.Received)
@@ -80,7 +80,7 @@ public class ApartmentRequestRepository : BaseRepository<ApartmentRequest>, IApa
 
         if (!string.IsNullOrEmpty(statusLower))
         {
-            baseQuery = baseQuery.Where(x => x.Status.Contains(statusLower, StringComparison.CurrentCultureIgnoreCase));
+            baseQuery = baseQuery.Where(x => x.Status.ToLower() == statusLower);
         }
 
         // Get total count before pagination

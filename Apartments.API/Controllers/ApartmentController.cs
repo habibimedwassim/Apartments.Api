@@ -74,7 +74,7 @@ public class ApartmentController(
     }
 
     [HttpPost("{id:int}/apply")]
-    public async Task<IActionResult> ApplyForApartment([FromRoute] int id, [FromQuery] string type)
+    public async Task<IActionResult> ApplyForApartment([FromRoute] int id)
     {
         var result = await apartmentRequestService.ApplyForApartment(id);
 

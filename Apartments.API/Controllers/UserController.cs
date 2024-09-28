@@ -82,7 +82,7 @@ public class UserController(
         return Ok(result.Data);
     }
 
-    [HttpPatch]
+    [HttpPatch("me")]
     public async Task<IActionResult> UpdateUserDetails([FromBody] UpdateUserDto updateUserDto)
     {
         var result = await userService.UpdateUserDetails(updateUserDto);
