@@ -1,5 +1,5 @@
 ﻿using Apartments.Application.Common;
-using Apartments.Application.Dtos.AdminDtos;
+using Apartments.Application.Dtos.ApartmentDtos;
 using Apartments.Application.Dtos.UserDtos;
 using Apartments.Application.IServices;
 using Apartments.Domain.Entities;
@@ -18,7 +18,7 @@ public class UserService(
     IUserContext userContext,
     IUserRepository userRepository,
     UserManager<User> userManager,
-    RoleManager<IdentityRole> roleManager) 
+    IApartmentRepository apartmentRepository)
     : IUserService
 {
     public async Task<ServiceResult<UserDto>> GetUserProfile()
@@ -30,10 +30,19 @@ public class UserService(
         var user = await userRepository.GetByUserIdAsync(currentUser.Id) ??
                    throw new NotFoundException("User not found");
 
+        var apartment = await apartmentRepository.GetApartmentByTenantId(currentUser.Id);
+
         var userDto = mapper.Map<UserDto>(user);
+
+        if(apartment != null)
+        {
+            var apartmentDto = mapper.Map<ApartmentDto>(apartment);
+            userDto.CurrentApartment = apartmentDto;
+        }
 
         return ServiceResult<UserDto>.SuccessResult(userDto);
     }
+
     public async Task<ServiceResult<string>> UpdateUserDetails(UpdateUserDto updateAppUserDto)
     {
         var currentUser = userContext.GetCurrentUser();

@@ -1,7 +1,7 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.IServices;
-using Apartments.Application.RequestHandlers;
 using Apartments.Application.Services;
+using Apartments.Application.Services.ApartmentRequestHandlers;
 using Apartments.Domain.Common;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -44,6 +44,7 @@ public static class ServiceCollectionExtensions
 
         services.RegisterConfigurations(configuration);
     }
+
     private static void RegisterConfigurations(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
@@ -53,12 +54,11 @@ public static class ServiceCollectionExtensions
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme =
-            options.DefaultChallengeScheme =
-            options.DefaultForbidScheme =
-            options.DefaultScheme =
-            options.DefaultSignInScheme =
-            options.DefaultSignOutScheme = JwtBearerDefaults.AuthenticationScheme;
-
+                options.DefaultChallengeScheme =
+                    options.DefaultForbidScheme =
+                        options.DefaultScheme =
+                            options.DefaultSignInScheme =
+                                options.DefaultSignOutScheme = JwtBearerDefaults.AuthenticationScheme;
         }).AddJwtBearer(options =>
         {
             var jwtSettings = new JwtSettings();
@@ -73,7 +73,7 @@ public static class ServiceCollectionExtensions
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(
                     Encoding.UTF8.GetBytes(jwtSettings.Key)
-                ),
+                )
             };
         });
     }

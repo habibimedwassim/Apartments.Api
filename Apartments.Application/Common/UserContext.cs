@@ -9,6 +9,7 @@ public interface IUserContext
     CurrentUser GetCurrentUser();
     bool IsUser();
 }
+
 public class UserContext(IHttpContextAccessor httpContextAccessor) : IUserContext
 {
     public CurrentUser GetCurrentUser()
@@ -17,9 +18,7 @@ public class UserContext(IHttpContextAccessor httpContextAccessor) : IUserContex
         if (user == null) throw new InvalidOperationException("User context is not present");
 
         if (user.Identity == null || !user.Identity.IsAuthenticated)
-        {
             throw new InvalidOperationException("User is not authenticated.");
-        }
 
         var userId = user.FindFirst(x => x.Type == ClaimTypes.NameIdentifier)!.Value;
         var email = user.FindFirst(x => x.Type == ClaimTypes.Email)!.Value;
@@ -27,17 +26,14 @@ public class UserContext(IHttpContextAccessor httpContextAccessor) : IUserContex
         var sysIdClaim = user.FindFirst(x => x.Type == ClaimTypes.Gender)?.Value;
 
         if (userId == null || email == null)
-        {
             throw new InvalidOperationException("User claims are missing required information.");
-        }
 
         if (string.IsNullOrEmpty(sysIdClaim) || !int.TryParse(sysIdClaim, out var sysId))
-        {
             throw new InvalidOperationException("User claims are missing required information for SysId.");
-        }
 
         return new CurrentUser(userId, email, sysId, role);
     }
+
     public bool IsUser()
     {
         var currentUser = GetCurrentUser();

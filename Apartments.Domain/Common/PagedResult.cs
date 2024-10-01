@@ -17,12 +17,10 @@ public class PagedResult<T>
 
         pageNumber = pageNumber < 1 ? 1 : pageNumber;
 
-        var totalPages = (int)Math.Ceiling(totalCount / (double)(AppConstants.PageSize));
+        var totalPages = (int)Math.Ceiling(totalCount / (double)AppConstants.PageSize);
 
         if (pageNumber > totalPages && totalPages > 0)
-        {
             throw new BadRequestException($"Page number {pageNumber} is beyond the limit of {totalPages}.");
-        }
 
         TotalPages = totalPages;
 

@@ -8,6 +8,9 @@ public class ApartmentPhotoConfiguration : IEntityTypeConfiguration<ApartmentPho
 {
     public void Configure(EntityTypeBuilder<ApartmentPhoto> builder)
     {
+        builder.Property(a => a.Url)
+            .HasMaxLength(2048);
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

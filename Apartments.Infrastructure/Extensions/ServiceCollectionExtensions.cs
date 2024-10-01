@@ -15,11 +15,12 @@ public static class ServiceCollectionExtensions
     public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("ApartmentsDb");
-        services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString).EnableSensitiveDataLogging());
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlServer(connectionString).EnableSensitiveDataLogging());
 
         services.AddIdentityApiEndpoints<User>()
-                .AddRoles<IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+            .AddRoles<IdentityRole>()
+            .AddEntityFrameworkStores<ApplicationDbContext>();
 
         services.AddScoped<IAppSeeder, AppSeeder>();
         services.AddScoped<IUserRepository, UserRepository>();
@@ -28,6 +29,5 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IApartmentPhotoRepository, ApartmentPhotoRepository>();
         services.AddScoped<IRentTransactionRepository, RentTransactionRepository>();
         services.AddScoped<IApartmentRequestRepository, ApartmentRequestRepository>();
-
     }
 }

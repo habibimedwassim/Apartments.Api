@@ -25,7 +25,7 @@ public static class WebApplicationBuilderExtensions
                 {
                     new OpenApiSecurityScheme
                     {
-                        Reference = new OpenApiReference {Type=ReferenceType.SecurityScheme, Id = "bearerAuth"}
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "bearerAuth" }
                     },
                     []
                 }
@@ -35,7 +35,7 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddScoped<ErrorHandlingMiddleware>();
 
-        builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
-
+        builder.Host.UseSerilog((context, configuration) =>
+            configuration.ReadFrom.Configuration(context.Configuration));
     }
 }

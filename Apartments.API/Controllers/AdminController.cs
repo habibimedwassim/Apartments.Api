@@ -33,10 +33,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
     public async Task<IActionResult> GetUsersStatistics([FromQuery] string type)
     {
         var result = await adminService.GetStatistics(type);
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
         return Ok(result.Data);
     }
 

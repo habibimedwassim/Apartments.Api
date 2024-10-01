@@ -14,7 +14,8 @@ public class RentTransactionController(IRentTransactionService rentTransactionSe
     [HttpPost]
     public async Task<IActionResult> CreateRentTransaction([FromBody] CreateRentTransactionDto createRentTransactionDto)
     {
-        var result = await rentTransactionService.CreateRentTransactionForApartment(createRentTransactionDto.ApartmentId);
+        var result =
+            await rentTransactionService.CreateRentTransactionForApartment(createRentTransactionDto.ApartmentId);
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 

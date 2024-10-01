@@ -9,11 +9,30 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
+        builder.Property(a => a.Id)
+            .HasMaxLength(50);
+
         builder.HasIndex(u => u.SysId)
-               .IsUnique();
+            .IsUnique();
 
         builder.Property(u => u.SysId)
-               .ValueGeneratedOnAdd()
-               .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+            .ValueGeneratedOnAdd()
+            .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+        builder.Property(a => a.FirstName)
+            .HasMaxLength(50);
+
+        builder.Property(a => a.LastName)
+            .HasMaxLength(50);
+
+        builder.Property(a => a.VerificationCode)
+            .HasMaxLength(4)
+            .IsFixedLength();
+
+        builder.Property(a => a.Gender)
+            .HasMaxLength(10);
+
+        builder.Property(a => a.Role)
+            .HasMaxLength(5);
     }
 }

@@ -14,7 +14,7 @@ namespace Apartments.Application.Services;
 public class AzureBlobStorageService(
     ILogger<AzureBlobStorageService> logger,
     IOptions<AzureBlobStorageSettings> blobSettingsOptions
-    ) : IAzureBlobStorageService
+) : IAzureBlobStorageService
 {
     private readonly AzureBlobStorageSettings _blobStorageSettings = blobSettingsOptions.Value;
 
@@ -61,7 +61,7 @@ public class AzureBlobStorageService(
 
             return blobClient.Uri.ToString();
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
             logger.LogError(ex, ex.Message);
             throw new AzureException("Failed to upload one or more photos.");
@@ -96,13 +96,15 @@ public class AzureBlobStorageService(
         // Upload the new file
         return await UploadAsync(file);
     }
-    public async Task<IEnumerable<ApartmentPhoto>> UploadApartmentPhotos(UploadApartmentPhotoDto uploadApartmentPhotoDto)
+
+    public async Task<IEnumerable<ApartmentPhoto>> UploadApartmentPhotos(
+        UploadApartmentPhotoDto uploadApartmentPhotoDto)
     {
         var apartmentPhotos = new List<ApartmentPhoto>();
 
         var photosToUpload = uploadApartmentPhotoDto.ApartmentPhotos
-                                                    .Where(x => allowedImageMimeTypes.Contains(x.ContentType.ToLower()) &&
-                                                                allowedImageExtensions.Contains(Path.GetExtension(x.FileName).ToLower()));
+            .Where(x => allowedImageMimeTypes.Contains(x.ContentType.ToLower()) &&
+                        allowedImageExtensions.Contains(Path.GetExtension(x.FileName).ToLower()));
 
         foreach (var photo in photosToUpload)
         {
@@ -126,15 +128,13 @@ public class AzureBlobStorageService(
 
         var ignoredPhotos = uploadApartmentPhotoDto.ApartmentPhotos.Except(photosToUpload);
         if (ignoredPhotos.Any())
-        {
             foreach (var ignoredPhoto in ignoredPhotos)
-            {
-                logger.LogWarning("Ignored file: {FileName}, MIME type: {ContentType}, because it's not an image.", ignoredPhoto.FileName, ignoredPhoto.ContentType);
-            }
-        }
+                logger.LogWarning("Ignored file: {FileName}, MIME type: {ContentType}, because it's not an image.",
+                    ignoredPhoto.FileName, ignoredPhoto.ContentType);
 
         return apartmentPhotos;
     }
+
     public async Task<IEnumerable<string>> FindMissingPhotosInAzureAsync(HashSet<string> dbPhotoUrls, int batchSize)
     {
         var blobServiceClient = new BlobServiceClient(_blobStorageSettings.ConnectionString);
@@ -166,7 +166,7 @@ public class AzureBlobStorageService(
         var blobServiceClient = new BlobServiceClient(_blobStorageSettings.ConnectionString);
         var containerClient = blobServiceClient.GetBlobContainerClient(_blobStorageSettings.ContainerName);
 
-        for (int i = 0; i < orphanedPhotos.Count; i += batchSize)
+        for (var i = 0; i < orphanedPhotos.Count; i += batchSize)
         {
             var currentBatch = orphanedPhotos.Skip(i).Take(batchSize).ToList();
 
@@ -179,9 +179,11 @@ public class AzureBlobStorageService(
                 logger.LogInformation("Deleted orphaned photo: {photoUrl}", photoUrl);
             }
 
-            logger.LogInformation("Processed batch {BatchNumber}/{TotalBatches}", (i / batchSize) + 1, (orphanedPhotos.Count + batchSize - 1) / batchSize);
+            logger.LogInformation("Processed batch {BatchNumber}/{TotalBatches}", i / batchSize + 1,
+                (orphanedPhotos.Count + batchSize - 1) / batchSize);
         }
     }
+
     private string GetBlobNameFromUri(string blobUri)
     {
         var uri = new Uri(blobUri);

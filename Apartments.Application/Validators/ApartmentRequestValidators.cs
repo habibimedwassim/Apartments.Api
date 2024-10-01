@@ -31,6 +31,7 @@ public class ApartmentRequestQueryFilterValidator : AbstractValidator<ApartmentR
             .WithMessage($"Sort by is optional, or must be in [{string.Join(",", allowedSortByColumnNames)}]");
     }
 }
+
 public class ApartmentRequestValidators
 {
 }

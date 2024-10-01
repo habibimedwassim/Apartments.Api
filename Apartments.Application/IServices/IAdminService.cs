@@ -13,5 +13,4 @@ public interface IAdminService
     Task<ServiceResult<string>> CleanupAllOrphanedPhotosAsync(int batchSize = 100);
     Task<ServiceResult<IEnumerable<ChangeLog>>> GetChangeLogs(ChangeLogDto changeLogDto);
     Task<ServiceResult<AdminStatisticsDto>> GetStatistics(string type);
-
 }

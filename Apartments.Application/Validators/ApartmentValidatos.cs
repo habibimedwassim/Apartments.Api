@@ -11,7 +11,7 @@ public class ApartmentQueryFilterValidator : AbstractValidator<ApartmentQueryFil
     [
         nameof(ApartmentDto.CreatedDate).ToLower(),
         nameof(ApartmentDto.RentAmount).ToLower(),
-        nameof(ApartmentDto.Size).ToLower(),
+        nameof(ApartmentDto.Size).ToLower()
     ];
 
     public ApartmentQueryFilterValidator()
@@ -54,7 +54,8 @@ public class CreateApartmentDtoValidator : AbstractValidator<CreateApartmentDto>
             .GreaterThan(0).WithMessage("Price must be greater than 0.");
 
         RuleFor(x => x.ApartmentPhotos)
-            .Must(photos => photos.Count <= AppConstants.PhotosLimit).WithMessage($"You cannot upload more than {AppConstants.PhotosLimit} photos.")
+            .Must(photos => photos.Count <= AppConstants.PhotosLimit)
+            .WithMessage($"You cannot upload more than {AppConstants.PhotosLimit} photos.")
             .When(x => x.ApartmentPhotos.Count > 0);
     }
 }

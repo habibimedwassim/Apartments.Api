@@ -8,6 +8,10 @@ public interface IAuthorizationManager
 {
     bool AuthorizeApartment(CurrentUser user, ResourceOperation operation, Apartment? apartment = null);
     bool AuthorizeApartmentPhoto(CurrentUser user, ResourceOperation operation, string? ownerId = null);
-    bool AuthorizeRentTransaction(CurrentUser user, ResourceOperation operation, RentTransaction? rentTransaction = null);
-    bool AuthorizeApartmentRequest(CurrentUser user, ResourceOperation operation, ApartmentRequestType type, ApartmentRequest? apartmentRequest = null);
+
+    bool AuthorizeRentTransaction(CurrentUser user, ResourceOperation operation,
+        RentTransaction? rentTransaction = null);
+
+    bool AuthorizeApartmentRequest(CurrentUser user, ResourceOperation operation, ApartmentRequestType type,
+        ApartmentRequest? apartmentRequest = null);
 }

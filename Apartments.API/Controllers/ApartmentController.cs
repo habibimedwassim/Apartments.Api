@@ -12,10 +12,10 @@ namespace Apartments.API.Controllers;
 [Route("api/apartments")]
 [Authorize]
 public class ApartmentController(
-    IApartmentService apartmentService, 
+    IApartmentService apartmentService,
     IRentTransactionService rentTransactionService,
     IApartmentRequestService apartmentRequestService
-    ) : ControllerBase
+) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAllApartments([FromQuery] ApartmentQueryFilter apartmentQueryFilter)
@@ -36,23 +36,18 @@ public class ApartmentController(
     {
         var result = await apartmentService.CreateApartment(createApartmentDto);
 
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
     }
 
     [HttpPatch("{id:int}")]
-    public async Task<IActionResult> UpdateApartment([FromRoute] int id, [FromBody] UpdateApartmentDto updateApartmentDto)
+    public async Task<IActionResult> UpdateApartment([FromRoute] int id,
+        [FromBody] UpdateApartmentDto updateApartmentDto)
     {
         var result = await apartmentService.UpdateApartment(id, updateApartmentDto);
 
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
     }
@@ -82,17 +77,19 @@ public class ApartmentController(
     }
 
     [HttpPost("{id:int}/dismiss")]
-    public async Task<IActionResult> DismissTenantFromApartment([FromRoute] int id, [FromBody] LeaveDismissReasonDto dismissReasonDto)
+    public async Task<IActionResult> DismissTenantFromApartment([FromRoute] int id,
+        [FromBody] LeaveDismissRequestDto dismissRequestDto)
     {
-        var result = await apartmentRequestService.DismissTenantFromApartment(id, dismissReasonDto);
+        var result = await apartmentRequestService.DismissTenantFromApartment(id, dismissRequestDto);
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 
     [HttpPost("{id:int}/leave")]
-    public async Task<IActionResult> LeaveApartmentRequest([FromRoute] int id, [FromBody] LeaveDismissReasonDto leaveReasonDto)
+    public async Task<IActionResult> LeaveApartmentRequest([FromRoute] int id,
+        [FromBody] LeaveDismissRequestDto leaveRequestDto)
     {
-        var result = await apartmentRequestService.LeaveApartmentRequest(id, leaveReasonDto);
+        var result = await apartmentRequestService.LeaveApartmentRequest(id, leaveRequestDto);
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
@@ -101,11 +98,7 @@ public class ApartmentController(
     public async Task<IActionResult> PayForApartment([FromRoute] int id)
     {
         var result = await rentTransactionService.CreateRentTransactionForApartment(id);
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
 
-        return Ok(result.Data);
+        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 }

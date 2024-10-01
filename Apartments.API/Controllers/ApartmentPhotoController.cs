@@ -27,15 +27,13 @@ public class ApartmentPhotoController(IApartmentPhotoService apartmentPhotoServi
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddPhotosToApartment([FromRoute] int apartmentId, [FromForm] UploadApartmentPhotoDto uploadApartmentPhoto)
+    public async Task<IActionResult> AddPhotosToApartment([FromRoute] int apartmentId,
+        [FromForm] UploadApartmentPhotoDto uploadApartmentPhoto)
     {
         uploadApartmentPhoto.ApartmentId = apartmentId;
         var result = await apartmentPhotoService.AddPhotosToApartment(uploadApartmentPhoto);
 
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
     }

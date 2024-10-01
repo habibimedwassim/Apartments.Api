@@ -16,10 +16,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         var result = await authService.LoginAsync(loginDto);
 
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
     }
@@ -27,7 +24,6 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
-        registerDto.Role = null;
         var result = await authService.RegisterAsync(registerDto);
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
@@ -37,8 +33,8 @@ public class AuthController(IAuthService authService) : ControllerBase
     [Authorize(Roles = UserRoles.Admin)]
     public async Task<IActionResult> RegisterOwner([FromBody] RegisterDto registerDto)
     {
-        registerDto.Role = UserRoles.Owner;
-        var result = await authService.RegisterAsync(registerDto);
+        var role = UserRoles.Owner;
+        var result = await authService.RegisterAsync(registerDto, role);
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
@@ -47,8 +43,8 @@ public class AuthController(IAuthService authService) : ControllerBase
     [Authorize(Roles = UserRoles.Admin)]
     public async Task<IActionResult> RegisterAdmin([FromBody] RegisterDto registerDto)
     {
-        registerDto.Role = UserRoles.Admin;
-        var result = await authService.RegisterAsync(registerDto);
+        var role = UserRoles.Admin;
+        var result = await authService.RegisterAsync(registerDto, role);
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }

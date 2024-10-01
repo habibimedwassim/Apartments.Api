@@ -18,12 +18,12 @@ public class ApartmentMapper : Profile
 
         CreateMap<Apartment, ApartmentDto>()
             .ForMember(dest => dest.ApartmentPhotos,
-                       opt => opt.MapFrom(src => src.ApartmentPhotos.Select(photo => new ApartmentPhotoDto
-                       {
-                           Id = photo.Id,
-                           CreatedDate = photo.CreatedDate,
-                           Url = photo.Url
-                       }).ToList()));
+                opt => opt.MapFrom(src => src.ApartmentPhotos.Select(photo => new ApartmentPhotoDto
+                {
+                    Id = photo.Id,
+                    CreatedDate = photo.CreatedDate,
+                    Url = photo.Url
+                }).ToList()));
 
         CreateMap<CreateApartmentDto, Apartment>()
             .ForMember(dest => dest.ApartmentPhotos, opt => opt.Ignore())
@@ -44,6 +44,7 @@ public class ApartmentMapper : Profile
             .ForMember(dest => dest.PostalCode, opt => opt.Condition(src => src.PostalCode != null))
             .ForMember(dest => dest.Size, opt => opt.Condition(src => src.Size.HasValue))
             .ForMember(dest => dest.RentAmount, opt => opt.Condition(src => src.RentAmount.HasValue))
-            .ForMember(dest => dest.IsOccupied, opt => opt.Condition(src => src.IsOccupied.HasValue));
+            .ForMember(dest => dest.IsOccupied, opt => opt.Condition(src => src.IsOccupied.HasValue))
+            .ForMember(dest => dest.AvailableFrom, opt => opt.Condition(src => src.AvailableFrom.HasValue));
     }
 }

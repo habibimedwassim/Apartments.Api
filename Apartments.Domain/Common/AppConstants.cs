@@ -1,6 +1,6 @@
 ﻿namespace Apartments.Domain.Common;
 
-public class AppConstants
+public static class AppConstants
 {
     public const int PageSize = 10;
     public const int CodeExpiration = 30;
@@ -8,6 +8,7 @@ public class AppConstants
     public const string DateFormat = "yyyy-MM-dd";
     public const string TempAdmin = "admin@temp.com";
 }
+
 public static class UserRoles
 {
     public const string Owner = "Owner";
@@ -15,7 +16,7 @@ public static class UserRoles
     public const string User = "User";
 }
 
-public class RequestStatus
+public static class RequestStatus
 {
     public const string Pending = nameof(Pending);
     public const string Approved = nameof(Approved);
@@ -30,37 +31,61 @@ public class RequestStatus
 
 public enum SortDirection
 {
-    Ascending, Descending
+    Ascending,
+    Descending
 }
+
 public enum ResourceOperation
 {
-    Create, Update, Delete, Restore, ApproveReject, Cancel
+    Create,
+    Update,
+    Delete,
+    Restore,
+    ApproveReject,
+    Cancel
 }
+
 public enum VerificationCodeOperation
 {
     EmailVerification,
     VerificationCode,
     PasswordReset
 }
+
 public enum RequestType
 {
-    Sent, Received, All
+    Sent,
+    Received,
+    All
 }
+
 public enum RequestAction
 {
-    Approve, Reject
+    Approve,
+    Reject
 }
 
 public enum ApartmentRequestType
 {
-    Rent, Leave, Dismiss
+    Rent,
+    Leave,
+    Dismiss
 }
 
 public enum PaymentRequestAction
 {
-    Accept, Cancel, Late
+    Accept,
+    Cancel,
+    Late,
+    Reset
 }
+
 public enum StatisticsType
 {
-    Users, Apartments, Photos, RentRequests, DismissRequests, LeaveRequests
+    Users,
+    Apartments,
+    Photos,
+    RentRequests,
+    DismissRequests,
+    LeaveRequests
 }

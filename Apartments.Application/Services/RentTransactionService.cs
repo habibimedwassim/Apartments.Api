@@ -44,19 +44,13 @@ public class RentTransactionService(
         var user = await userRepository.GetBySysIdAsync(sysId) ??
                    throw new NotFoundException("User not found");
 
-        var rentTransactionsQuery = rentTransactionRepository.GetRentTransactionsForTenantAsync(user.Id);
-
-        if (user.Role == UserRoles.Owner)
-        {
-            rentTransactionsQuery = rentTransactionRepository.GetRentTransactionsForOwnerAsync(user.Id);
-        }
-
-        var rentTransactions = await rentTransactionsQuery;
+        var rentTransactions = await rentTransactionRepository.GetRentTransactionsForUserAsync(user.Id, user.Role);
 
         var rentTransactionsDto = mapper.Map<List<RentTransactionDto>>(rentTransactions);
 
         return ServiceResult<List<RentTransactionDto>>.SuccessResult(rentTransactionsDto);
     }
+
     public async Task<ServiceResult<string>> CreateRentTransactionForApartment(int id)
     {
         logger.LogInformation("Paying for apartment with Id = {id}", id);
@@ -67,27 +61,30 @@ public class RentTransactionService(
                         throw new NotFoundException(nameof(Apartment), id.ToString());
 
         var user = await userRepository.GetByUserIdAsync(currentUser.Id) ??
-                        throw new NotFoundException("User not found");
+                   throw new NotFoundException("User not found");
 
-        if (user.CurrentApartment == null || user.CurrentApartment.Id != apartment.Id)
-        {
-            return ServiceResult<string>.ErrorResult(StatusCodes.Status400BadRequest, "User can't pay for this apartment");
-        }
+        if (apartment.TenantId == null || apartment.TenantId != user.Id)
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status400BadRequest,
+                "User can't pay for this apartment");
 
         if (!authorizationManager.AuthorizeRentTransaction(currentUser, ResourceOperation.Create))
-        {
             throw new ForbiddenException("User can't pay for this apartment");
-        }
 
         var latestTransaction = await rentTransactionRepository.GetLatestRentTransactionAsync(apartment.Id, user.Id) ??
                                 throw new NotFoundException("The owner needs to accept your request first");
 
+        var dateFrom = latestTransaction.DateFrom;
+        var dateTo = latestTransaction.DateTo.HasValue ? 
+                     latestTransaction.DateTo.Value 
+                     : DateOnly.FromDateTime(DateTime.UtcNow);
+
         var rentTransaction = new RentTransaction
         {
+            OwnerId = apartment.OwnerId,
             TenantId = currentUser.Id,
             ApartmentId = id,
-            DateFrom = latestTransaction.DateTo,
-            DateTo = latestTransaction.DateTo.AddMonths(1),
+            DateFrom = dateTo,
+            DateTo = dateTo.AddMonths(1),
             RentAmount = apartment.RentAmount
         };
 
@@ -106,25 +103,26 @@ public class RentTransactionService(
                               throw new NotFoundException(nameof(RentTransaction), id.ToString());
 
         if (!authorizationManager.AuthorizeRentTransaction(currentUser, ResourceOperation.Update, rentTransaction))
-        {
             throw new ForbiddenException();
-        }
+
+        var originalRecord = mapper.Map<RentTransaction>(rentTransaction);
 
         rentTransaction.Status = requestAction switch
         {
             PaymentRequestAction.Accept => RequestStatus.Paid,
             PaymentRequestAction.Late => RequestStatus.Late,
+            PaymentRequestAction.Reset => RequestStatus.Pending,
             PaymentRequestAction.Cancel => await HandleCancelRentTransactionAsync(rentTransaction, currentUser),
             _ => rentTransaction.Status
         };
 
-        var originalRecord = mapper.Map<RentTransaction>(rentTransaction);
         await rentTransactionRepository.UpdateRentTransactionAsync(originalRecord, rentTransaction, currentUser.Email);
 
         return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Transaction updated successfully!");
     }
 
-    private async Task<string> HandleCancelRentTransactionAsync(RentTransaction rentTransaction, CurrentUser currentUser)
+    private async Task<string> HandleCancelRentTransactionAsync(RentTransaction rentTransaction,
+        CurrentUser currentUser)
     {
         await rentTransactionRepository.DeleteRentTransactionAsync(rentTransaction, currentUser.Email);
         return RequestStatus.Cancelled;

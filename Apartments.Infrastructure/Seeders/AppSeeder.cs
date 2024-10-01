@@ -45,6 +45,7 @@ public class AppSeeder(ApplicationDbContext dbContext, UserManager<User> userMan
             }
         }
     }
+
     private User GetTempAdmin()
     {
         return new User()
@@ -54,25 +55,26 @@ public class AppSeeder(ApplicationDbContext dbContext, UserManager<User> userMan
             EmailConfirmed = true
         };
     }
+
     private IEnumerable<IdentityRole> GetRoles()
     {
         List<IdentityRole> roles =
-            [
-                new (UserRoles.Owner){ NormalizedName = UserRoles.Owner.ToUpper()},
-                new (UserRoles.Admin){ NormalizedName = UserRoles.Admin.ToUpper()}
-            ];
+        [
+            new(UserRoles.Owner) { NormalizedName = UserRoles.Owner.ToUpper() },
+            new(UserRoles.Admin) { NormalizedName = UserRoles.Admin.ToUpper() }
+        ];
 
         return roles;
     }
+
     private IEnumerable<Apartment> GetApartments(User? user)
     {
         var owner = user ?? new User() { Email = AppConstants.TempAdmin };
 
-        List<Apartment> apartments = new()
-        {
-            new()
+        List<Apartment> apartments =
+        [
+            new Apartment(owner.Id)
             {
-                Owner = owner,
                 CreatedDate = DateTime.UtcNow,
                 City = "Tunis",
                 Street = "Cité des Nymphes",
@@ -80,23 +82,26 @@ public class AppSeeder(ApplicationDbContext dbContext, UserManager<User> userMan
                 Description = "Apartment on the 2nd floor with 3 beds (S+3)",
                 Size = 3,
                 RentAmount = 550M,
-                ApartmentPhotos = new List<ApartmentPhoto>
-                {
+                AvailableFrom = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(2)),
+                ApartmentPhotos =
+                [
                     new ApartmentPhoto
                     {
                         CreatedDate = DateTime.UtcNow,
                         Url = "https://www.resident360.com/wp-content/uploads/2019/03/Anthology-1.jpg"
                     },
+
                     new ApartmentPhoto
                     {
                         CreatedDate = DateTime.UtcNow,
-                        Url = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/AIMCO_apartment_interior.jpg/640px-AIMCO_apartment_interior.jpg"
+                        Url =
+                            "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/AIMCO_apartment_interior.jpg/640px-AIMCO_apartment_interior.jpg"
                     }
-                }
+                ]
             },
-            new()
+
+            new Apartment(owner.Id)
             {
-                Owner = owner,
                 CreatedDate = DateTime.UtcNow.AddDays(-1),
                 City = "Zaghouan",
                 Street = "Cité Ennozha",
@@ -105,9 +110,10 @@ public class AppSeeder(ApplicationDbContext dbContext, UserManager<User> userMan
                 Size = 2,
                 RentAmount = 400M,
                 IsOccupied = true,
-                ApartmentPhotos = new List<ApartmentPhoto>()
+                AvailableFrom = null,
+                ApartmentPhotos = []
             }
-        };
+        ];
 
         return apartments;
     }

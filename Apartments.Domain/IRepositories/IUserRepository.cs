@@ -9,5 +9,7 @@ public interface IUserRepository
     Task<User?> GetTenantByApartmentId(int id);
     Task RestoreUserAsync(User user, string userEmail);
     Task SoftDeleteUserAsync(User user, string userEmail);
-    Task UpdateAsync(User originalRecord, User updatedRecord, string userEmail, string[]? additionalPropertiesToExclude = null);
+
+    Task UpdateAsync(User originalRecord, User updatedRecord, string userEmail,
+        string[]? additionalPropertiesToExclude = null);
 }

@@ -6,7 +6,6 @@ namespace Apartments.Domain.IRepositories;
 public interface IApartmentPhotoRepository
 {
     Task<List<ApartmentPhoto>> GetPhotosInBatchesAsync(int batchSize);
-    Task<ApartmentPhoto?> GetApartmentPhotoByIdAsync(int id);
     Task AddApartmentPhotosAsync(IEnumerable<ApartmentPhoto> apartmentPhotos);
     Task DeleteApartmentPhotoAsync(ApartmentPhoto apartmentPhoto, string userEmail);
     Task PermanentDeleteApartmentPhotosAsync(IEnumerable<ApartmentPhoto> apartmentPhotos);

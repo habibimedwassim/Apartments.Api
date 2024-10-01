@@ -12,6 +12,7 @@ public class EmailValidator : AbstractValidator<EmailDto>
             .WithMessage("Invalid Email");
     }
 }
+
 public class LoginValidator : AbstractValidator<LoginDto>
 {
     public LoginValidator()
@@ -21,13 +22,14 @@ public class LoginValidator : AbstractValidator<LoginDto>
             .WithMessage("Invalid Email");
     }
 }
+
 public class RegisterValidator : AbstractValidator<RegisterDto>
 {
     public RegisterValidator()
     {
         RuleFor(x => x.Email)
-           .EmailAddress()
-           .WithMessage("Invalid Email");
+            .EmailAddress()
+            .WithMessage("Invalid Email");
 
         RuleFor(x => x.PhoneNumber)
             .Matches(@"^\d{8}")
@@ -43,6 +45,7 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
             .When(x => x.DateOfBirth != null)
             .WithMessage("You must be at least 18 years old.");
     }
+
     private bool BeAtLeast18YearsOld(DateOnly? dateOfBirth)
     {
         if (dateOfBirth == null) return false;
@@ -50,10 +53,7 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
         var today = DateOnly.FromDateTime(DateTime.Today);
         var age = today.Year - dateOfBirth.Value.Year;
 
-        if (dateOfBirth.Value.AddYears(age) > today)
-        {
-            age--;
-        }
+        if (dateOfBirth.Value.AddYears(age) > today) age--;
 
         return age >= 18;
     }
@@ -78,8 +78,8 @@ public class VerifyEmailValidator : AbstractValidator<VerifyEmailDto>
     public VerifyEmailValidator()
     {
         RuleFor(x => x.Email)
-           .EmailAddress()
-           .WithMessage("Invalid Email");
+            .EmailAddress()
+            .WithMessage("Invalid Email");
 
         RuleFor(x => x.VerificationCode)
             .Matches(@"^\d{4}")

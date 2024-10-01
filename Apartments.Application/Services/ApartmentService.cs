@@ -22,7 +22,7 @@ public class ApartmentService(
     IAzureBlobStorageService azureBlobStorageService,
     IApartmentPhotoRepository apartmentPhotoRepository,
     IApartmentRepository apartmentRepository
-    ) : IApartmentService
+) : IApartmentService
 {
     public async Task<PagedResult<ApartmentDto>> GetAllApartments(ApartmentQueryFilter apartmentQueryFilter)
     {
@@ -32,7 +32,8 @@ public class ApartmentService(
 
         var apartmentsDto = mapper.Map<IEnumerable<ApartmentDto>>(pagedModel.Data);
 
-        var result = new PagedResult<ApartmentDto>(apartmentsDto, pagedModel.DataCount, apartmentQueryFilter.pageNumber);
+        var result =
+            new PagedResult<ApartmentDto>(apartmentsDto, pagedModel.DataCount, apartmentQueryFilter.pageNumber);
 
         return result;
     }
@@ -41,30 +42,41 @@ public class ApartmentService(
     {
         logger.LogInformation("Retrieving Apartment with Id = {Id}", id);
 
-        var apartment = await apartmentRepository.GetApartmentByIdAsync(id) ?? 
+        var apartment = await apartmentRepository.GetApartmentByIdAsync(id) ??
                         throw new NotFoundException(nameof(Apartment), id.ToString());
 
         var apartmentDto = mapper.Map<ApartmentDto>(apartment);
 
         return ServiceResult<ApartmentDto>.SuccessResult(apartmentDto);
     }
-    public async Task<ServiceResult<ApartmentDto>> CreateApartment(CreateApartmentDto createApartmentDTO)
+
+    public async Task<ServiceResult<ApartmentDto>> CreateApartment(CreateApartmentDto createApartmentDto)
     {
         var currentUser = userContext.GetCurrentUser();
 
         if (!authorizationManager.AuthorizeApartment(currentUser, ResourceOperation.Create))
-        {
             throw new ForbiddenException($"{currentUser.Email} not authorized to create an apartment");
-        }
 
         // Start a transaction at the service layer
-        using var transaction = await apartmentRepository.BeginTransactionAsync();
+        await using var transaction = await apartmentRepository.BeginTransactionAsync();
 
         try
         {
+            var availableFrom = createApartmentDto.AvailableFrom.HasValue
+                                ? createApartmentDto.AvailableFrom.Value
+                                : DateOnly.FromDateTime(DateTime.UtcNow);
+
             // Map apartment details and save to the database
-            var apartment = mapper.Map<Apartment>(createApartmentDTO);
-            apartment.OwnerId = currentUser!.Id;
+            var apartment = new Apartment(currentUser.Id)
+            {
+                Street = createApartmentDto.Street,
+                City = createApartmentDto.City,
+                PostalCode = createApartmentDto.PostalCode,
+                Description = createApartmentDto.Description,
+                Size = createApartmentDto.Size,
+                RentAmount = createApartmentDto.RentAmount,
+                AvailableFrom = availableFrom,
+            };
 
             var createdApartment = await apartmentRepository.AddApartmentAsync(apartment);
             if (createdApartment == null)
@@ -78,7 +90,7 @@ public class ApartmentService(
             var photosToUpload = new UploadApartmentPhotoDto()
             {
                 ApartmentId = apartment.Id,
-                ApartmentPhotos = createApartmentDTO.ApartmentPhotos
+                ApartmentPhotos = createApartmentDto.ApartmentPhotos
             };
 
             var apartmentPhotos = await azureBlobStorageService.UploadApartmentPhotos(photosToUpload);
@@ -89,20 +101,23 @@ public class ApartmentService(
             await transaction.CommitAsync();
 
             // Map to the DTO to return as a response
-            var createdApartmentDTO = mapper.Map<ApartmentDto>(createdApartment);
-            createdApartmentDTO.ApartmentPhotos = mapper.Map<List<ApartmentPhotoDto>>(apartmentPhotos);
+            var createdApartmentDto = mapper.Map<ApartmentDto>(createdApartment);
+            createdApartmentDto.ApartmentPhotos = mapper.Map<List<ApartmentPhotoDto>>(apartmentPhotos);
 
-            logger.LogInformation("Apartment with ID {ApartmentId} created successfully by user {UserId}.", createdApartment.Id, currentUser.Id);
-            return ServiceResult<ApartmentDto>.SuccessResult(createdApartmentDTO, "Apartment created successfully.");
+            logger.LogInformation("Apartment with ID {ApartmentId} created successfully by user {UserId}.",
+                createdApartment.Id, currentUser.Id);
+            return ServiceResult<ApartmentDto>.SuccessResult(createdApartmentDto, "Apartment created successfully.");
         }
         catch (Exception ex)
         {
             // Rollback in case of any exceptions
             await transaction.RollbackAsync();
             logger.LogError(ex, "An error occurred while creating the apartment with photos. Transaction rolled back.");
-            return ServiceResult<ApartmentDto>.ErrorResult(StatusCodes.Status500InternalServerError, "An error occurred while creating the apartment with photos.");
+            return ServiceResult<ApartmentDto>.ErrorResult(StatusCodes.Status500InternalServerError,
+                "An error occurred while creating the apartment with photos.");
         }
     }
+
     public async Task<ServiceResult<ApartmentDto>> UpdateApartment(int id, UpdateApartmentDto updateApartmentDto)
     {
         var currentUser = userContext.GetCurrentUser();
@@ -113,9 +128,7 @@ public class ApartmentService(
                                 throw new NotFoundException(nameof(Apartment), id.ToString());
 
         if (!authorizationManager.AuthorizeApartment(currentUser, ResourceOperation.Update, existingApartment))
-        {
             throw new ForbiddenException($"{currentUser.Email} not authorized to Update this Apartment");
-        }
 
         var originalApartment = mapper.Map<Apartment>(existingApartment);
 
@@ -123,10 +136,10 @@ public class ApartmentService(
 
         await apartmentRepository.UpdateApartmentAsync(originalApartment, existingApartment, currentUser.Email);
 
-        var updatedApartmentDTO = mapper.Map<ApartmentDto>(existingApartment);
-        updatedApartmentDTO.ApartmentPhotos = mapper.Map<List<ApartmentPhotoDto>>(existingApartment.ApartmentPhotos);
+        var updatedApartmentDto = mapper.Map<ApartmentDto>(existingApartment);
+        updatedApartmentDto.ApartmentPhotos = mapper.Map<List<ApartmentPhotoDto>>(existingApartment.ApartmentPhotos);
 
-        return ServiceResult<ApartmentDto>.SuccessResult(updatedApartmentDTO, "Apartment updated successfully.");
+        return ServiceResult<ApartmentDto>.SuccessResult(updatedApartmentDto, "Apartment updated successfully.");
     }
 
     public async Task<ServiceResult<string>> DeleteApartment(int id)
@@ -139,14 +152,13 @@ public class ApartmentService(
                         throw new NotFoundException(nameof(Apartment), id.ToString());
 
         if (!authorizationManager.AuthorizeApartment(currentUser, ResourceOperation.Delete, apartment))
-        {
             throw new ForbiddenException($"{currentUser.Email} not authorized to Delete this Apartment");
-        }
 
         await apartmentRepository.DeleteApartmentAsync(apartment, currentUser.Email);
 
         return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Apartment deleted successfully.");
     }
+
     public async Task<ServiceResult<string>> RestoreApartment(int id)
     {
         var currentUser = userContext.GetCurrentUser();
@@ -157,9 +169,7 @@ public class ApartmentService(
                         throw new NotFoundException(nameof(Apartment), id.ToString());
 
         if (!authorizationManager.AuthorizeApartment(currentUser, ResourceOperation.Restore, apartment))
-        {
             throw new ForbiddenException($"{currentUser.Email} not authorized to Restore this Apartment");
-        }
 
         await apartmentRepository.RestoreApartmentAsync(apartment, currentUser.Email);
 
@@ -177,9 +187,8 @@ public class ApartmentService(
                    throw new NotFoundException("User not found");
 
         if (user.Role == UserRoles.User)
-        {
-            return ServiceResult<List<ApartmentDto>>.ErrorResult(StatusCodes.Status400BadRequest, "Only Owners have owned apartments");
-        }
+            return ServiceResult<List<ApartmentDto>>.ErrorResult(StatusCodes.Status400BadRequest,
+                "Only Owners have owned apartments");
 
         var apartments = await apartmentRepository.GetOwnedApartmentsAsync(user.Id);
 

@@ -42,9 +42,11 @@ public class ErrorHandlingMiddleware(ILogger<ErrorHandlingMiddleware> logger) : 
         catch (Exception ex)
         {
             logger.LogError(ex, ex.Message);
-            await HandleExceptionAsync(context, StatusCodes.Status500InternalServerError, "Something went wrong, please contact the Admin!");
+            await HandleExceptionAsync(context, StatusCodes.Status500InternalServerError,
+                "Something went wrong, please contact the Admin!");
         }
     }
+
     private static Task HandleExceptionAsync(HttpContext context, int statusCode, string message)
     {
         var resultDetails = new ResultDetails(message);
@@ -53,6 +55,7 @@ public class ErrorHandlingMiddleware(ILogger<ErrorHandlingMiddleware> logger) : 
         var result = JsonSerializer.Serialize(resultDetails);
         return context.Response.WriteAsync(result);
     }
+
     private static Task HandleExceptionAsync(HttpContext context, int statusCode, object resultDetails)
     {
         context.Response.ContentType = "application/json";

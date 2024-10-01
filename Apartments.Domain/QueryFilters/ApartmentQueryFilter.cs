@@ -14,4 +14,5 @@ public class ApartmentQueryFilter
     public decimal? minPrice { get; set; }
     public decimal? maxPrice { get; set; }
     public bool? isOccupied { get; set; }
+    public DateOnly? availableFrom { get; set; }
 }

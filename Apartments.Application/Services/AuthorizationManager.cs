@@ -12,7 +12,7 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
     {
         if (user.IsAdmin) return true;
 
-        if(user.IsUser) return false;
+        if (user.IsUser) return false;
 
         if (operation == ResourceOperation.Create && user.IsOwner)
         {
@@ -20,8 +20,7 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
             return true;
         }
 
-        if (IsTheOwner(user, apartment)) 
-        {
+        if (IsTheOwner(user, apartment))
             if (operation == ResourceOperation.Update ||
                 operation == ResourceOperation.Delete ||
                 operation == ResourceOperation.Restore)
@@ -29,7 +28,6 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
                 logger.LogInformation("Owner authorized to {Operation} apartment.", operation.ToString());
                 return true;
             }
-        }
 
         return LogAndDeny(user, operation, nameof(Apartment));
     }
@@ -38,8 +36,7 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
     {
         if (user.IsAdmin) return true;
 
-        if (ownerId != null && user.IsOwner && ownerId == user.Id) 
-        {
+        if (ownerId != null && user.IsOwner && ownerId == user.Id)
             if (operation == ResourceOperation.Create ||
                 operation == ResourceOperation.Delete ||
                 operation == ResourceOperation.Restore)
@@ -47,11 +44,12 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
                 logger.LogInformation("Owner authorized to {Operation} apartment photos.", operation.ToString());
                 return true;
             }
-        }
 
         return LogAndDeny(user, operation, nameof(ApartmentPhoto));
     }
-    public bool AuthorizeRentTransaction(CurrentUser user, ResourceOperation operation, RentTransaction? rentTransaction = null)
+
+    public bool AuthorizeRentTransaction(CurrentUser user, ResourceOperation operation,
+        RentTransaction? rentTransaction = null)
     {
         if (user.IsAdmin) return true;
 
@@ -61,7 +59,8 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
             return true;
         }
 
-        if (IsTheOwner(user, rentTransaction) && (operation == ResourceOperation.Update || operation == ResourceOperation.Delete))
+        if (IsTheOwner(user, rentTransaction) &&
+            (operation == ResourceOperation.Update || operation == ResourceOperation.Delete))
         {
             logger.LogInformation("Owner authorized to Update the rent transaction.");
             return true;
@@ -75,7 +74,9 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
 
         return LogAndDeny(user, operation, nameof(RentTransaction));
     }
-    public bool AuthorizeApartmentRequest(CurrentUser user, ResourceOperation operation, ApartmentRequestType type, ApartmentRequest? apartmentRequest = null)
+
+    public bool AuthorizeApartmentRequest(CurrentUser user, ResourceOperation operation, ApartmentRequestType type,
+        ApartmentRequest? apartmentRequest = null)
     {
         if (user.IsAdmin) return true;
 
@@ -84,9 +85,10 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
             ApartmentRequestType.Rent => AuthorizeRentRequest(user, operation, apartmentRequest),
             ApartmentRequestType.Dismiss => AuthorizeDismissRequest(user, operation, apartmentRequest),
             ApartmentRequestType.Leave => AuthorizeLeaveRequest(user, operation, apartmentRequest),
-            _ => LogAndDeny(user, operation, nameof(ApartmentRequest)),
+            _ => LogAndDeny(user, operation, nameof(ApartmentRequest))
         };
     }
+
     private bool AuthorizeRentRequest(CurrentUser user, ResourceOperation operation, ApartmentRequest? apartmentRequest)
     {
         if (operation == ResourceOperation.Create && user.IsUser)
@@ -95,8 +97,7 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
             return true;
         }
 
-        if(IsTheOwner(user,apartmentRequest))
-        {
+        if (IsTheOwner(user, apartmentRequest))
             if (operation == ResourceOperation.Update ||
                 operation == ResourceOperation.Delete ||
                 operation == ResourceOperation.ApproveReject)
@@ -104,9 +105,8 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
                 logger.LogInformation("Owner authorized to {Operation} the rent request.", operation.ToString());
                 return true;
             }
-        }
 
-        if(IsTheTenant(user, apartmentRequest) && operation == ResourceOperation.Cancel)
+        if (IsTheTenant(user, apartmentRequest) && operation == ResourceOperation.Cancel)
         {
             logger.LogInformation("Tenant authorized to Cancel the rent request.");
             return true;
@@ -114,27 +114,28 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
 
         return LogAndDeny(user, operation, nameof(ApartmentRequest));
     }
-    private bool AuthorizeDismissRequest(CurrentUser user, ResourceOperation operation, ApartmentRequest? apartmentRequest)
+
+    private bool AuthorizeDismissRequest(CurrentUser user, ResourceOperation operation,
+        ApartmentRequest? apartmentRequest)
     {
         if (IsTheOwner(user, apartmentRequest?.Apartment) && operation == ResourceOperation.Create)
         {
             logger.LogInformation("Owner authorized to dismiss the tenant.");
             return true;
-            
         }
 
-        if(IsTheOwner(user, apartmentRequest))
-        {
+        if (IsTheOwner(user, apartmentRequest))
             if (operation == ResourceOperation.Update || operation == ResourceOperation.Delete)
             {
                 logger.LogInformation("Owner authorized to {Operation} the dismiss request.", operation.ToString());
                 return true;
             }
-        }
 
         return LogAndDeny(user, operation, nameof(ApartmentRequest));
     }
-    private bool AuthorizeLeaveRequest(CurrentUser user, ResourceOperation operation, ApartmentRequest? apartmentRequest)
+
+    private bool AuthorizeLeaveRequest(CurrentUser user, ResourceOperation operation,
+        ApartmentRequest? apartmentRequest)
     {
         if (user.IsUser && operation == ResourceOperation.Create)
         {
@@ -142,20 +143,21 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
             return true;
         }
 
-        if (IsTheTenant(user, apartmentRequest) && operation == ResourceOperation.Cancel)
+        if (IsTheTenant(user, apartmentRequest) && (operation == ResourceOperation.Cancel || operation == ResourceOperation.Update))
         {
             logger.LogInformation("User authorized to Cancel the leave request.");
             return true;
         }
 
-        if(IsTheOwner(user, apartmentRequest) && operation == ResourceOperation.ApproveReject)
+        if (IsTheOwner(user, apartmentRequest) && operation == ResourceOperation.ApproveReject)
         {
             logger.LogInformation("Owner authorized to Approve/Reject the leave request.");
             return true;
         }
-        
+
         return LogAndDeny(user, operation, nameof(ApartmentRequest));
     }
+
     private bool IsTheOwner(CurrentUser user, object? requestObject)
     {
         return CheckUserRole(user, requestObject, "OwnerId", user.IsOwner);
@@ -176,10 +178,11 @@ public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAutho
         var userId = userIdProperty.GetValue(requestObject)?.ToString();
         return user.Id == userId;
     }
-    
+
     private bool LogAndDeny(CurrentUser user, ResourceOperation operation, string resourceType)
     {
-        logger.LogWarning("Authorization failed for user {UserEmail} to {Operation} a {ResourceType}.", user.Email, operation, resourceType);
+        logger.LogWarning("Authorization failed for user {UserEmail} to {Operation} a {ResourceType}.", user.Email,
+            operation, resourceType);
         return false;
     }
 }

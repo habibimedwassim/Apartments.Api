@@ -17,6 +17,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+
 namespace Apartments.Application.Services;
 
 public class AuthService(
@@ -27,6 +28,7 @@ public class AuthService(
     UserManager<User> userManager) : IAuthService
 {
     private readonly JwtSettings _jwtSettings = jwtSettings.Value;
+
     public async Task<ServiceResult<LoginResponseDto>> LoginAsync(LoginDto loginDTO)
     {
         var normalizedEmail = CoreUtilities.NormalizeEmail(loginDTO.Email);
@@ -36,19 +38,22 @@ public class AuthService(
         if (user == null || !await userManager.CheckPasswordAsync(user, loginDTO.Password))
         {
             logger.LogWarning("Login failed for email: {Email}. Invalid credentials.", loginDTO.Email);
-            return ServiceResult<LoginResponseDto>.ErrorResult(StatusCodes.Status401Unauthorized, "Invalid email or password.");
+            return ServiceResult<LoginResponseDto>.ErrorResult(StatusCodes.Status401Unauthorized,
+                "Invalid email or password.");
         }
 
-        if (user.IsDeleted) 
+        if (user.IsDeleted)
         {
             logger.LogInformation("User ({userEmail}) is disabled", loginDTO.Email);
-            return ServiceResult<LoginResponseDto>.ErrorResult(StatusCodes.Status401Unauthorized, $"User ({loginDTO.Email}) is disabled");
+            return ServiceResult<LoginResponseDto>.ErrorResult(StatusCodes.Status401Unauthorized,
+                $"User ({loginDTO.Email}) is disabled");
         }
 
         if (!user.EmailConfirmed)
         {
             logger.LogWarning("Login attempt with unverified email: {Email}. Verification code sent.", loginDTO.Email);
-            return ServiceResult<LoginResponseDto>.ErrorResult(StatusCodes.Status401Unauthorized, "Email is not verified. Please check your inbox!");
+            return ServiceResult<LoginResponseDto>.ErrorResult(StatusCodes.Status401Unauthorized,
+                "Email is not verified. Please check your inbox!");
         }
 
         var accessToken = await GenerateAccessTokenAsync(user);
@@ -67,34 +72,32 @@ public class AuthService(
         return ServiceResult<LoginResponseDto>.SuccessResult(response, "Login successful.");
     }
 
-    public async Task<ServiceResult<ResultDetails>> RegisterAsync(RegisterDto registerDto)
+    public async Task<ServiceResult<ResultDetails>> RegisterAsync(RegisterDto registerDto, string? role = null)
     {
         var normalizedEmail = CoreUtilities.NormalizeEmail(registerDto.Email);
         var existingUser = await userManager.Users
-                                            .FirstOrDefaultAsync(x => x.PhoneNumber == registerDto.PhoneNumber ||
-                                                                      x.Email == normalizedEmail);
+            .FirstOrDefaultAsync(x => x.PhoneNumber == registerDto.PhoneNumber ||
+                                      x.Email == normalizedEmail);
         if (existingUser != null)
-        {
             return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status409Conflict, $"A user exists already.");
-        }
         var user = CreateUser(registerDto);
 
         var result = await userManager.CreateAsync(user, registerDto.Password);
 
         if (result.Succeeded)
         {
-            if (!string.IsNullOrEmpty(registerDto.Role))
-            {
-                await AssignRoleToUser(user, registerDto.Role);
-            }
+            if (!string.IsNullOrEmpty(role)) await AssignRoleToUser(user, role);
 
             await SendVerificationCodeAsync(user, VerificationCodeOperation.EmailVerification);
             logger.LogInformation("User {Email} created successfully. Verification email sent.", registerDto.Email);
-            return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status201Created, "User created successfully. Please verify your email.");
+            return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status201Created,
+                "User created successfully. Please verify your email.");
         }
 
-        logger.LogError("User creation failed for {Email}. Errors: {Errors}", registerDto.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
-        return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status400BadRequest, string.Join(", ", result.Errors.Select(e => e.Description)));
+        logger.LogError("User creation failed for {Email}. Errors: {Errors}", registerDto.Email,
+            string.Join(", ", result.Errors.Select(e => e.Description)));
+        return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status400BadRequest,
+            string.Join(", ", result.Errors.Select(e => e.Description)));
     }
 
     public async Task<ServiceResult<ResultDetails>> VerifyEmailAsync(VerifyEmailDto verifyEmailDTO)
@@ -103,10 +106,10 @@ public class AuthService(
         var user = await userManager.FindByEmailAsync(normalizedEmail) ??
                    throw new NotFoundException($"User with email : {verifyEmailDTO.Email} not found!");
 
-        if (user.VerificationCode != verifyEmailDTO.VerificationCode || user.VerificationCodeExpiration < DateTime.UtcNow)
-        {
-            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status401Unauthorized, "Invalid or expired verification code.");
-        }
+        if (user.VerificationCode != verifyEmailDTO.VerificationCode ||
+            user.VerificationCodeExpiration < DateTime.UtcNow)
+            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status401Unauthorized,
+                "Invalid or expired verification code.");
 
         user.EmailConfirmed = true;
         user.VerificationCode = null;
@@ -125,7 +128,8 @@ public class AuthService(
         await SendVerificationCodeAsync(user, VerificationCodeOperation.VerificationCode);
 
         logger.LogInformation("Verification email resent to: {Email}", email.Email);
-        return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status200OK, "Verification code has been sent to your email.");
+        return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status200OK,
+            "Verification code has been sent to your email.");
     }
 
     public async Task<ServiceResult<ResultDetails>> ForgotPasswordAsync(EmailDto email)
@@ -136,13 +140,16 @@ public class AuthService(
 
         if (!user.EmailConfirmed)
         {
-            logger.LogWarning("Forgot password failed for unverified email: {Email}. Verification code sent.", email.Email);
-            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status401Unauthorized, "Please verify your email before resetting your password.");
+            logger.LogWarning("Forgot password failed for unverified email: {Email}. Verification code sent.",
+                email.Email);
+            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status401Unauthorized,
+                "Please verify your email before resetting your password.");
         }
 
         await SendVerificationCodeAsync(user, VerificationCodeOperation.PasswordReset);
         logger.LogInformation("Password reset code sent to: {Email}", email.Email);
-        return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status200OK, "Password reset code has been sent to your email.");
+        return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status200OK,
+            "Password reset code has been sent to your email.");
     }
 
     public async Task<ServiceResult<ResultDetails>> ResetPasswordAsync(ResetPasswordDto resetPasswordDTO)
@@ -151,10 +158,10 @@ public class AuthService(
         var user = await userManager.FindByEmailAsync(normalizedEmail) ??
                    throw new NotFoundException($"User with email : {resetPasswordDTO.Email} not found!");
 
-        if (user.VerificationCode != resetPasswordDTO.VerificationCode || user.VerificationCodeExpiration < DateTime.UtcNow)
-        {
-            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status401Unauthorized, "Invalid or expired verification code.");
-        }
+        if (user.VerificationCode != resetPasswordDTO.VerificationCode ||
+            user.VerificationCodeExpiration < DateTime.UtcNow)
+            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status401Unauthorized,
+                "Invalid or expired verification code.");
 
         var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
         var result = await userManager.ResetPasswordAsync(user, resetToken, resetPasswordDTO.NewPassword);
@@ -170,8 +177,10 @@ public class AuthService(
         user.VerificationCodeExpiration = null;
         await userManager.UpdateAsync(user);
 
-        return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status200OK, "Password has been reset successfully.");
+        return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status200OK,
+            "Password has been reset successfully.");
     }
+
     public async Task<ServiceResult<string>> UpdateUserPassword(ChangePasswordDto changePasswordDto)
     {
         var currentUser = userContext.GetCurrentUser();
@@ -180,11 +189,11 @@ public class AuthService(
                    throw new NotFoundException($"User ({currentUser.Email}) not found!");
 
         if (!await userManager.CheckPasswordAsync(user, changePasswordDto.CurrentPassword))
-        {
             return ServiceResult<string>.ErrorResult(StatusCodes.Status400BadRequest, "Invalid current password.");
-        }
 
-        var result = await userManager.ChangePasswordAsync(user, changePasswordDto.CurrentPassword, changePasswordDto.NewPassword);
+        var result =
+            await userManager.ChangePasswordAsync(user, changePasswordDto.CurrentPassword,
+                changePasswordDto.NewPassword);
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -195,6 +204,7 @@ public class AuthService(
         logger.LogInformation("Password updated successfully for {UserId}.", user.Id);
         return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Password updated successfully.");
     }
+
     public async Task<ServiceResult<string>> UpdateUserEmail(EmailDto changeEmailDto)
     {
         var currentUser = userContext.GetCurrentUser();
@@ -205,20 +215,21 @@ public class AuthService(
         var normalizedEmail = CoreUtilities.NormalizeEmail(changeEmailDto.Email);
 
         if (await userManager.Users.AnyAsync(x => x.Email == normalizedEmail || x.UserName == normalizedEmail))
-        {
-            return ServiceResult<string>.ErrorResult(StatusCodes.Status409Conflict, $"User with Email ({changeEmailDto.Email}) already exists.");
-        }
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status409Conflict,
+                $"User with Email ({changeEmailDto.Email}) already exists.");
 
         try
         {
             await ChangeUserEmail(user, normalizedEmail, VerificationCodeOperation.EmailVerification);
             logger.LogInformation("User {Email} updated successfully. Verification email sent.", changeEmailDto.Email);
-            return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Email updated successfully. Please verify it and login again.");
+            return ServiceResult<string>.InfoResult(StatusCodes.Status200OK,
+                "Email updated successfully. Please verify it and login again.");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to update user email for {UserId}.", user.Id);
-            return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError, "An error occurred while updating the email.");
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError,
+                "An error occurred while updating the email.");
         }
     }
 
@@ -246,7 +257,7 @@ public class AuthService(
             LastName = registerDTO.LastName,
             PhoneNumber = registerDTO.PhoneNumber,
             Gender = registerDTO.Gender,
-            DateOfBirth = registerDTO.DateOfBirth,
+            DateOfBirth = registerDTO.DateOfBirth
         };
     }
 
@@ -258,11 +269,12 @@ public class AuthService(
         await userManager.UpdateAsync(user);
 
         var subject = GetEmailSubject(context);
-        string message = $"Your {subject.ToLower()} is: {verificationCode}";
+        var message = $"Your {subject.ToLower()} is: {verificationCode}";
 
         await emailService.SendEmailAsync(user.Email!, subject, message);
         logger.LogInformation("Sent {Context} code to {Email}.", subject, user.Email);
     }
+
     private async Task ChangeUserEmail(User user, string email, VerificationCodeOperation context)
     {
         var oldEmail = user.Email;
@@ -279,7 +291,8 @@ public class AuthService(
 
         // Send the verification code to the new email
         var subject = GetEmailSubject(context);
-        var message = $"Your email has been changed from {oldEmail} to {email}. Your verification code is: {verificationCode}";
+        var message =
+            $"Your email has been changed from {oldEmail} to {email}. Your verification code is: {verificationCode}";
 
         try
         {
@@ -292,6 +305,7 @@ public class AuthService(
             throw new InvalidOperationException("An error occurred while sending the verification email.");
         }
     }
+
     private string GetEmailSubject(VerificationCodeOperation context)
     {
         return context switch
@@ -314,9 +328,9 @@ public class AuthService(
 
         var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id!),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email!),
-            new Claim(JwtRegisteredClaimNames.Gender, user.SysId.ToString())
+            new(JwtRegisteredClaimNames.Sub, user.Id!),
+            new(JwtRegisteredClaimNames.Email, user.Email!),
+            new(JwtRegisteredClaimNames.Gender, user.SysId.ToString())
         };
 
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
@@ -325,9 +339,9 @@ public class AuthService(
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: _jwtSettings.Issuer,
-            audience: _jwtSettings.Audience,
-            claims: claims,
+            _jwtSettings.Issuer,
+            _jwtSettings.Audience,
+            claims,
             expires: DateTime.Now.AddMinutes(_jwtSettings.ExpirationMinutes),
             signingCredentials: creds);
 

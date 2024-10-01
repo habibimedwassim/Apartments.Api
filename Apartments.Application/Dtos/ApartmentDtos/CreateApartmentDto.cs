@@ -10,5 +10,6 @@ public class CreateApartmentDto
     public string Description { get; set; } = default!;
     public int Size { get; set; }
     public decimal RentAmount { get; set; }
+    public DateOnly? AvailableFrom { get; set; }
     public List<IFormFile> ApartmentPhotos { get; set; } = [];
 }

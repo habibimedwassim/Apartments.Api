@@ -14,10 +14,10 @@ namespace Apartments.API.Controllers;
 [Route("api/users")]
 [Authorize]
 public class UserController(
-    IUserService userService, 
+    IUserService userService,
     IApartmentService apartmentService,
     IRentTransactionService rentTransactionService,
-    IApartmentRequestService apartmentRequestService) 
+    IApartmentRequestService apartmentRequestService)
     : ControllerBase
 {
     [HttpGet("me")]
@@ -31,16 +31,14 @@ public class UserController(
     public async Task<IActionResult> GetOwnedApartments()
     {
         var result = await apartmentService.GetOwnedApartments();
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
     }
 
     [HttpGet("me/requests")]
-    public async Task<IActionResult> GetApartmentRequests([FromQuery] ApartmentRequestQueryFilter apartmentRequestQueryFilter)
+    public async Task<IActionResult> GetApartmentRequests(
+        [FromQuery] ApartmentRequestQueryFilter apartmentRequestQueryFilter)
     {
         var result = await apartmentRequestService.GetApartmentRequests(apartmentRequestQueryFilter);
         return Ok(result);
@@ -50,10 +48,7 @@ public class UserController(
     public async Task<IActionResult> GetRentTransactions()
     {
         var result = await rentTransactionService.GetRentTransactions();
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
     }
@@ -62,10 +57,7 @@ public class UserController(
     public async Task<IActionResult> GetOwnedApartments([FromRoute] int id)
     {
         var result = await apartmentService.GetOwnedApartments(id);
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
     }
@@ -74,10 +66,7 @@ public class UserController(
     public async Task<IActionResult> GetRentTransactions([FromRoute] int id)
     {
         var result = await rentTransactionService.GetRentTransactions(id);
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
     }
@@ -90,7 +79,8 @@ public class UserController(
     }
 
     [HttpPost("{id:int}/dismiss")]
-    public async Task<IActionResult> DismissTenantById([FromRoute] int id, [FromBody] LeaveDismissReasonDto dismissReasonDto)
+    public async Task<IActionResult> DismissTenantById([FromRoute] int id,
+        [FromBody] LeaveDismissRequestDto dismissReasonDto)
     {
         var result = await apartmentRequestService.DismissTenantById(id, dismissReasonDto);
 

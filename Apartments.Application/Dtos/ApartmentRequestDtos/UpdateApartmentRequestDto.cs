@@ -2,7 +2,7 @@
 
 public class UpdateApartmentRequestDto
 {
-    public DateOnly? MeetingDate { get; set; }
+    public DateOnly? RequestDate { get; set; }
     public string? Reason { get; set; }
-    public string Status { get; set; } = default!;
+    public string? Status { get; set; }
 }

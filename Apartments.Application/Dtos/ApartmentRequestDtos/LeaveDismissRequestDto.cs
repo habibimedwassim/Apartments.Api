@@ -1,8 +1,7 @@
 ﻿namespace Apartments.Application.Dtos.ApartmentRequestDtos;
 
-public class DismissRequestDto
+public class LeaveDismissRequestDto
 {
-    public int Id { get; set; }
-    public DateTime CreatedDate { get; set; }
+    public DateOnly? RequestDate { get; set; }
     public string Reason { get; set; } = string.Empty;
 }

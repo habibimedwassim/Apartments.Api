@@ -5,22 +5,33 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apartments.Infrastructure.Repositories;
 
-public class UserRepository : BaseRepository<User>, IUserRepository
+public class UserRepository(ApplicationDbContext dbContext) : BaseRepository<User>(dbContext), IUserRepository
 {
-    private readonly ApplicationDbContext dbContext;
-    public UserRepository(ApplicationDbContext _dbContext) : base(_dbContext)
-    {
-        dbContext = _dbContext;
-    }
+    private readonly ApplicationDbContext _dbContext = dbContext;
 
     public async Task<User?> GetByUserIdAsync(string id)
-        => await GetByIdAsync(id);
+    {
+        return await GetByIdAsync(id);
+    }
+
     public async Task<User?> GetBySysIdAsync(int id)
-        => await GetByIdAsync(id);
+    {
+        return await GetByIdAsync(id);
+    }
+
     public async Task<User?> GetTenantByApartmentId(int id)
-        => await dbContext.Users.FirstOrDefaultAsync(x => x.CurrentApartmentId == id);
-    public async Task UpdateAsync(User originalRecord, User updatedRecord, string userEmail, string[]? additionalPropertiesToExclude = null)
-        => await UpdateWithChangeLogsAsync(originalRecord, updatedRecord, userEmail, originalRecord.SysId.ToString(), additionalPropertiesToExclude);
+    {
+        var apartment = await _dbContext.Apartments.Include(x => x.Tenant).FirstOrDefaultAsync(x => x.Id == id);
+
+        return apartment?.Tenant;
+    }
+
+    public async Task UpdateAsync(User originalRecord, User updatedRecord, string userEmail,
+        string[]? additionalPropertiesToExclude = null)
+    {
+        await UpdateWithChangeLogsAsync(originalRecord, updatedRecord, userEmail, originalRecord.SysId.ToString(),
+            additionalPropertiesToExclude);
+    }
 
     public async Task SoftDeleteUserAsync(User user, string userEmail)
     {
@@ -28,6 +39,7 @@ public class UserRepository : BaseRepository<User>, IUserRepository
 
         await DeleteRestoreAsync(user, true, userEmail, user.SysId.ToString());
     }
+
     public async Task RestoreUserAsync(User user, string userEmail)
     {
         if (!user.IsDeleted) return;

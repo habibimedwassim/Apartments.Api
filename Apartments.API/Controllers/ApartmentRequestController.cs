@@ -13,7 +13,8 @@ namespace Apartments.API.Controllers;
 public class ApartmentRequestController(IApartmentRequestService apartmentRequestService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetApartmentRequests([FromQuery] ApartmentRequestQueryFilter apartmentRequestQueryFilter)
+    public async Task<IActionResult> GetApartmentRequests(
+        [FromQuery] ApartmentRequestQueryFilter apartmentRequestQueryFilter)
     {
         var result = await apartmentRequestService.GetApartmentRequests(apartmentRequestQueryFilter);
         return Ok(result);
@@ -23,10 +24,7 @@ public class ApartmentRequestController(IApartmentRequestService apartmentReques
     public async Task<IActionResult> GetApartmentRequestById([FromRoute] int id)
     {
         var result = await apartmentRequestService.GetApartmentRequestById(id);
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
     }
@@ -38,14 +36,13 @@ public class ApartmentRequestController(IApartmentRequestService apartmentReques
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
+
     [HttpPatch("{id:int}")]
-    public async Task<IActionResult> UpdateApartmentRequest([FromRoute] int id, [FromBody] UpdateApartmentRequestDto updateApartmentRequestDto)
+    public async Task<IActionResult> UpdateApartmentRequest([FromRoute] int id,
+        [FromBody] UpdateApartmentRequestDto updateApartmentRequestDto)
     {
         var result = await apartmentRequestService.UpdateApartmentRequest(id, updateApartmentRequestDto);
-        if (!result.Success)
-        {
-            return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-        }
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
     }

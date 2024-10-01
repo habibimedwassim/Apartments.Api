@@ -1,52 +1,75 @@
-﻿using Apartments.Domain.Entities;
+﻿using Apartments.Domain.Common;
+using Apartments.Domain.Entities;
 using Apartments.Domain.IRepositories;
 using Apartments.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apartments.Infrastructure.Repositories;
 
-public class RentTransactionRepository : BaseRepository<RentTransaction>, IRentTransactionRepository
+public class RentTransactionRepository(ApplicationDbContext dbContext)
+    : BaseRepository<RentTransaction>(dbContext), IRentTransactionRepository
 {
-    private readonly ApplicationDbContext dbContext;
-    public RentTransactionRepository(ApplicationDbContext _dbContext) : base(_dbContext)
-    {
-        dbContext = _dbContext;
-    }
+    private readonly ApplicationDbContext _dbContext = dbContext;
+
     public async Task<RentTransaction?> GetLatestRentTransactionAsync(int apartmentId, string userId)
     {
-        return await dbContext.RentTransactions
-                              .Where(x => x.ApartmentId == apartmentId && x.TenantId == userId)
-                              .OrderByDescending(x => x.DateTo)
-                              .FirstOrDefaultAsync();
+        return await _dbContext.RentTransactions
+            .Where(x => x.ApartmentId == apartmentId && 
+                        x.TenantId == userId && 
+                        x.Status == RequestStatus.Paid &&
+                        !x.IsDeleted)
+            .OrderByDescending(x => x.DateTo)
+            .FirstOrDefaultAsync();
     }
-    public async Task<IEnumerable<RentTransaction>> GetRentTransactionsForOwnerAsync(string id)
+    public async Task<IEnumerable<RentTransaction>> GetRentTransactionsForUserAsync(string id, string? ownerRole)
     {
-        var rentHistories = await dbContext.RentTransactions
-                                           .Include(x => x.Apartment)
-                                           .Include(x => x.Apartment.ApartmentPhotos)
-                                           .Where(x => x.OwnerId == id).ToListAsync();
-        return rentHistories;
+        var query = _dbContext.RentTransactions
+            .Include(x => x.Apartment)
+            .Include(x => x.Apartment.ApartmentPhotos).AsQueryable();
+
+        if (!string.IsNullOrEmpty(ownerRole))
+        {
+            query = query.Where(x => x.OwnerId == id);
+        }
+        else
+        {
+            query = query.Where(x => x.TenantId == id);
+        }
+
+        return await query.ToListAsync();
     }
-    public async Task<IEnumerable<RentTransaction>> GetRentTransactionsForTenantAsync(string id)
+    public async Task<RentTransaction> AddRentTransactionAsync(RentTransaction rentTransaction)
     {
-        var baseQuery = dbContext.RentTransactions.IgnoreQueryFilters().AsQueryable();
-
-        var rentHistories = await dbContext.RentTransactions
-                                           .Include(x => x.Apartment)
-                                           .Include(x => x.Apartment.ApartmentPhotos)
-                                           .Where(x => x.TenantId == id).ToListAsync();
-        return rentHistories;
+        return await AddAsync(rentTransaction);
     }
 
-    public async Task<RentTransaction> AddRentTransactionAsync(RentTransaction rentTransaction) 
-        => await AddAsync(rentTransaction);
-    public async Task<RentTransaction?> GetRentTransactionByIdAsync(int id) => await GetByIdAsync(id);
-    public async Task UpdateRentTransactionAsync(RentTransaction originalRecord, RentTransaction updatedRecord, string userEmail, string[]? additionalPropertiesToExclude = null)
-        => await UpdateWithChangeLogsAsync(originalRecord, updatedRecord, userEmail, originalRecord.Id.ToString(), additionalPropertiesToExclude);
+    public async Task<RentTransaction?> GetRentTransactionByIdAsync(int id)
+    {
+        return await GetByIdAsync(id);
+    }
+
+    public async Task UpdateRentTransactionAsync(RentTransaction originalRecord, RentTransaction updatedRecord,
+        string userEmail, string[]? additionalPropertiesToExclude = null)
+    {
+        await UpdateWithChangeLogsAsync(originalRecord, updatedRecord, userEmail, originalRecord.Id.ToString(),
+            additionalPropertiesToExclude);
+    }
+
     public async Task DeleteRentTransactionAsync(RentTransaction rentTransaction, string userEmail)
     {
         if (rentTransaction.IsDeleted) return;
 
         await DeleteRestoreAsync(rentTransaction, true, userEmail, rentTransaction.Id.ToString());
+    }
+
+    public async Task DeletePendingRentTransactionsAsync(RentTransaction rentTransaction)
+    {
+        var transactionsToRemove = await _dbContext.RentTransactions
+                                                   .Where(x => x.TenantId == rentTransaction.TenantId &&
+                                                               x.ApartmentId == rentTransaction.ApartmentId &&
+                                                               x.OwnerId == rentTransaction.OwnerId &&
+                                                               x.Status == RequestStatus.Pending)
+                                                   .ToListAsync();
+        _dbContext.RentTransactions.RemoveRange(transactionsToRemove);
     }
 }

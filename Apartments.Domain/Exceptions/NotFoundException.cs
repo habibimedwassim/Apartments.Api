@@ -6,12 +6,8 @@ public class NotFoundException : Exception
         : base($"{resourceType} with id: {resourceIdentifier} doesn't exist")
     {
     }
-    public NotFoundException(string message) : base(message)
-    {
-    }
 
-    public NotFoundException(string message, Exception innerException)
-        : base(message, innerException)
+    public NotFoundException(string message) : base(message)
     {
     }
 }

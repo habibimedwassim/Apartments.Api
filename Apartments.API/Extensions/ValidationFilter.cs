@@ -12,7 +12,8 @@ public class ValidationFilter(IServiceProvider serviceProvider) : IActionFilter
         {
             if (argument == null) continue;
 
-            var validator = serviceProvider.GetService(typeof(IValidator<>).MakeGenericType(argument.GetType())) as IValidator;
+            var validator =
+                serviceProvider.GetService(typeof(IValidator<>).MakeGenericType(argument.GetType())) as IValidator;
 
             if (validator != null)
             {

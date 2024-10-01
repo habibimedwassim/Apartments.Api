@@ -7,14 +7,18 @@ namespace Apartments.Application.IServices;
 
 public interface IApartmentRequestService
 {
-    Task<PagedResult<ApartmentRequestDto>> GetApartmentRequests(ApartmentRequestQueryFilter apartmentRequestQueryFilter);
+    Task<PagedResult<ApartmentRequestDto>>
+        GetApartmentRequests(ApartmentRequestQueryFilter apartmentRequestQueryFilter);
+
     Task<ServiceResult<ApartmentRequestDto>> GetApartmentRequestById(int requestId);
-    Task<ServiceResult<ApartmentRequestDto>> UpdateApartmentRequest(int requestId, UpdateApartmentRequestDto updateApartmentRequestDto);
+
+    Task<ServiceResult<ApartmentRequestDto>> UpdateApartmentRequest(int requestId,
+        UpdateApartmentRequestDto updateApartmentRequestDto);
+
     Task<ServiceResult<string>> ApplyForApartment(int apartmentId);
-    Task<ServiceResult<string>> DismissTenantFromApartment(int apartmentId, LeaveDismissReasonDto dismissReasonDto);
-    Task<ServiceResult<string>> DismissTenantById(int userId, LeaveDismissReasonDto dismissReasonDto);
+    Task<ServiceResult<string>> DismissTenantFromApartment(int apartmentId, LeaveDismissRequestDto dismissRequestDto);
+    Task<ServiceResult<string>> DismissTenantById(int userId, LeaveDismissRequestDto dismissRequestDto);
     Task<ServiceResult<string>> CancelApartmentRequest(int requestId);
-    Task<ServiceResult<string>> LeaveApartmentRequest(int apartmentId, LeaveDismissReasonDto leaveReasonDto);
+    Task<ServiceResult<string>> LeaveApartmentRequest(int apartmentId, LeaveDismissRequestDto leaveRequestDto);
     Task<ServiceResult<string>> ApproveRejectApartmentRequest(int requestId, string action);
 }
-

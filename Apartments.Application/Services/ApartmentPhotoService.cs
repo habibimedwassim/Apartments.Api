@@ -20,14 +20,14 @@ public class ApartmentPhotoService(
     IAzureBlobStorageService azureBlobStorageService,
     IApartmentRepository apartmentRepository,
     IApartmentPhotoRepository apartmentPhotoRepository
-    ) : IApartmentPhotoService
+) : IApartmentPhotoService
 {
-    public async Task<ServiceResult<IEnumerable<ApartmentPhotoDto>>> AddPhotosToApartment(UploadApartmentPhotoDto uploadApartmentPhotoDto)
+    public async Task<ServiceResult<IEnumerable<ApartmentPhotoDto>>> AddPhotosToApartment(
+        UploadApartmentPhotoDto uploadApartmentPhotoDto)
     {
         if (!uploadApartmentPhotoDto.ApartmentPhotos.Any())
-        {
-            return ServiceResult<IEnumerable<ApartmentPhotoDto>>.ErrorResult(StatusCodes.Status422UnprocessableEntity, "Please add at lease 1 image");
-        }
+            return ServiceResult<IEnumerable<ApartmentPhotoDto>>.ErrorResult(StatusCodes.Status422UnprocessableEntity,
+                "Please add at lease 1 image");
 
         var currentUser = userContext.GetCurrentUser();
 
@@ -37,58 +37,65 @@ public class ApartmentPhotoService(
                         throw new NotFoundException(nameof(Apartment), uploadApartmentPhotoDto.ApartmentId.ToString());
 
         if (!authorizationManager.AuthorizeApartmentPhoto(currentUser, ResourceOperation.Create, apartment.OwnerId))
-        {
             throw new ForbiddenException($"{currentUser.Email} not authorized to create an apartment photo");
-        }
 
-        if(PhotosLimitReached(apartment))
+        if (PhotosLimitReached(apartment))
         {
-            var message = $"Apartment with ID {apartment.Id} already has {AppConstants.PhotosLimit} photos, please remove a photo before adding a new one";
+            var message =
+                $"Apartment with ID {apartment.Id} already has {AppConstants.PhotosLimit} photos, please remove a photo before adding a new one";
             logger.LogInformation(message);
-            return ServiceResult<IEnumerable<ApartmentPhotoDto>>.ErrorResult(StatusCodes.Status417ExpectationFailed, message);
+            return ServiceResult<IEnumerable<ApartmentPhotoDto>>.ErrorResult(StatusCodes.Status417ExpectationFailed,
+                message);
         }
 
-        using var transaction = await apartmentPhotoRepository.BeginTransactionAsync();
+        await using var transaction = await apartmentPhotoRepository.BeginTransactionAsync();
 
         try
         {
             var apartmentPhotos = await azureBlobStorageService.UploadApartmentPhotos(uploadApartmentPhotoDto);
 
-            if (!apartmentPhotos.Any()) 
+            var listApartmentPhotos = apartmentPhotos.ToList();
+            if (listApartmentPhotos.Count == 0)
             {
                 var message = $"No Photos were added to Apartment with ID {apartment.Id}";
                 logger.LogInformation(message);
-                return ServiceResult<IEnumerable<ApartmentPhotoDto>>.ErrorResult(StatusCodes.Status417ExpectationFailed, message);
+                return ServiceResult<IEnumerable<ApartmentPhotoDto>>.ErrorResult(StatusCodes.Status417ExpectationFailed,
+                    message);
             }
 
-            await apartmentPhotoRepository.AddApartmentPhotosAsync(apartmentPhotos);
+            await apartmentPhotoRepository.AddApartmentPhotosAsync(listApartmentPhotos);
 
             // Commit the transaction
-            await transaction.CommitAsync();
+            await apartmentPhotoRepository.CommitTransactionAsync(transaction);
 
             // Map to the DTO to return as a response
-            var apartmentPhotoDtos = mapper.Map<IEnumerable<ApartmentPhotoDto>>(apartmentPhotos);
+            var listApartmentPhotoDto = mapper.Map<IEnumerable<ApartmentPhotoDto>>(apartmentPhotos);
 
-            logger.LogInformation("Photos added to Apartment with ID {ApartmentId} successfully by {UserId}.", apartment.Id, currentUser.Email);
-            return ServiceResult<IEnumerable<ApartmentPhotoDto>>.SuccessResult(apartmentPhotoDtos, "Apartment created successfully.");
+            logger.LogInformation("Photos added to Apartment with ID {ApartmentId} successfully by {UserId}.",
+                apartment.Id, currentUser.Email);
+            return ServiceResult<IEnumerable<ApartmentPhotoDto>>.SuccessResult(listApartmentPhotoDto,
+                "Apartment created successfully.");
         }
         catch (Exception ex)
         {
             // Rollback in case of any exceptions
             await transaction.RollbackAsync();
             logger.LogError(ex, "An error occurred while adding photos to the apartment. Transaction rolled back.");
-            return ServiceResult<IEnumerable<ApartmentPhotoDto>>.ErrorResult(StatusCodes.Status500InternalServerError, "An error occurred while adding photos to the apartment");
+            return ServiceResult<IEnumerable<ApartmentPhotoDto>>.ErrorResult(StatusCodes.Status500InternalServerError,
+                "An error occurred while adding photos to the apartment");
         }
     }
+
     public async Task<ServiceResult<ApartmentPhotoDto>> GetApartmentPhotoById(int photoId, int apartmentId)
     {
-        logger.LogInformation("Retrieving photo with Id = {PhotoId} from apartment with Id = {ApartmentId}", photoId, apartmentId);
+        logger.LogInformation("Retrieving photo with Id = {PhotoId} from apartment with Id = {ApartmentId}", photoId,
+            apartmentId);
 
         var apartment = await apartmentRepository.GetApartmentByIdAsync(apartmentId) ??
                         throw new NotFoundException(nameof(Apartment), apartmentId.ToString());
 
         var apartmentPhoto = apartment.ApartmentPhotos.FirstOrDefault(p => p.Id == photoId) ??
-                        throw new NotFoundException(nameof(ApartmentPhoto), photoId.ToString());
+                             throw new NotFoundException(nameof(ApartmentPhoto), photoId.ToString());
 
         var apartmentPhotoDto = mapper.Map<ApartmentPhotoDto>(apartmentPhoto);
 
@@ -97,7 +104,7 @@ public class ApartmentPhotoService(
 
     public async Task<ServiceResult<IEnumerable<ApartmentPhotoDto>>> GetApartmentPhotos(int apartmentId)
     {
-        logger.LogInformation("Retrieving photos from apartment with Id = {Id}",apartmentId);
+        logger.LogInformation("Retrieving photos from apartment with Id = {Id}", apartmentId);
 
         var apartment = await apartmentRepository.GetApartmentByIdAsync(apartmentId) ??
                         throw new NotFoundException(nameof(Apartment), apartmentId.ToString());
@@ -111,15 +118,14 @@ public class ApartmentPhotoService(
     {
         var currentUser = userContext.GetCurrentUser();
 
-        logger.LogInformation("Deleting photo with Id = {photoId} from apartment with Id = {apartmentId}", photoId, apartmentId);
+        logger.LogInformation("Deleting photo with Id = {photoId} from apartment with Id = {apartmentId}", photoId,
+            apartmentId);
 
         var apartment = await apartmentRepository.GetApartmentByIdAsync(apartmentId) ??
                         throw new NotFoundException(nameof(Apartment), apartmentId.ToString());
 
         if (!authorizationManager.AuthorizeApartmentPhoto(currentUser, ResourceOperation.Delete, apartment.OwnerId))
-        {
             throw new ForbiddenException($"{currentUser.Email} not authorized to delete this apartment photo");
-        }
 
         var apartmentPhoto = apartment.ApartmentPhotos.FirstOrDefault(x => x.Id == photoId) ??
                              throw new NotFoundException(nameof(ApartmentPhoto), photoId.ToString());
@@ -138,15 +144,14 @@ public class ApartmentPhotoService(
     {
         var currentUser = userContext.GetCurrentUser();
 
-        logger.LogInformation("Restoring photo with Id = {photoId} for apartment with Id = {apartmentId}", photoId, apartmentId);
+        logger.LogInformation("Restoring photo with Id = {photoId} for apartment with Id = {apartmentId}", photoId,
+            apartmentId);
 
         var apartment = await apartmentRepository.GetApartmentByIdAsync(apartmentId) ??
                         throw new NotFoundException(nameof(Apartment), apartmentId.ToString());
 
         if (!authorizationManager.AuthorizeApartmentPhoto(currentUser, ResourceOperation.Restore, apartment.OwnerId))
-        {
             throw new ForbiddenException($"{currentUser.Email} not authorized to restore this apartment photo");
-        }
 
         var apartmentPhoto = apartment.ApartmentPhotos.FirstOrDefault(x => x.Id == photoId) ??
                              throw new NotFoundException(nameof(ApartmentPhoto), photoId.ToString());
@@ -158,17 +163,12 @@ public class ApartmentPhotoService(
 
         return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, logMessage);
     }
-    
+
     private bool PhotosLimitReached(Apartment apartment)
     {
         var notDeletedPhotos = apartment.ApartmentPhotos
-                                        .Where(x => !x.IsDeleted)
-                                        .Count();
+            .Count(x => !x.IsDeleted);
 
-        if(notDeletedPhotos >= AppConstants.PhotosLimit)
-        {
-            return true;
-        }
-        return false;
+        return notDeletedPhotos >= AppConstants.PhotosLimit;
     }
 }

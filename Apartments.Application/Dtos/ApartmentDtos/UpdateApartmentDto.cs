@@ -9,4 +9,5 @@ public class UpdateApartmentDto
     public int? Size { get; set; }
     public decimal? RentAmount { get; set; }
     public bool? IsOccupied { get; set; }
+    public DateOnly? AvailableFrom { get; set; }
 }

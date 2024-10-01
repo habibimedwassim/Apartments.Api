@@ -24,7 +24,7 @@ public class AdminService(
     IUserRepository userRepository,
     UserManager<User> userManager,
     RoleManager<IdentityRole> roleManager
-    ) : IAdminService
+) : IAdminService
 {
     public async Task<ServiceResult<string>> CleanupAllOrphanedPhotosAsync(int batchSize = 100)
     {
@@ -37,33 +37,35 @@ public class AdminService(
         // Check for orphaned photos (those in the database but missing in Azure Blob Storage)
         var orphanedPhotoUrls = await azureBlobStorageService.FindMissingPhotosInAzureAsync(dbPhotoUrls, batchSize);
 
-        if (!orphanedPhotoUrls.Any())
+        var photoUrls = orphanedPhotoUrls.ToList();
+        if (photoUrls.Count == 0)
         {
             logger.LogInformation("No orphaned photos found.");
             return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "No orphaned photos found.");
         }
 
         // Delete orphaned photos from the database
-        var orphanedPhotosToDelete = allApartmentPhotos.Where(x => orphanedPhotoUrls.Contains(x.Url)).ToList();
+        var orphanedPhotosToDelete = allApartmentPhotos.Where(x => photoUrls.Contains(x.Url)).ToList();
         await apartmentPhotoRepository.PermanentDeleteApartmentPhotosAsync(orphanedPhotosToDelete);
 
         var logMessage = $"{orphanedPhotosToDelete.Count} orphaned photos deleted successfully.";
         logger.LogInformation(logMessage);
         return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, logMessage);
     }
-    
+
 
     public async Task<ServiceResult<IEnumerable<ChangeLog>>> GetChangeLogs(ChangeLogDto changeLogDto)
     {
         var endDate = changeLogDto.EndDate ?? DateTime.UtcNow;
         logger.LogInformation("Retrieving change logs for entity {EntityName} between {StartDate} and {EndDate}.",
-                              changeLogDto.EntityName, changeLogDto.StartDate, endDate);
+            changeLogDto.EntityName, changeLogDto.StartDate, endDate);
 
-        var changeLogs = await adminRepository.GetChangeLogsAsync(changeLogDto.EntityName, changeLogDto.StartDate, endDate);
+        var changeLogs =
+            await adminRepository.GetChangeLogsAsync(changeLogDto.EntityName, changeLogDto.StartDate, endDate);
 
         return ServiceResult<IEnumerable<ChangeLog>>.SuccessResult(changeLogs);
-
     }
+
     public async Task<ServiceResult<AdminStatisticsDto>> GetStatistics(string type)
     {
         var parsedType = CoreUtilities.ValidateEnum<StatisticsType>(type);
@@ -74,7 +76,7 @@ public class AdminService(
 
         var (active, deleted) = await adminRepository.GetStatisticsForTypeAsync(parsedType);
 
-        var statisticsResult = new AdminStatisticsDto() 
+        var statisticsResult = new AdminStatisticsDto()
         {
             Active = active,
             Deleted = deleted
@@ -95,9 +97,8 @@ public class AdminService(
         {
             var removeRolesResult = await userManager.RemoveFromRolesAsync(user, roles);
             if (!removeRolesResult.Succeeded)
-            {
-                return ServiceResult<string>.ErrorResult(StatusCodes.Status417ExpectationFailed, "Failed to remove existing roles");
-            }
+                return ServiceResult<string>.ErrorResult(StatusCodes.Status417ExpectationFailed,
+                    "Failed to remove existing roles");
         }
 
         var role = await roleManager.FindByNameAsync(assignRoleDto.RoleName) ??
@@ -105,12 +106,12 @@ public class AdminService(
 
         var addRoleResult = await userManager.AddToRoleAsync(user, role.Name!);
         if (!addRoleResult.Succeeded)
-        {
-            return ServiceResult<string>.ErrorResult(StatusCodes.Status417ExpectationFailed, "Failed to assign new role");
-        }
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status417ExpectationFailed,
+                "Failed to assign new role");
 
         return await AddRoleToUser(user, role.Name, "assign role");
     }
+
     public async Task<ServiceResult<string>> UnAssignRole(int sysId)
     {
         logger.LogInformation("Unassigning user roles");
@@ -120,12 +121,12 @@ public class AdminService(
 
         var rolesRemoved = await RemoveUserRoles(user);
         if (!rolesRemoved)
-        {
-            return ServiceResult<string>.ErrorResult(StatusCodes.Status417ExpectationFailed, "Failed to remove existing roles");
-        }
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status417ExpectationFailed,
+                "Failed to remove existing roles");
 
         return await AddRoleToUser(user, null, "unassign role");
     }
+
     public async Task<ServiceResult<string>> DisableUser(int id)
     {
         var currentUser = userContext.GetCurrentUser();
@@ -139,6 +140,7 @@ public class AdminService(
 
         return ServiceResult<string>.InfoResult(StatusCodes.Status202Accepted, "User disabled successfully.");
     }
+
     public async Task<ServiceResult<string>> RestoreUser(int id)
     {
         var currentUser = userContext.GetCurrentUser();
@@ -163,6 +165,7 @@ public class AdminService(
                 var removeRolesResult = await userManager.RemoveFromRolesAsync(user, roles);
                 return removeRolesResult.Succeeded;
             }
+
             return true;
         }
         catch (Exception ex)
@@ -171,6 +174,7 @@ public class AdminService(
             return false;
         }
     }
+
     private async Task<ServiceResult<string>> AddRoleToUser(User user, string? role, string message)
     {
         try
@@ -182,11 +186,10 @@ public class AdminService(
 
             return ServiceResult<string>.InfoResult(StatusCodes.Status202Accepted, $"{message} succeeded!");
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
             logger.LogError(ex, ex.Message);
             return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError, $"{message} failed");
         }
-        
     }
 }
