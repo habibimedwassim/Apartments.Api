@@ -14,71 +14,33 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
 {
     private readonly ApplicationDbContext _dbContext = dbContext;
 
-    public async Task<PagedModel<Apartment>> GetApartmentsPagedAsync(ApartmentQueryFilter apartmentsQueryFilter)
+    public async Task<PagedModel<Apartment>> GetApartmentsPagedAsync(ApartmentQueryFilter apartmentsQueryFilter, string? ownerId = null)
     {
-        var cityLower = apartmentsQueryFilter.city?.ToLower();
-        var streetLower = apartmentsQueryFilter.street?.ToLower();
-        var postalCodeLower = apartmentsQueryFilter.postalCode?.ToLower();
-        var availableFrom = apartmentsQueryFilter.availableFrom;
-        var pageNumber = apartmentsQueryFilter.pageNumber;
-
+        // Start with the base query
         var baseQuery = _dbContext.Apartments.AsQueryable();
 
+        // Apply soft delete filter
         baseQuery = _dbContext.ApplyIsDeletedFilter(baseQuery);
 
+        // Apply ownerId filter if provided
+        if (!string.IsNullOrEmpty(ownerId))
+        {
+            baseQuery = baseQuery.Where(x => x.OwnerId == ownerId);
+        }
+
         // Apply filters
-        if (!string.IsNullOrEmpty(cityLower)) baseQuery = baseQuery.Where(x => x.City.ToLower().Contains(cityLower));
-
-        if (!string.IsNullOrEmpty(streetLower))
-            baseQuery = baseQuery.Where(x => x.Street.ToLower().Contains(streetLower));
-
-        if (!string.IsNullOrEmpty(postalCodeLower))
-            baseQuery = baseQuery.Where(x => x.PostalCode.ToLower().Contains(postalCodeLower));
-
-        if (apartmentsQueryFilter.apartmentSize.HasValue)
-            baseQuery = baseQuery.Where(x => x.Size == apartmentsQueryFilter.apartmentSize.Value);
-
-        if (apartmentsQueryFilter.minPrice.HasValue)
-            baseQuery = baseQuery.Where(x => x.RentAmount >= apartmentsQueryFilter.minPrice.Value);
-
-        if (apartmentsQueryFilter.maxPrice.HasValue)
-            baseQuery = baseQuery.Where(x => x.RentAmount <= apartmentsQueryFilter.maxPrice.Value);
-
-        if (apartmentsQueryFilter.isOccupied.HasValue)
-            baseQuery = baseQuery.Where(x => x.IsOccupied == apartmentsQueryFilter.isOccupied.Value);
-
-        if (apartmentsQueryFilter.availableFrom.HasValue)
-            baseQuery = baseQuery.Where(x => x.AvailableFrom >= apartmentsQueryFilter.availableFrom.Value);
+        ApplyFilters(ref baseQuery, apartmentsQueryFilter);
 
         // Get total count before pagination
         var totalCount = await baseQuery.CountAsync();
 
-        // Default sorting if no sortBy is provided
-        var sortBy = apartmentsQueryFilter.sortBy ?? nameof(Apartment.CreatedDate);
-        var sortDirection = apartmentsQueryFilter.sortDirection;
-
-        // Dictionary for mapping sort columns
-        var columnSelector = new Dictionary<string, Expression<Func<Apartment, object>>>
-        {
-            { nameof(Apartment.CreatedDate), x => x.CreatedDate },
-            { nameof(Apartment.RentAmount), x => x.RentAmount },
-            { nameof(Apartment.Size), x => x.Size }
-        };
-
         // Apply sorting
-        if (columnSelector.ContainsKey(sortBy))
-        {
-            var selectedColumn = columnSelector[sortBy];
-
-            baseQuery = sortDirection == SortDirection.Descending
-                ? baseQuery.OrderByDescending(selectedColumn)
-                : baseQuery.OrderBy(selectedColumn);
-        }
+        ApplySorting(ref baseQuery, apartmentsQueryFilter);
 
         // Apply pagination
         var apartments = await baseQuery
             .Include(x => x.ApartmentPhotos)
-            .Skip(AppConstants.PageSize * (pageNumber - 1))
+            .Skip(AppConstants.PageSize * (apartmentsQueryFilter.pageNumber - 1))
             .Take(AppConstants.PageSize)
             .ToListAsync();
 
@@ -88,13 +50,6 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
     {
         return await _dbContext.Apartments.Include(x => x.ApartmentPhotos)
             .FirstOrDefaultAsync(x => x.TenantId == tenantId);
-    }
-    public async Task<IEnumerable<Apartment>> GetOwnedApartmentsAsync(string ownerId)
-    {
-        return await _dbContext.Apartments.Include(x => x.ApartmentPhotos)
-            .Where(x => x.OwnerId == ownerId)
-            .OrderBy(x => x.CreatedDate)
-            .ToListAsync();
     }
     public async Task DeleteApartmentAsync(Apartment apartment, string userEmail)
     {
@@ -153,13 +108,59 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<Apartment>> GetOccupiedApartments()
+    private void ApplyFilters(ref IQueryable<Apartment> baseQuery, ApartmentQueryFilter apartmentsQueryFilter)
     {
-        return await _dbContext.Apartments
-                               .Include(x => x.Owner)
-                               .Include(x => x.Tenant)
-                               .Include(x => x.ApartmentPhotos)
-                               .Where(x => x.TenantId != null && !x.IsDeleted)
-                               .ToListAsync();
+        var cityLower = apartmentsQueryFilter.city?.ToLower();
+        var streetLower = apartmentsQueryFilter.street?.ToLower();
+        var postalCodeLower = apartmentsQueryFilter.postalCode?.ToLower();
+
+        if (!string.IsNullOrEmpty(cityLower))
+            baseQuery = baseQuery.Where(x => x.City.ToLower().Contains(cityLower));
+
+        if (!string.IsNullOrEmpty(streetLower))
+            baseQuery = baseQuery.Where(x => x.Street.ToLower().Contains(streetLower));
+
+        if (!string.IsNullOrEmpty(postalCodeLower))
+            baseQuery = baseQuery.Where(x => x.PostalCode.ToLower().Contains(postalCodeLower));
+
+        if (apartmentsQueryFilter.apartmentSize.HasValue)
+            baseQuery = baseQuery.Where(x => x.Size == apartmentsQueryFilter.apartmentSize.Value);
+
+        if (apartmentsQueryFilter.minPrice.HasValue)
+            baseQuery = baseQuery.Where(x => x.RentAmount >= apartmentsQueryFilter.minPrice.Value);
+
+        if (apartmentsQueryFilter.maxPrice.HasValue)
+            baseQuery = baseQuery.Where(x => x.RentAmount <= apartmentsQueryFilter.maxPrice.Value);
+
+        if (apartmentsQueryFilter.isOccupied.HasValue)
+            baseQuery = baseQuery.Where(x => x.IsOccupied == apartmentsQueryFilter.isOccupied.Value);
+
+        if (apartmentsQueryFilter.availableFrom.HasValue)
+            baseQuery = baseQuery.Where(x => x.AvailableFrom >= apartmentsQueryFilter.availableFrom.Value);
+    }
+
+    // Helper method to apply sorting
+    private void ApplySorting(ref IQueryable<Apartment> baseQuery, ApartmentQueryFilter apartmentsQueryFilter)
+    {
+        var sortBy = apartmentsQueryFilter.sortBy ?? nameof(Apartment.CreatedDate);
+        var sortDirection = apartmentsQueryFilter.sortDirection;
+
+        // Dictionary for mapping sort columns
+        var columnSelector = new Dictionary<string, Expression<Func<Apartment, object>>>
+        {
+            { nameof(Apartment.CreatedDate), x => x.CreatedDate },
+            { nameof(Apartment.RentAmount), x => x.RentAmount },
+            { nameof(Apartment.Size), x => x.Size }
+        };
+
+        // Apply sorting
+        if (columnSelector.ContainsKey(sortBy))
+        {
+            var selectedColumn = columnSelector[sortBy];
+
+            baseQuery = sortDirection == SortDirection.Descending
+                ? baseQuery.OrderByDescending(selectedColumn)
+                : baseQuery.OrderBy(selectedColumn);
+        }
     }
 }

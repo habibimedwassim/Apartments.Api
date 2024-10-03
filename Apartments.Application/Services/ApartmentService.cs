@@ -176,24 +176,28 @@ public class ApartmentService(
         return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Apartment restored successfully.");
     }
 
-    public async Task<ServiceResult<List<ApartmentDto>>> GetOwnedApartments(int? id = null)
+    public async Task<ServiceResult<PagedResult<ApartmentDto>>> GetOwnedApartments(ApartmentQueryFilter apartmentQueryFilter, int? ownerId = null)
     {
         var currentUser = userContext.GetCurrentUser();
-        var sysId = id ?? currentUser.SysId;
+        var sysId = ownerId ?? currentUser.SysId;
 
-        logger.LogInformation("Retrieving User with Id = {id} owned apartments", sysId);
+        logger.LogInformation("Retrieving All Apartments for Owner with Id = {Id}", ownerId);
 
         var user = await userRepository.GetBySysIdAsync(sysId) ??
                    throw new NotFoundException("User not found");
 
         if (user.Role == UserRoles.User)
-            return ServiceResult<List<ApartmentDto>>.ErrorResult(StatusCodes.Status400BadRequest,
+            return ServiceResult<PagedResult<ApartmentDto>>.ErrorResult(StatusCodes.Status400BadRequest,
                 "Only Owners have owned apartments");
 
-        var apartments = await apartmentRepository.GetOwnedApartmentsAsync(user.Id);
+        var pagedModel = await apartmentRepository.GetApartmentsPagedAsync(apartmentQueryFilter, user.Id);
 
-        var apartmentsDto = mapper.Map<List<ApartmentDto>>(apartments);
+        var apartmentsDto = mapper.Map<IEnumerable<ApartmentDto>>(pagedModel.Data);
 
-        return ServiceResult<List<ApartmentDto>>.SuccessResult(apartmentsDto);
+        var pagedResult = new PagedResult<ApartmentDto>(apartmentsDto, pagedModel.DataCount, apartmentQueryFilter.pageNumber);
+
+        var result = ServiceResult<PagedResult<ApartmentDto>>.SuccessResult(pagedResult);
+            
+        return result;
     }
 }

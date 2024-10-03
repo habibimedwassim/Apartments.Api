@@ -127,7 +127,7 @@ public class LeaveRequestHandler(
                 TenantId = currentUser.Id,
                 ApartmentId = apartment.Id,
                 OwnerId = apartment.OwnerId,
-                RequestDate = leaveRequestDto.RequestDate.Value,
+                RequestDate = leaveRequestDto.RequestDate!.Value,
                 Reason = leaveRequestDto.Reason,
             };
             await apartmentRequestRepository.AddApartmentRequestAsync(leaveRequest);

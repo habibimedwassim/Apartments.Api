@@ -28,9 +28,9 @@ public class UserController(
     }
 
     [HttpGet("me/apartments")]
-    public async Task<IActionResult> GetOwnedApartments()
+    public async Task<IActionResult> GetOwnedApartments([FromQuery] ApartmentQueryFilter apartmentQueryFilter)
     {
-        var result = await apartmentService.GetOwnedApartments();
+        var result = await apartmentService.GetOwnedApartments(apartmentQueryFilter);
         if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
@@ -54,9 +54,9 @@ public class UserController(
     }
 
     [HttpGet("{id:int}/apartments")]
-    public async Task<IActionResult> GetOwnedApartments([FromRoute] int id)
+    public async Task<IActionResult> GetOwnedApartments([FromRoute] int id, [FromQuery] ApartmentQueryFilter apartmentQueryFilter)
     {
-        var result = await apartmentService.GetOwnedApartments(id);
+        var result = await apartmentService.GetOwnedApartments(apartmentQueryFilter, id);
         if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);

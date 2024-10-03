@@ -24,6 +24,7 @@ var seeder = scope.ServiceProvider.GetRequiredService<IAppSeeder>();
 await seeder.Seed();
 
 // Middlewares - Error Handling should be first to catch all exceptions
+app.UseCors("AllowSpecificOrigin");
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Add Authentication and Authorization
