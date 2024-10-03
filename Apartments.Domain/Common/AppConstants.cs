@@ -3,7 +3,7 @@
 public static class AppConstants
 {
     public const int PageSize = 10;
-    public const int CodeExpiration = 30;
+    public const int CodeExpiration = 10;
     public const int PhotosLimit = 4;
     public const string DateFormat = "yyyy-MM-dd";
     public const string TempAdmin = "admin@temp.com";

@@ -125,6 +125,14 @@ public class AuthService(
         var user = await userManager.FindByEmailAsync(normalizedEmail) ??
                    throw new NotFoundException($"User with email : {email.Email} not found!");
 
+        if(user.VerificationCodeExpiration != null && user.VerificationCodeExpiration > DateTime.UtcNow)
+        {
+            var remainingSpan = user.VerificationCodeExpiration.Value - DateTime.UtcNow;
+            var remainingMinutes = Math.Ceiling(remainingSpan.TotalMinutes);
+            var message = $"Retry in {remainingMinutes} minutes";
+            return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status401Unauthorized, message);
+        }
+
         await SendVerificationCodeAsync(user, VerificationCodeOperation.VerificationCode);
 
         logger.LogInformation("Verification email resent to: {Email}", email.Email);
