@@ -1,6 +1,7 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.ApartmentRequestDtos;
 using Apartments.Application.IServices;
+using Apartments.Application.Utilities;
 using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.IRepositories;
@@ -72,9 +73,11 @@ public class DismissRequestHandler(
             await rentTransactionRepository.AddRentTransactionAsync(rentTransaction);
 
             await transaction.CommitAsync();
+
             // Notify tenant about the dismissal
+            var ownerFullName = CoreUtilities.ConstructUserFullName(apartment.Owner.FirstName, apartment.Owner.LastName);
             var message =
-                $"You have been dismissed from the apartment {apartment.Description}, you have until ({requestDate.ToString(AppConstants.DateFormat)}) to clear the apartment. Reason: {dismissRequest.Reason}";
+                $"You have been dismissed from the apartment titled: ({apartment.Title}) owned by {ownerFullName}, you have until ({requestDate.ToString(AppConstants.DateFormat)}) to clear the apartment. Reason: {dismissRequest.Reason}";
             await emailService.SendEmailAsync(tenant.Email!, "Dismissed from Apartment", message);
 
             return ServiceResult<string>.SuccessResult("Tenant dismissed successfully");

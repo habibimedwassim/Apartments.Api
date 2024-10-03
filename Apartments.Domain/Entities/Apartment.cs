@@ -8,6 +8,7 @@ public class Apartment(string ownerId)
     public User? Tenant { get; set; }
     public string OwnerId { get; init; } = ownerId;
     public User Owner { get; init; } = default!;
+    public string Title { get; set; } = default!;
     public string Street { get; set; } = default!;
     public string City { get; set; } = default!;
     public string PostalCode { get; set; } = default!;

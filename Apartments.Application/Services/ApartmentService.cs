@@ -69,6 +69,7 @@ public class ApartmentService(
             // Map apartment details and save to the database
             var apartment = new Apartment(currentUser.Id)
             {
+                Title = createApartmentDto.Title,
                 Street = createApartmentDto.Street,
                 City = createApartmentDto.City,
                 PostalCode = createApartmentDto.PostalCode,

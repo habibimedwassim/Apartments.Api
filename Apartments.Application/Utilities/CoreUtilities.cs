@@ -88,7 +88,13 @@ public static class CoreUtilities
 
         return changeLogs;
     }
+    public static string ConstructUserFullName(string firstName, string lastName)
+    {
+        if(string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName)) 
+            return string.Empty;
 
+        return $"{firstName}, {lastName}";
+    }
     public static string NormalizeEmail(string email)
     {
         if (email.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase) ||

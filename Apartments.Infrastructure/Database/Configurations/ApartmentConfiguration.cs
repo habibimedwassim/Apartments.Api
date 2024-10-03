@@ -23,6 +23,9 @@ public class ApartmentConfiguration : IEntityTypeConfiguration<Apartment>
             .HasForeignKey(x => x.OwnerId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Property(a => a.Title)
+            .HasMaxLength(100);
+
         builder.Property(x => x.RentAmount)
             .HasPrecision(8, 2);
 

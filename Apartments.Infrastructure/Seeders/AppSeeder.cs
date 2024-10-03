@@ -75,6 +75,7 @@ public class AppSeeder(ApplicationDbContext dbContext, UserManager<User> userMan
         [
             new Apartment(owner.Id)
             {
+                Title = "Temp Apartment 1",
                 CreatedDate = DateTime.UtcNow,
                 City = "Tunis",
                 Street = "Cité des Nymphes",
@@ -102,6 +103,7 @@ public class AppSeeder(ApplicationDbContext dbContext, UserManager<User> userMan
 
             new Apartment(owner.Id)
             {
+                Title = "Temp Apartment 2",
                 CreatedDate = DateTime.UtcNow.AddDays(-1),
                 City = "Zaghouan",
                 Street = "Cité Ennozha",

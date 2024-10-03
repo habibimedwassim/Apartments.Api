@@ -7,6 +7,7 @@ public class ApartmentQueryFilter
     public int pageNumber { get; set; }
     public string? sortBy { get; set; }
     public SortDirection sortDirection { get; set; } = SortDirection.Descending;
+    public string? title { get; set; }
     public string? city { get; set; }
     public string? street { get; set; }
     public string? postalCode { get; set; }

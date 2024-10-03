@@ -110,9 +110,13 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
 
     private void ApplyFilters(ref IQueryable<Apartment> baseQuery, ApartmentQueryFilter apartmentsQueryFilter)
     {
+        var titleLower = apartmentsQueryFilter.title?.ToLower();
         var cityLower = apartmentsQueryFilter.city?.ToLower();
         var streetLower = apartmentsQueryFilter.street?.ToLower();
         var postalCodeLower = apartmentsQueryFilter.postalCode?.ToLower();
+
+        if (!string.IsNullOrEmpty(titleLower))
+            baseQuery = baseQuery.Where(x => x.Title.ToLower().Contains(titleLower));
 
         if (!string.IsNullOrEmpty(cityLower))
             baseQuery = baseQuery.Where(x => x.City.ToLower().Contains(cityLower));

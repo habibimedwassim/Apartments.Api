@@ -134,7 +134,7 @@ public class LeaveRequestHandler(
 
             // Notify owner about the leave request
             var message =
-                $"Tenant ({currentUser.Email}) has requested to leave the apartment {apartment.Description}. Reason: {leaveRequestDto.Reason}";
+                $"Tenant ({currentUser.Email}) has requested to leave the apartment titled : {apartment.Title}. Reason: {leaveRequestDto.Reason}";
             await emailService.SendEmailAsync(currentUser.Email, "Request to leave Apartment", message);
 
             return ServiceResult<string>.SuccessResult("Leave request sent successfully");
