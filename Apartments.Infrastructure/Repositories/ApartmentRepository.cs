@@ -167,4 +167,13 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
                 : baseQuery.OrderBy(selectedColumn);
         }
     }
+
+    public async Task<IEnumerable<Apartment>> GetOwnedApartmentsAsync(string ownerId)
+    {
+        return await _dbContext.Apartments
+                               .Include(x => x.ApartmentPhotos)
+                               .Where(x => x.OwnerId == ownerId)
+                               .OrderByDescending(x => x.CreatedDate)
+                               .ToListAsync();
+    }
 }

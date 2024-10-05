@@ -8,6 +8,7 @@ namespace Apartments.Domain.IRepositories;
 public interface IApartmentRepository
 {
     Task<PagedModel<Apartment>> GetApartmentsPagedAsync(ApartmentQueryFilter apartmentsQueryFilter, string? ownerId = null);
+    Task<IEnumerable<Apartment>> GetOwnedApartmentsAsync(string ownerId);
     Task<Apartment?> GetApartmentByTenantId(string tenantId);
     Task<Apartment?> GetApartmentByIdAsync(int id);
     Task<Apartment> AddApartmentAsync(Apartment apartment);

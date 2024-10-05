@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Apartments.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241001025840_dbSchema")]
+    [Migration("20241003173759_dbSchema")]
     partial class dbSchema
     {
         /// <inheritdoc />
@@ -81,6 +81,11 @@ namespace Apartments.Infrastructure.Migrations
 
                     b.Property<string>("TenantId")
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 

@@ -13,5 +13,5 @@ public interface IApartmentService
     Task<ServiceResult<ApartmentDto>> UpdateApartment(int id, UpdateApartmentDto updateApartmentDto);
     Task<ServiceResult<string>> DeleteApartment(int id);
     Task<ServiceResult<string>> RestoreApartment(int id);
-    Task<ServiceResult<PagedResult<ApartmentDto>>> GetOwnedApartments(ApartmentQueryFilter apartmentQueryFilter, int? ownerId = null);
+    Task<ServiceResult<IEnumerable<ApartmentDto>>> GetOwnedApartments(int? ownerId = null);
 }

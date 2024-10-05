@@ -9,7 +9,9 @@ using Apartments.Domain.IRepositories;
 using Apartments.Domain.QueryFilters;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 
 namespace Apartments.Application.Services;
 
@@ -177,7 +179,7 @@ public class ApartmentService(
         return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Apartment restored successfully.");
     }
 
-    public async Task<ServiceResult<PagedResult<ApartmentDto>>> GetOwnedApartments(ApartmentQueryFilter apartmentQueryFilter, int? ownerId = null)
+    public async Task<ServiceResult<IEnumerable<ApartmentDto>>> GetOwnedApartments(int? ownerId = null)
     {
         var currentUser = userContext.GetCurrentUser();
         var sysId = ownerId ?? currentUser.SysId;
@@ -188,17 +190,13 @@ public class ApartmentService(
                    throw new NotFoundException("User not found");
 
         if (user.Role == UserRoles.User)
-            return ServiceResult<PagedResult<ApartmentDto>>.ErrorResult(StatusCodes.Status400BadRequest,
+            return ServiceResult<IEnumerable<ApartmentDto>>.ErrorResult(StatusCodes.Status400BadRequest,
                 "Only Owners have owned apartments");
 
-        var pagedModel = await apartmentRepository.GetApartmentsPagedAsync(apartmentQueryFilter, user.Id);
+        var apartments = await apartmentRepository.GetOwnedApartmentsAsync(user.Id);
 
-        var apartmentsDto = mapper.Map<IEnumerable<ApartmentDto>>(pagedModel.Data);
-
-        var pagedResult = new PagedResult<ApartmentDto>(apartmentsDto, pagedModel.DataCount, apartmentQueryFilter.pageNumber);
-
-        var result = ServiceResult<PagedResult<ApartmentDto>>.SuccessResult(pagedResult);
+        var apartmentsDto = mapper.Map<IEnumerable<ApartmentDto>>(apartments);
             
-        return result;
+        return ServiceResult<IEnumerable<ApartmentDto>>.SuccessResult(apartmentsDto);
     }
 }

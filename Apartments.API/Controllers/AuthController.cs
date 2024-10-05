@@ -33,8 +33,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [Authorize(Roles = UserRoles.Admin)]
     public async Task<IActionResult> RegisterOwner([FromBody] RegisterDto registerDto)
     {
-        var role = UserRoles.Owner;
-        var result = await authService.RegisterAsync(registerDto, role);
+        var result = await authService.RegisterWithRoleAsync(registerDto, UserRoles.Owner);
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
@@ -43,8 +42,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [Authorize(Roles = UserRoles.Admin)]
     public async Task<IActionResult> RegisterAdmin([FromBody] RegisterDto registerDto)
     {
-        var role = UserRoles.Admin;
-        var result = await authService.RegisterAsync(registerDto, role);
+        var result = await authService.RegisterWithRoleAsync(registerDto, UserRoles.Admin);
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }

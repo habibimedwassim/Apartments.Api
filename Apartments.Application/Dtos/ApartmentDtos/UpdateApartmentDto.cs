@@ -11,4 +11,5 @@ public class UpdateApartmentDto
     public decimal? RentAmount { get; set; }
     public bool? IsOccupied { get; set; }
     public DateOnly? AvailableFrom { get; set; }
+    public bool? IsDeleted { get; set; }
 }

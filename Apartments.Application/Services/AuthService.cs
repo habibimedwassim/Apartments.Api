@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -61,9 +62,9 @@ public class AuthService(
         {
             AccessToken = accessToken,
             Email = user.Email!,
-            UserName = user.UserName!,
             FirstName = user.FirstName,
             LastName = user.LastName,
+            FullName = CoreUtilities.ConstructUserFullName(user.FirstName, user.LastName),
             DateOfBirth = user.DateOfBirth,
             Gender = user.Gender,
             Role = user.Role ?? UserRoles.User
@@ -72,7 +73,7 @@ public class AuthService(
         return ServiceResult<LoginResponseDto>.SuccessResult(response, "Login successful.");
     }
 
-    public async Task<ServiceResult<ResultDetails>> RegisterAsync(RegisterDto registerDto, string? role = null)
+    public async Task<ServiceResult<ResultDetails>> RegisterAsync(RegisterDto registerDto)
     {
         var normalizedEmail = CoreUtilities.NormalizeEmail(registerDto.Email);
         var existingUser = await userManager.Users
@@ -80,14 +81,13 @@ public class AuthService(
                                       x.Email == normalizedEmail);
         if (existingUser != null)
             return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status409Conflict, $"A user exists already.");
+
         var user = CreateUser(registerDto);
 
         var result = await userManager.CreateAsync(user, registerDto.Password);
 
         if (result.Succeeded)
         {
-            if (!string.IsNullOrEmpty(role)) await AssignRoleToUser(user, role);
-
             await SendVerificationCodeAsync(user, VerificationCodeOperation.EmailVerification);
             logger.LogInformation("User {Email} created successfully. Verification email sent.", registerDto.Email);
             return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status201Created,
@@ -99,12 +99,43 @@ public class AuthService(
         return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status400BadRequest,
             string.Join(", ", result.Errors.Select(e => e.Description)));
     }
+    public async Task<ServiceResult<ResultDetails>> RegisterWithRoleAsync(RegisterDto registerDto, string role)
+    {
+        var normalizedEmail = CoreUtilities.NormalizeEmail(registerDto.Email);
+        var existingUser = await userManager.Users
+            .FirstOrDefaultAsync(x => x.PhoneNumber == registerDto.PhoneNumber ||
+                                      x.Email == normalizedEmail);
+        if (existingUser != null)
+            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status409Conflict, $"User exists already.");
 
+        var user = CreateUserWithRole(registerDto, role);
+
+        var result = await userManager.CreateAsync(user, registerDto.Password);
+
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(user, role);
+
+            return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status201Created,
+                $"{role} created successfully.");
+        }
+
+        logger.LogError("User creation failed for {Email}. Errors: {Errors}", registerDto.Email,
+            string.Join(", ", result.Errors.Select(e => e.Description)));
+        return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status400BadRequest,
+            string.Join(", ", result.Errors.Select(e => e.Description)));
+    }
     public async Task<ServiceResult<ResultDetails>> VerifyEmailAsync(VerifyEmailDto verifyEmailDTO)
     {
         var normalizedEmail = CoreUtilities.NormalizeEmail(verifyEmailDTO.Email);
         var user = await userManager.FindByEmailAsync(normalizedEmail) ??
                    throw new NotFoundException($"User with email : {verifyEmailDTO.Email} not found!");
+
+        if (user.EmailConfirmed)
+        {
+            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status401Unauthorized,
+                $"User with email: ({user.Email}) is already verified!");
+        }
 
         if (user.VerificationCode != verifyEmailDTO.VerificationCode ||
             user.VerificationCodeExpiration < DateTime.UtcNow)
@@ -243,17 +274,6 @@ public class AuthService(
 
     #region Helpers
 
-    private async Task AssignRoleToUser(User user, string role)
-    {
-        if (role == UserRoles.Admin || role == UserRoles.Owner)
-        {
-            user.Role = role;
-            await userManager.AddToRoleAsync(user, role);
-            await userManager.UpdateAsync(user);
-            logger.LogInformation("Assigned role {Role} to user {Email}.", role, user.Email);
-        }
-    }
-
     private User CreateUser(RegisterDto registerDTO)
     {
         var normalizedEmail = CoreUtilities.NormalizeEmail(registerDTO.Email);
@@ -265,10 +285,31 @@ public class AuthService(
             LastName = registerDTO.LastName,
             PhoneNumber = registerDTO.PhoneNumber,
             Gender = registerDTO.Gender,
-            DateOfBirth = registerDTO.DateOfBirth
+            DateOfBirth = registerDTO.DateOfBirth,
+            Role = UserRoles.User,
         };
     }
-
+    private User CreateUserWithRole(RegisterDto registerDTO, string role)
+    {
+        if (role == UserRoles.Admin || role == UserRoles.Owner)
+        {
+            var normalizedEmail = CoreUtilities.NormalizeEmail(registerDTO.Email);
+            return new User
+            {
+                UserName = normalizedEmail,
+                Email = normalizedEmail,
+                FirstName = registerDTO.FirstName,
+                LastName = registerDTO.LastName,
+                PhoneNumber = registerDTO.PhoneNumber,
+                Gender = registerDTO.Gender,
+                DateOfBirth = registerDTO.DateOfBirth,
+                Role = role,
+                EmailConfirmed = true
+            };
+        }
+        throw new BadRequestException("User role should be Admin or Owner");
+            
+    }
     private async Task SendVerificationCodeAsync(User user, VerificationCodeOperation context)
     {
         var verificationCode = GenerateVerificationCode();
@@ -350,7 +391,7 @@ public class AuthService(
             _jwtSettings.Issuer,
             _jwtSettings.Audience,
             claims,
-            expires: DateTime.Now.AddMinutes(_jwtSettings.ExpirationMinutes),
+            expires: DateTime.UtcNow.AddDays(AppConstants.TokenExpiration),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

@@ -45,6 +45,7 @@ public class ApartmentMapper : Profile
             .ForMember(dest => dest.Size, opt => opt.Condition(src => src.Size.HasValue))
             .ForMember(dest => dest.RentAmount, opt => opt.Condition(src => src.RentAmount.HasValue))
             .ForMember(dest => dest.IsOccupied, opt => opt.Condition(src => src.IsOccupied.HasValue))
+            .ForMember(dest => dest.IsDeleted, opt => opt.Condition(src => src.IsDeleted.HasValue))
             .ForMember(dest => dest.AvailableFrom, opt => opt.Condition(src => src.AvailableFrom.HasValue));
     }
 }

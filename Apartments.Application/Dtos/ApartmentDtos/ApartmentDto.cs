@@ -16,4 +16,5 @@ public class ApartmentDto
     public bool IsOccupied { get; set; }
     public DateOnly? AvailableFrom { get; set; }
     public List<ApartmentPhotoDto> ApartmentPhotos { get; set; } = [];
+    public bool IsDeleted { get; set; }
 }

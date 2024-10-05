@@ -4,6 +4,7 @@ public static class AppConstants
 {
     public const int PageSize = 20;
     public const int CodeExpiration = 10;
+    public const int TokenExpiration = 30;
     public const int PhotosLimit = 4;
     public const string DateFormat = "yyyy-MM-dd";
     public const string TempAdmin = "admin@temp.com";

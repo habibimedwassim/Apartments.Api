@@ -79,6 +79,11 @@ namespace Apartments.Infrastructure.Migrations
                     b.Property<string>("TenantId")
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
