@@ -184,7 +184,7 @@ public class ApartmentService(
         var currentUser = userContext.GetCurrentUser();
         var sysId = ownerId ?? currentUser.SysId;
 
-        logger.LogInformation("Retrieving All Apartments for Owner with Id = {Id}", ownerId);
+        logger.LogInformation("Retrieving All Apartments for Owner with Id = {Id}", sysId);
 
         var user = await userRepository.GetBySysIdAsync(sysId) ??
                    throw new NotFoundException("User not found");
@@ -196,7 +196,7 @@ public class ApartmentService(
         var apartments = await apartmentRepository.GetOwnedApartmentsAsync(user.Id);
 
         var apartmentsDto = mapper.Map<IEnumerable<ApartmentDto>>(apartments);
-            
+                    
         return ServiceResult<IEnumerable<ApartmentDto>>.SuccessResult(apartmentsDto);
     }
 }
