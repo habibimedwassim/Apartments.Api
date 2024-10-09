@@ -52,7 +52,7 @@ public class CreateApartmentDtoValidator : AbstractValidator<CreateApartmentDto>
             .MaximumLength(500).WithMessage("Description cannot exceed 500 characters.");
 
         RuleFor(x => x.Size)
-            .GreaterThan(0).WithMessage("Size must be greater than 0.");
+            .GreaterThanOrEqualTo(0).WithMessage("Size must be positive.");
 
         RuleFor(x => x.RentAmount)
             .GreaterThan(0).WithMessage("Price must be greater than 0.");
@@ -94,7 +94,7 @@ public class UpdateApartmentDtoValidator : AbstractValidator<UpdateApartmentDto>
             .When(x => !string.IsNullOrEmpty(x.Description));
 
         RuleFor(x => x.Size)
-            .GreaterThan(0).WithMessage("Size must be greater than 0.")
+            .GreaterThanOrEqualTo(0).WithMessage("Size must be positive.")
             .When(x => x.Size != null);
 
         RuleFor(x => x.RentAmount)
