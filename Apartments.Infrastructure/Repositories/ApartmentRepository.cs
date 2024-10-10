@@ -53,9 +53,10 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
     }
     public async Task DeleteApartmentAsync(Apartment apartment, string userEmail)
     {
-        if (apartment.IsDeleted) return;
+        bool action = true;
+        if (apartment.IsDeleted) action = false;
 
-        await DeleteRestoreAsync(apartment, true, userEmail, apartment.Id.ToString());
+        await DeleteRestoreAsync(apartment, action, userEmail, apartment.Id.ToString());
     }
 
     public async Task RestoreApartmentAsync(Apartment apartment, string userEmail)

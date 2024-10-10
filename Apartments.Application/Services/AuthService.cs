@@ -6,6 +6,7 @@ using Apartments.Application.Utilities;
 using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.Exceptions;
+using Apartments.Domain.IRepositories;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -26,6 +27,7 @@ public class AuthService(
     IUserContext userContext,
     IEmailService emailService,
     IOptions<JwtSettings> jwtSettings,
+    IUserRepository userRepository,
     UserManager<User> userManager) : IAuthService
 {
     private readonly JwtSettings _jwtSettings = jwtSettings.Value;
@@ -75,55 +77,99 @@ public class AuthService(
 
     public async Task<ServiceResult<ResultDetails>> RegisterAsync(RegisterDto registerDto)
     {
-        var normalizedEmail = CoreUtilities.NormalizeEmail(registerDto.Email);
-        var existingUser = await userManager.Users
-            .FirstOrDefaultAsync(x => x.PhoneNumber == registerDto.PhoneNumber ||
-                                      x.Email == normalizedEmail);
-        if (existingUser != null)
-            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status409Conflict, $"A user exists already.");
-
-        var user = CreateUser(registerDto);
-
-        var result = await userManager.CreateAsync(user, registerDto.Password);
-
-        if (result.Succeeded)
+        using var transaction = await userRepository.BeginTransactionAsync();
+        try
         {
-            await SendVerificationCodeAsync(user, VerificationCodeOperation.EmailVerification);
-            logger.LogInformation("User {Email} created successfully. Verification email sent.", registerDto.Email);
-            return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status201Created,
-                "User created successfully. Please verify your email.");
-        }
+            var normalizedEmail = CoreUtilities.NormalizeEmail(registerDto.Email);
+            var existingUser = await userManager.Users
+                .FirstOrDefaultAsync(x => x.PhoneNumber == registerDto.PhoneNumber ||
+                                          x.Email == normalizedEmail);
+            if (existingUser != null)
+                return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status409Conflict, $"A user exists already.");
 
-        logger.LogError("User creation failed for {Email}. Errors: {Errors}", registerDto.Email,
-            string.Join(", ", result.Errors.Select(e => e.Description)));
-        return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status400BadRequest,
-            string.Join(", ", result.Errors.Select(e => e.Description)));
+            var user = CreateUser(registerDto);
+
+            var result = await userManager.CreateAsync(user, registerDto.Password);
+
+            if (result.Succeeded)
+            {
+                var message = "Great to see you aboard! Let's quickly verify your email to get you started. " +
+                    "Your verification code is: ";
+                await SendVerificationCodeAsync(user, VerificationCodeOperation.EmailVerification, message);
+                logger.LogInformation("User {Email} created successfully. Verification email sent.", registerDto.Email);
+
+                await transaction.CommitAsync();
+
+                return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status201Created,
+                    "User created successfully. Please verify your email.");
+            }
+
+            logger.LogError("User creation failed for {Email}. Errors: {Errors}", registerDto.Email,
+                string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            await transaction.RollbackAsync();
+
+            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status400BadRequest,
+                string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+        catch (Exception ex)
+        {
+            // Rollback transaction in case of exception
+            await transaction.RollbackAsync();
+
+            // Log exception
+            logger.LogError(ex, "An error occurred while registering the user.");
+
+            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status500InternalServerError,
+                "An error occurred during registration.");
+        }
+        
     }
     public async Task<ServiceResult<ResultDetails>> RegisterWithRoleAsync(RegisterDto registerDto, string role)
     {
-        var normalizedEmail = CoreUtilities.NormalizeEmail(registerDto.Email);
-        var existingUser = await userManager.Users
-            .FirstOrDefaultAsync(x => x.PhoneNumber == registerDto.PhoneNumber ||
-                                      x.Email == normalizedEmail);
-        if (existingUser != null)
-            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status409Conflict, $"User exists already.");
-
-        var user = CreateUserWithRole(registerDto, role);
-
-        var result = await userManager.CreateAsync(user, registerDto.Password);
-
-        if (result.Succeeded)
+        using var transaction = await userRepository.BeginTransactionAsync();
+        try
         {
-            await userManager.AddToRoleAsync(user, role);
+            var normalizedEmail = CoreUtilities.NormalizeEmail(registerDto.Email);
+            var existingUser = await userManager.Users
+                .FirstOrDefaultAsync(x => x.PhoneNumber == registerDto.PhoneNumber ||
+                                          x.Email == normalizedEmail);
+            if (existingUser != null)
+                return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status409Conflict, $"User exists already.");
 
-            return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status201Created,
-                $"{role} created successfully.");
+            var user = CreateUserWithRole(registerDto, role);
+
+            var result = await userManager.CreateAsync(user, registerDto.Password);
+
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(user, role);
+
+                await transaction.CommitAsync();
+
+                return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status201Created,
+                    $"{role} created successfully.");
+            }
+
+            logger.LogError("User creation failed for {Email}. Errors: {Errors}", registerDto.Email,
+                string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            await transaction.RollbackAsync();
+
+            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status400BadRequest,
+                string.Join(", ", result.Errors.Select(e => e.Description)));
         }
+        catch (Exception ex) 
+        {
+            // Rollback transaction in case of exception
+            await transaction.RollbackAsync();
 
-        logger.LogError("User creation failed for {Email}. Errors: {Errors}", registerDto.Email,
-            string.Join(", ", result.Errors.Select(e => e.Description)));
-        return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status400BadRequest,
-            string.Join(", ", result.Errors.Select(e => e.Description)));
+            // Log exception
+            logger.LogError(ex, "An error occurred while registering the user.");
+
+            return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status500InternalServerError,
+                "An error occurred during registration.");
+        }
     }
     public async Task<ServiceResult<ResultDetails>> VerifyEmailAsync(VerifyEmailDto verifyEmailDTO)
     {
@@ -164,7 +210,9 @@ public class AuthService(
             return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status401Unauthorized, message);
         }
 
-        await SendVerificationCodeAsync(user, VerificationCodeOperation.VerificationCode);
+        var resendMessage = "It looks like you requested a new verification code. " +
+            "No worries, we've got you covered! Here's your new verification code:";
+        await SendVerificationCodeAsync(user, VerificationCodeOperation.VerificationCode, resendMessage);
 
         logger.LogInformation("Verification email resent to: {Email}", email.Email);
         return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status200OK,
@@ -185,7 +233,8 @@ public class AuthService(
                 "Please verify your email before resetting your password.");
         }
 
-        await SendVerificationCodeAsync(user, VerificationCodeOperation.PasswordReset);
+        var message = "We're sorry to hear that you forgot your password! Your reset password code is:";
+        await SendVerificationCodeAsync(user, VerificationCodeOperation.PasswordReset, message);
         logger.LogInformation("Password reset code sent to: {Email}", email.Email);
         return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status200OK,
             "Password reset code has been sent to your email.");
@@ -310,20 +359,59 @@ public class AuthService(
         throw new BadRequestException("User role should be Admin or Owner");
             
     }
-    private async Task SendVerificationCodeAsync(User user, VerificationCodeOperation context)
+    //private async Task SendVerificationCodeAsync(User user, VerificationCodeOperation context)
+    //{
+    //    var verificationCode = GenerateVerificationCode();
+    //    user.VerificationCode = verificationCode;
+    //    user.VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(AppConstants.CodeExpiration);
+    //    await userManager.UpdateAsync(user);
+
+    //    var subject = GetEmailSubject(context);
+    //    var message = $"Your {subject.ToLower()} is: {verificationCode}";
+
+    //    await emailService.SendEmailAsync(user.Email!, subject, message);
+    //    logger.LogInformation("Sent {Context} code to {Email}.", subject, user.Email);
+    //}
+    private async Task SendVerificationCodeAsync(User user, VerificationCodeOperation context, string message)
     {
+        // Generate the verification code
         var verificationCode = GenerateVerificationCode();
         user.VerificationCode = verificationCode;
         user.VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(AppConstants.CodeExpiration);
         await userManager.UpdateAsync(user);
 
-        var subject = GetEmailSubject(context);
-        var message = $"Your {subject.ToLower()} is: {verificationCode}";
+        var userName = user.FirstName ?? "";
 
-        await emailService.SendEmailAsync(user.Email!, subject, message);
+        // Get the email subject
+        var subject = GetEmailSubject(context);
+
+        // Create placeholders for the email template
+        var placeholders = new Dictionary<string, string>
+        {
+            { "UserName", userName },
+            { "Message", message },
+            { "VerificationCode", verificationCode },
+            { "ExpirationTime", AppConstants.CodeExpiration.ToString() }
+        };
+
+        // Load and populate the email template with placeholders
+        var emailBody = await emailService.GetEmailTemplateAsync("VerificationEmailTemplate", placeholders);
+
+        // Send the email with the populated template
+        await emailService.SendEmailAsync(user.Email!, subject, emailBody);
+
+        // Log the event
         logger.LogInformation("Sent {Context} code to {Email}.", subject, user.Email);
     }
-
+    private string GetEmailSubject(VerificationCodeOperation context)
+    {
+        return context switch
+        {
+            VerificationCodeOperation.EmailVerification => "Let's verify your email",
+            VerificationCodeOperation.PasswordReset => "Let's reset your password",
+            _ => "Verification Code"
+        };
+    }
     private async Task ChangeUserEmail(User user, string email, VerificationCodeOperation context)
     {
         var oldEmail = user.Email;
@@ -355,15 +443,7 @@ public class AuthService(
         }
     }
 
-    private string GetEmailSubject(VerificationCodeOperation context)
-    {
-        return context switch
-        {
-            VerificationCodeOperation.EmailVerification => "Email Verification Code",
-            VerificationCodeOperation.PasswordReset => "Password Reset Code",
-            _ => "Verification Code"
-        };
-    }
+    
 
     private string GenerateVerificationCode()
     {

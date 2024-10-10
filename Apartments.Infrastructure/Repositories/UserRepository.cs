@@ -2,6 +2,7 @@
 using Apartments.Domain.IRepositories;
 using Apartments.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Apartments.Infrastructure.Repositories;
 
@@ -45,5 +46,9 @@ public class UserRepository(ApplicationDbContext dbContext) : BaseRepository<Use
         if (!user.IsDeleted) return;
 
         await DeleteRestoreAsync(user, false, userEmail, user.SysId.ToString());
+    }
+    public async Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return await _dbContext.Database.BeginTransactionAsync();
     }
 }
