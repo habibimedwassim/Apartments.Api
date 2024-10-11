@@ -49,6 +49,7 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
         services.Configure<SendGridSettings>(configuration.GetSection("SendGrid"));
+        services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
         services.Configure<AzureBlobStorageSettings>(configuration.GetSection("AzureStorage"));
 
         services.AddAuthentication(options =>

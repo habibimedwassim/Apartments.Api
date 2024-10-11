@@ -1,42 +1,40 @@
 ﻿using Apartments.Application.IServices;
 using Microsoft.Extensions.Options;
-using SendGrid.Helpers.Mail;
-using SendGrid;
 using Apartments.Domain.Common;
 using System.Net.Mail;
 using System.Net;
 
 namespace Apartments.Application.Services;
-public class EmailService(IOptions<SendGridSettings> sendGridSettings) : IEmailService
+public class EmailService(IOptions<SmtpSettings> options) : IEmailService
 {
-    private readonly SendGridSettings _sendGridSettings = sendGridSettings.Value;
-
-    //public async Task SendEmailAsync(string to, string subject, string body)
-    //{
-    //    var client = new SendGridClient(_sendGridSettings.ApiKey);
-    //    var from = new EmailAddress(_sendGridSettings.FromEmail, _sendGridSettings.FromName);
-    //    var toEmail = new EmailAddress(to);
-    //    var msg = MailHelper.CreateSingleEmail(from, toEmail, subject, body, body);
-
-    //    var response = await client.SendEmailAsync(msg);
-
-    //    if (!response.IsSuccessStatusCode)
-    //    {
-    //        throw new Exception($"Failed to send email. Status Code: {response.StatusCode}");
-    //    }
-    //}
+    private readonly SmtpSettings _smtpSettings = options.Value;
     public async Task SendEmailAsync(string to, string subject, string body)
     {
-        var client = new SendGridClient(_sendGridSettings.ApiKey);
-        var from = new EmailAddress(_sendGridSettings.FromEmail, _sendGridSettings.FromName);
-        var toEmail = new EmailAddress(to);
-        var msg = MailHelper.CreateSingleEmail(from, toEmail, subject, plainTextContent: body, htmlContent: body);
-
-        var response = await client.SendEmailAsync(msg);
-
-        if (response.StatusCode != System.Net.HttpStatusCode.OK && response.StatusCode != System.Net.HttpStatusCode.Accepted)
+        try
         {
-            throw new Exception($"Failed to send email. Status code: {response.StatusCode}");
+            var fromAddress = new MailAddress(_smtpSettings.UserName, "RenTN");
+            var toAddress = new MailAddress(to);
+
+            using (var smtp = new SmtpClient
+            {
+                Host = _smtpSettings.Host,
+                Port = _smtpSettings.Port,
+                EnableSsl = _smtpSettings.EnableSsl,
+                Credentials = new NetworkCredential(_smtpSettings.UserName, _smtpSettings.Password)
+            })
+            using (var message = new MailMessage(fromAddress, toAddress)
+            {
+                Subject = subject,
+                Body = body,
+                IsBodyHtml = true
+            })
+            {
+                await smtp.SendMailAsync(message);
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to send email: {ex.Message}", ex);
         }
     }
 
