@@ -26,7 +26,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(50);
 
         builder.Property(a => a.VerificationCode)
-            .HasMaxLength(4)
+            .HasMaxLength(6)
             .IsFixedLength();
 
         builder.Property(a => a.Gender)

@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <title>Welcome to RenTN!</title>
     <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
@@ -91,10 +92,6 @@
 </head>
 
 <body style='background-color: #f4f4f4; margin: 0 !important; padding: 0 !important;'>
-    <!-- HIDDEN PREHEADER TEXT -->
-    <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: 'Lato', Helvetica, Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-        We're thrilled to have you here! Get ready to dive into your new account.
-    </div>
     <table border='0' cellpadding='0' cellspacing='0' width='100%'>
         <!-- LOGO -->
         <tr>
@@ -111,7 +108,7 @@
                 <table border='0' cellpadding='0' cellspacing='0' width='100%' style='max-width: 600px'>
                     <tr>
                         <td bgcolor='#ffffff' align='center' valign='top' style='padding: 40px 20px 20px 20px; border-radius: 4px 4px 0px 0px; color: #111111; font-family: "Lato", Helvetica, Arial, sans-serif; font-size: 36px; font-weight: 400; letter-spacing: 2px; line-height: 48px;'>
-                            <h1 style='font-size: 36px; font-weight: 400; margin: 0'>Welcome to RentN!</h1>
+                            <h1 style='font-size: 36px; font-weight: 400; margin: 0'>{{Title}}</h1>
                         </td>
                     </tr>
                 </table>
@@ -124,8 +121,16 @@
                         <td bgcolor='#ffffff' align='left' style='padding: 20px 30px 40px 30px; color: #666666; font-family: "Lato", Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 25px;'>
                             <p style='margin: 0'>Hi {{UserName}},</p>
                             <p style='margin: 15px 0'>{{Message}}</p>
-                            <h2 style="text-align: center; font-size: 24px; font-weight: bold; color: #4CAF50; padding: 15px; background-color: #f9f9f9; border-radius: 8px;">{{VerificationCode}}</h2>
-                            <p style='margin: 15px 0;'>This code is valid for the next {{ExpirationTime}} minutes. We're excited for you to explore all the features we have!</p>
+
+                            <!-- Updated Verification Code Box -->
+                            <div style="background-color: #f9f9f9; border: 2px solid #e2e8f0; border-radius: 5px; padding: 15px; margin: 20px 0; font-size: 32px; font-weight: bold; letter-spacing: 5px; text-align: center; color: #4CAF50;">
+                                {{VerificationCode}}
+                            </div>
+
+                            <p style='margin: 15px 0;'>
+                                This code is valid for the next {{ExpirationTime}} minutes.
+                                <br />We're excited for you to explore all the features we have!
+                            </p>
                             <p style='margin: 0;'>If you have any issues, feel free to reply to this email.</p>
                         </td>
                     </tr>

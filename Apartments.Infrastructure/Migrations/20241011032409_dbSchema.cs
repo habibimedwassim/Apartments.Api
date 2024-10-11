@@ -34,7 +34,7 @@ namespace Apartments.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    VerificationCode = table.Column<string>(type: "nchar(4)", fixedLength: true, maxLength: 4, nullable: true),
+                    VerificationCode = table.Column<string>(type: "nchar(6)", fixedLength: true, maxLength: 6, nullable: true),
                     VerificationCodeExpiration = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Gender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
                     DateOfBirth = table.Column<DateOnly>(type: "date", nullable: true),

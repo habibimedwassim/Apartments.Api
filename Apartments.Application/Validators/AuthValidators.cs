@@ -68,7 +68,7 @@ public class ResetPasswordValidator : AbstractValidator<ResetPasswordDto>
             .WithMessage("Invalid Email");
 
         RuleFor(x => x.VerificationCode)
-            .Matches(@"^\d{4}")
+            .Matches(@"^\d{6}")
             .WithMessage("Please provide a valid verification code (4 digits).");
     }
 }
@@ -82,7 +82,7 @@ public class VerifyEmailValidator : AbstractValidator<VerifyEmailDto>
             .WithMessage("Invalid Email");
 
         RuleFor(x => x.VerificationCode)
-            .Matches(@"^\d{4}")
+            .Matches(@"^\d{6}")
             .WithMessage("Please provide a valid verification code (4 digits).");
     }
 }

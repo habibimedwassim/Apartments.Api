@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Apartments.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241003173759_dbSchema")]
+    [Migration("20241011032409_dbSchema")]
     partial class dbSchema
     {
         /// <inheritdoc />
@@ -361,8 +361,8 @@ namespace Apartments.Infrastructure.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("VerificationCode")
-                        .HasMaxLength(4)
-                        .HasColumnType("nchar(4)")
+                        .HasMaxLength(6)
+                        .HasColumnType("nchar(6)")
                         .IsFixedLength();
 
                     b.Property<DateTime?>("VerificationCodeExpiration")

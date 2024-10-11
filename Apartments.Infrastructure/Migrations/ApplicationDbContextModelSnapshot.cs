@@ -358,8 +358,8 @@ namespace Apartments.Infrastructure.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("VerificationCode")
-                        .HasMaxLength(4)
-                        .HasColumnType("nchar(4)")
+                        .HasMaxLength(6)
+                        .HasColumnType("nchar(6)")
                         .IsFixedLength();
 
                     b.Property<DateTime?>("VerificationCodeExpiration")

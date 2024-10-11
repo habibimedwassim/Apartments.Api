@@ -95,7 +95,7 @@ public class AuthService(
             {
                 var message = "Great to see you aboard! Let's quickly verify your email to get you started. " +
                     "Your verification code is: ";
-                await SendVerificationCodeAsync(user, VerificationCodeOperation.EmailVerification, message);
+                await SendVerificationCodeAsync(user, VerificationCodeOperation.EmailVerification, message, "Welcome!");
                 logger.LogInformation("User {Email} created successfully. Verification email sent.", registerDto.Email);
 
                 await transaction.CommitAsync();
@@ -212,7 +212,7 @@ public class AuthService(
 
         var resendMessage = "It looks like you requested a new verification code. " +
             "No worries, we've got you covered! Here's your new verification code:";
-        await SendVerificationCodeAsync(user, VerificationCodeOperation.VerificationCode, resendMessage);
+        await SendVerificationCodeAsync(user, VerificationCodeOperation.VerificationCode, resendMessage, "Verification Code");
 
         logger.LogInformation("Verification email resent to: {Email}", email.Email);
         return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status200OK,
@@ -234,7 +234,7 @@ public class AuthService(
         }
 
         var message = "We're sorry to hear that you forgot your password! Your reset password code is:";
-        await SendVerificationCodeAsync(user, VerificationCodeOperation.PasswordReset, message);
+        await SendVerificationCodeAsync(user, VerificationCodeOperation.PasswordReset, message, "Password Reset");
         logger.LogInformation("Password reset code sent to: {Email}", email.Email);
         return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status200OK,
             "Password reset code has been sent to your email.");
@@ -372,7 +372,7 @@ public class AuthService(
     //    await emailService.SendEmailAsync(user.Email!, subject, message);
     //    logger.LogInformation("Sent {Context} code to {Email}.", subject, user.Email);
     //}
-    private async Task SendVerificationCodeAsync(User user, VerificationCodeOperation context, string message)
+    private async Task SendVerificationCodeAsync(User user, VerificationCodeOperation context, string message, string title)
     {
         // Generate the verification code
         var verificationCode = GenerateVerificationCode();
@@ -388,6 +388,7 @@ public class AuthService(
         // Create placeholders for the email template
         var placeholders = new Dictionary<string, string>
         {
+            { "Title", title },
             { "UserName", userName },
             { "Message", message },
             { "VerificationCode", verificationCode },
@@ -443,12 +444,10 @@ public class AuthService(
         }
     }
 
-    
-
     private string GenerateVerificationCode()
     {
         var random = new Random();
-        return random.Next(1000, 9999).ToString();
+        return random.Next(100000, 999999).ToString();
     }
 
     private async Task<string> GenerateAccessTokenAsync(User user)
