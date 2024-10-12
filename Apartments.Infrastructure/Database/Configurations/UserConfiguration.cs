@@ -25,7 +25,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(a => a.LastName)
             .HasMaxLength(50);
 
-        builder.Property(a => a.VerificationCode)
+        builder.Property(a => a.EmailCode)
+            .HasMaxLength(6)
+            .IsFixedLength();
+
+        builder.Property(a => a.ResetCode)
             .HasMaxLength(6)
             .IsFixedLength();
 

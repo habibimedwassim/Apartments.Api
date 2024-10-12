@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Apartments.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class dbSchema : Migration
+    public partial class addDbSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -34,8 +34,12 @@ namespace Apartments.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    VerificationCode = table.Column<string>(type: "nchar(6)", fixedLength: true, maxLength: 6, nullable: true),
-                    VerificationCodeExpiration = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EmailCode = table.Column<string>(type: "nchar(6)", fixedLength: true, maxLength: 6, nullable: true),
+                    EmailCodeExpiration = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    TempEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TempEmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    ResetCode = table.Column<string>(type: "nchar(6)", fixedLength: true, maxLength: 6, nullable: true),
+                    ResetCodeExpiration = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Gender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
                     DateOfBirth = table.Column<DateOnly>(type: "date", nullable: true),
                     Role = table.Column<string>(type: "nvarchar(5)", maxLength: 5, nullable: true),

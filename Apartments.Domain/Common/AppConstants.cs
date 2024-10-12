@@ -46,6 +46,11 @@ public enum ResourceOperation
     Cancel
 }
 
+public enum VerificationCodeType
+{
+    Email,
+    Password
+}
 public enum VerificationCodeOperation
 {
     EmailVerification,

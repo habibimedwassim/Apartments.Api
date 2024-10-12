@@ -3,6 +3,15 @@ using FluentValidation;
 
 namespace Apartments.Application.Validators;
 
+public class UpdateEmailValidator : AbstractValidator<UpdateEmailDto>
+{
+    public UpdateEmailValidator()
+    {
+        RuleFor(x => x.Email)
+            .EmailAddress()
+            .WithMessage("Invalid Email");
+    }
+}
 public class EmailValidator : AbstractValidator<EmailDto>
 {
     public EmailValidator()

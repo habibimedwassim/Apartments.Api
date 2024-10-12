@@ -1,16 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <title>Welcome to RenTN!</title>
+    <title>{{Title}}</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <style type="text/css">
-        /* Import Inter font as used in ShadCN */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-        /* General Reset */
         body, table, td, a {
             font-family: 'Inter', sans-serif;
             -webkit-text-size-adjust: 100%;
@@ -34,22 +32,19 @@
             text-decoration: none;
         }
 
-        /* Outer Border Styling for Card */
         .email-container-border {
             max-width: 600px;
             margin: 0 auto;
-            border: 2px solid #e0e0e0; /* Main border around the entire table */
+            border: 2px solid #e0e0e0;
             border-radius: 8px;
         }
 
-        /* Card Styling */
         .email-container {
             background-color: #ffffff;
             border-radius: 8px;
             padding: 40px 30px;
         }
 
-        /* Title Styling */
         h1 {
             font-size: 36px;
             font-weight: 600;
@@ -58,7 +53,6 @@
             margin-bottom: 20px;
         }
 
-        /* General Text */
         p {
             font-size: 16px;
             color: #666666;
@@ -66,34 +60,24 @@
             margin: 0 0 20px;
         }
 
-        /* Verification Code Box */
-        .verification-code-box {
+        .notification-box {
             background-color: #f9f9f9;
             border: 2px solid #e0e0e0;
             padding: 15px;
-            font-size: 32px;
+            font-size: 18px;
             font-weight: bold;
             text-align: center;
-            letter-spacing: 5px;
             margin: 20px 0;
             border-radius: 5px;
             color: #333333;
         }
 
-        /* Expiration Time Highlight */
-        .expiration-time {
-            font-weight: bold;
-            color: #333333;
-        }
-
-        /* Footer Text */
         .small-text {
             font-size: 14px;
             color: #999999;
             line-height: 20px;
         }
 
-        /* Responsive Design */
         @media screen and (max-width: 600px) {
             .email-container {
                 padding: 20px;
@@ -103,12 +87,11 @@
                 font-size: 28px;
             }
 
-            .verification-code-box {
-                font-size: 28px;
+            .notification-box {
+                font-size: 16px;
             }
         }
 
-        /* Add padding inside table cells to prevent content from touching edges */
         td {
             padding-left: 20px;
             padding-right: 20px;
@@ -117,42 +100,28 @@
 </head>
 
 <body style="background-color: transparent;">
-    <!-- Main Email Container -->
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: transparent; padding: 20px;">
-        <!-- Empty Row to center the card vertically -->
         <tr>
             <td align="center" valign="top" style="padding: 20px 10px;"></td>
         </tr>
         <tr>
             <td align="center">
-                <!-- Outer Border Around the Email Content -->
                 <div class="email-container-border">
                     <table class="email-container" cellpadding="0" cellspacing="0" border="0">
                         <tr>
                             <td>
-                                <!-- Title -->
                                 <h1>{{Title}}</h1>
-
-                                <!-- Greeting -->
                                 <p>Hi {{UserName}},</p>
 
-                                <!-- Main Message -->
-                                <p>{{Message}}</p>
-
-                                <!-- Verification Code -->
-                                <div class="verification-code-box">
-                                    {{VerificationCode}}
+                                <!-- Notification box -->
+                                <div class="notification-box">
+                                    {{NotificationDetails}}
                                 </div>
 
-                                <!-- Expiration Time -->
-                                <p>This code is valid for the next <span class="expiration-time">{{ExpirationTime}} minutes</span>.</p>
-
-                                <!-- Footer Message -->
+                                <!-- Footer message -->
                                 <p class="small-text">
-                                    We're excited for you to explore all the features we have! If you have any issues, feel free to reply to this email.
+                                    If you have any questions, feel free to reply to this email or contact support.
                                 </p>
-
-                                <!-- Cheers -->
                                 <p class="small-text">Cheers,<br />The RenTN Team</p>
                             </td>
                         </tr>
@@ -160,7 +129,6 @@
                 </div>
             </td>
         </tr>
-        <!-- Another Empty Row below to keep the card centered -->
         <tr>
             <td align="center" valign="bottom" style="padding: 20px 10px;"></td>
         </tr>

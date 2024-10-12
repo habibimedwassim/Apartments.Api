@@ -7,8 +7,12 @@ public class User : IdentityUser
     public int SysId { get; init; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
-    public string? VerificationCode { get; set; }
-    public DateTime? VerificationCodeExpiration { get; set; }
+    public string? EmailCode { get; set; }
+    public DateTime? EmailCodeExpiration { get; set; }
+    public string? TempEmail { get; set; }
+    public bool TempEmailConfirmed { get; set; }
+    public string? ResetCode { get; set; }
+    public DateTime? ResetCodeExpiration { get; set; }
     public string? Gender { get; set; } = UserGender.Male;
     public DateOnly? DateOfBirth { get; set; }
     public string? Role { get; set; }

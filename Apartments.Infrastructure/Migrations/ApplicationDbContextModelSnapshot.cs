@@ -294,6 +294,14 @@ namespace Apartments.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("EmailCode")
+                        .HasMaxLength(6)
+                        .HasColumnType("nchar(6)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime?>("EmailCodeExpiration")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
@@ -337,6 +345,14 @@ namespace Apartments.Infrastructure.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("ResetCode")
+                        .HasMaxLength(6)
+                        .HasColumnType("nchar(6)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime?>("ResetCodeExpiration")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Role")
                         .HasMaxLength(5)
                         .HasColumnType("nvarchar(5)");
@@ -350,20 +366,18 @@ namespace Apartments.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SysId"));
 
+                    b.Property<string>("TempEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TempEmailConfirmed")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("VerificationCode")
-                        .HasMaxLength(6)
-                        .HasColumnType("nchar(6)")
-                        .IsFixedLength();
-
-                    b.Property<DateTime?>("VerificationCodeExpiration")
-                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
