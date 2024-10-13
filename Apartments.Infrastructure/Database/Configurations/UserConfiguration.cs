@@ -10,6 +10,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
+        builder.Property(a => a.Id)
+            .HasMaxLength(50);
+
         builder.HasIndex(u => u.CIN)
             .IsUnique();
 

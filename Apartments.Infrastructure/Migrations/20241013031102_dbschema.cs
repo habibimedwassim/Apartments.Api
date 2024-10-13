@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Apartments.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class addDbSchema : Migration
+    public partial class dbschema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -32,6 +32,7 @@ namespace Apartments.Infrastructure.Migrations
                     Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     SysId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    CIN = table.Column<string>(type: "nchar(8)", fixedLength: true, maxLength: 8, nullable: false),
                     FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     EmailCode = table.Column<string>(type: "nchar(6)", fixedLength: true, maxLength: 6, nullable: true),
@@ -52,7 +53,7 @@ namespace Apartments.Infrastructure.Migrations
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nchar(8)", fixedLength: true, maxLength: 8, nullable: true),
                     PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
                     LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -387,6 +388,12 @@ namespace Apartments.Infrastructure.Migrations
                 name: "EmailIndex",
                 table: "AspNetUsers",
                 column: "NormalizedEmail");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_CIN",
+                table: "AspNetUsers",
+                column: "CIN",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUsers_SysId",

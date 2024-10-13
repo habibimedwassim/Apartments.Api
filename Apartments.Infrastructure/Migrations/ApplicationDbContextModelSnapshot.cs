@@ -283,6 +283,12 @@ namespace Apartments.Infrastructure.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<string>("CIN")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nchar(8)")
+                        .IsFixedLength();
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -340,7 +346,9 @@ namespace Apartments.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(8)
+                        .HasColumnType("nchar(8)")
+                        .IsFixedLength();
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
@@ -380,6 +388,9 @@ namespace Apartments.Infrastructure.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CIN")
+                        .IsUnique();
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");

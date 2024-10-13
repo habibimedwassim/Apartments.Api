@@ -85,8 +85,12 @@ public class AuthService(
             if (existingUser != null)
             {
                 var existsMessage = normalizedEmail == existingUser.Email
-                    ? $"A User with email {registerDto.Email} exists already!"
-                    : $"A User with phone number {registerDto.PhoneNumber} exists already!";
+                                    ? $"A User with email {registerDto.Email} exists already!"
+                                    : registerDto.PhoneNumber == existingUser.PhoneNumber
+                                        ? $"A User with phone number {registerDto.PhoneNumber} exists already!"
+                                        : registerDto.CIN == existingUser.CIN
+                                            ? $"A User with CIN {registerDto.CIN} exists already!"
+                                            : "A user with similar details exists.";
 
                 return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status409Conflict, existsMessage);
             }
@@ -139,8 +143,12 @@ public class AuthService(
             if (existingUser != null)
             {
                 var existsMessage = normalizedEmail == existingUser.Email
-                    ? $"A User with email {registerDto.Email} exists already!"
-                    : $"A User with phone number {registerDto.PhoneNumber} exists already!";
+                                    ? $"A User with email {registerDto.Email} exists already!"
+                                    : registerDto.PhoneNumber == existingUser.PhoneNumber
+                                        ? $"A User with phone number {registerDto.PhoneNumber} exists already!"
+                                        : registerDto.CIN == existingUser.CIN
+                                            ? $"A User with CIN {registerDto.CIN} exists already!"
+                                            : "A user with similar details exists.";
 
                 return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status409Conflict, existsMessage);
             }
@@ -466,6 +474,7 @@ public class AuthService(
         var normalizedEmail = CoreUtilities.NormalizeEmail(registerDTO.Email);
         return new User
         {
+            CIN = registerDTO.CIN,
             UserName = normalizedEmail,
             Email = normalizedEmail,
             FirstName = registerDTO.FirstName,
@@ -483,6 +492,7 @@ public class AuthService(
             var normalizedEmail = CoreUtilities.NormalizeEmail(registerDTO.Email);
             return new User
             {
+                CIN = registerDTO.CIN,
                 UserName = normalizedEmail,
                 Email = normalizedEmail,
                 FirstName = registerDTO.FirstName,
