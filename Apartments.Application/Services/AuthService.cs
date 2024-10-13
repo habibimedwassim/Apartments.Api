@@ -221,7 +221,7 @@ public class AuthService(
             }
 
             var remainingMinutes = GetRemainingMinutes(user, VerificationCodeType.Password);
-            if (remainingMinutes < 0)
+            if (remainingMinutes > 0)
             {
                 var retryMessage = $"Retry in {remainingMinutes} minutes";
                 return ServiceResult<ResultDetails>.InfoResult(StatusCodes.Status401Unauthorized, retryMessage);
