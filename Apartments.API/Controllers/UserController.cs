@@ -1,8 +1,10 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.AdminDtos;
 using Apartments.Application.Dtos.ApartmentRequestDtos;
+using Apartments.Application.Dtos.AuthDtos;
 using Apartments.Application.Dtos.UserDtos;
 using Apartments.Application.IServices;
+using Apartments.Application.Services;
 using Apartments.Domain.Common;
 using Apartments.Domain.QueryFilters;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +27,35 @@ public class UserController(
     {
         var user = await userService.GetUserProfile();
         return Ok(user.Data);
+    }
+
+    [HttpPatch("me")]
+    public async Task<IActionResult> UpdateUserDetails([FromBody] UpdateUserDto updateUserDto)
+    {
+        var result = await userService.UpdateUserDetails(updateUserDto);
+        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+    }
+
+    [HttpPatch("change-password")]
+    public async Task<IActionResult> UpdateUserPassword([FromBody] ChangePasswordDto changePasswordDto)
+    {
+        var result = await userService.UpdateUserPassword(changePasswordDto);
+        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+    }
+
+    [HttpPatch("change-email")]
+    public async Task<IActionResult> UpdateUserEmail([FromBody] EmailDto changeEmailDto)
+    {
+        var result = await userService.UpdateUserEmail(changeEmailDto);
+        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+    }
+
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyNewEmailDto verifyNewEmailDTO)
+    {
+        var result = await userService.VerifyEmailAsync(verifyNewEmailDTO);
+
+        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 
     [HttpGet("me/apartments")]
@@ -69,13 +100,6 @@ public class UserController(
         if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
-    }
-
-    [HttpPatch("me")]
-    public async Task<IActionResult> UpdateUserDetails([FromBody] UpdateUserDto updateUserDto)
-    {
-        var result = await userService.UpdateUserDetails(updateUserDto);
-        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 
     [HttpPost("{id:int}/dismiss")]

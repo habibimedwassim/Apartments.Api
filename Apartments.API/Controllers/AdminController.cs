@@ -1,7 +1,6 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.AdminDtos;
 using Apartments.Application.IServices;
-using Apartments.Application.Services;
 using Apartments.Domain.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

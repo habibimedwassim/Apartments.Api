@@ -5,6 +5,7 @@ namespace Apartments.Domain.Entities;
 public class User : IdentityUser
 {
     public int SysId { get; init; }
+    public string CIN { get; init; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string? EmailCode { get; set; }

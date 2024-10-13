@@ -58,7 +58,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpPost("resend-code")]
     public async Task<IActionResult> ResendVerificationEmail([FromBody] EmailDto email, [FromQuery] string type)
     {
-        var result = await authService.ResendEmailAsync(email, type);
+        var result = await authService.ResendVerificationCodeAsync(email, type);
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
@@ -76,22 +76,6 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         var result = await authService.ResetPasswordAsync(resetPasswordDTO);
 
-        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-    }
-
-    [HttpPatch("change-password")]
-    [Authorize]
-    public async Task<IActionResult> UpdateUserPassword([FromBody] ChangePasswordDto changePasswordDto)
-    {
-        var result = await authService.UpdateUserPassword(changePasswordDto);
-        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-    }
-
-    [HttpPatch("change-email")]
-    [Authorize]
-    public async Task<IActionResult> UpdateUserEmail([FromBody] UpdateEmailDto changeEmailDto)
-    {
-        var result = await authService.UpdateUserEmail(changeEmailDto);
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Apartments.Application.Common;
-using Apartments.Application.Dtos.ApartmentDtos;
 using Apartments.Application.Dtos.ApartmentPhotoDtos;
 using Apartments.Application.IServices;
 using Apartments.Domain.Common;

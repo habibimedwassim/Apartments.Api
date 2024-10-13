@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace Apartments.Application.Validators;
 
-public class UpdateEmailValidator : AbstractValidator<UpdateEmailDto>
+public class VerifyNewEmailValidator : AbstractValidator<VerifyNewEmailDto>
 {
-    public UpdateEmailValidator()
+    public VerifyNewEmailValidator()
     {
         RuleFor(x => x.Email)
             .EmailAddress()
@@ -44,6 +44,11 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
             .Matches(@"^\d{8}")
             .WithMessage("Please provide a valid phone number (8 digits).")
             .When(x => x.PhoneNumber != null);
+
+        RuleFor(x => x.CIN)
+            .NotEmpty()
+            .Matches(@"^\d{8}")
+            .WithMessage("Please provide a valid CIN number (8 digits).");
 
         RuleFor(x => x.Gender)
             .Must(x => x == "Male" || x == "Female")

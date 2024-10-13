@@ -6,6 +6,8 @@ namespace Apartments.Domain.IRepositories;
 public interface IUserRepository
 {
     Task<IDbContextTransaction> BeginTransactionAsync();
+    Task<User?> GetByEmailAsync(string email, Common.VerificationCodeType verificationCodeType);
+    Task<User?> GetByCinAsync(string cin);
     Task<User?> GetBySysIdAsync(int id);
     Task<User?> GetByUserIdAsync(string id);
     Task<User?> GetTenantByApartmentId(int id);

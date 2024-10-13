@@ -9,9 +9,7 @@ using Apartments.Domain.IRepositories;
 using Apartments.Domain.QueryFilters;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 
 namespace Apartments.Application.Services;
 

@@ -49,6 +49,7 @@ public enum ResourceOperation
 public enum VerificationCodeType
 {
     Email,
+    NewEmail,
     Password
 }
 public enum VerificationCodeOperation

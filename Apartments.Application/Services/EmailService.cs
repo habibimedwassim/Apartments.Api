@@ -3,9 +3,11 @@ using Microsoft.Extensions.Options;
 using Apartments.Domain.Common;
 using System.Net.Mail;
 using System.Net;
+using Microsoft.Extensions.Logging;
 
 namespace Apartments.Application.Services;
-public class EmailService(IOptions<SmtpSettings> options) : IEmailService
+public class EmailService(
+    IOptions<SmtpSettings> options) : IEmailService
 {
     private readonly SmtpSettings _smtpSettings = options.Value;
     public async Task SendEmailAsync(string to, string subject, string body)
