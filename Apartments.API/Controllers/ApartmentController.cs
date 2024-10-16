@@ -36,9 +36,7 @@ public class ApartmentController(
     {
         var result = await apartmentService.CreateApartment(createApartmentDto);
 
-        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-
-        return Ok(result.Data);
+        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 
     [HttpPatch("{id:int}")]
@@ -47,23 +45,13 @@ public class ApartmentController(
     {
         var result = await apartmentService.UpdateApartment(id, updateApartmentDto);
 
-        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-
-        return Ok(result.Data);
-    }
-
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteApartment([FromRoute] int id)
-    {
-        var result = await apartmentService.DeleteApartment(id);
-
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 
-    [HttpGet("{id:int}/restore")]
-    public async Task<IActionResult> RestoreApartment([FromRoute] int id)
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteRestoreApartment([FromRoute] int id, [FromQuery] bool permanent = false)
     {
-        var result = await apartmentService.RestoreApartment(id);
+        var result = await apartmentService.DeleteApartment(id, permanent);
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }

@@ -1,4 +1,5 @@
 ﻿using Apartments.Application.Dtos.UserDtos;
+using Apartments.Application.Utilities;
 using Apartments.Domain.Entities;
 using AutoMapper;
 
@@ -12,16 +13,17 @@ public class UserMapper : Profile
 
         CreateMap<User, UserDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.SysId))
-            .ForMember(dest => dest.CurrentApartment, opt => opt.Ignore());
-
+            .ForMember(dest => dest.CurrentApartment, opt => opt.Ignore())
+            .ForMember(dest => dest.FullName,
+               opt => opt.MapFrom(src => CoreUtilities.ConstructUserFullName(src.FirstName, src.LastName)));
+    
         CreateMap<UserDto, User>()
             .ForMember(dest => dest.SysId, opt => opt.MapFrom(src => src.Id));
 
         CreateMap<User, UserProfileDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.SysId))
             .ForMember(dest => dest.CurrentApartment, opt => opt.NullSubstitute(null))
-            .ForMember(dest => dest.RentTransactions, opt => opt.Ignore())
-            .ForMember(dest => dest.OwnedApartments, opt => opt.Ignore());
+            .ForMember(dest => dest.RentTransactions, opt => opt.Ignore());
 
         CreateMap<UpdateUserDto, User>()
             .ForMember(dest => dest.FirstName, opt => opt.Condition(src => src.FirstName != null))

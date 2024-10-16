@@ -5,7 +5,7 @@ using FluentValidation;
 
 namespace Apartments.Application.Validators;
 
-public class ApartmentRequestQueryFilterValidator : AbstractValidator<ApartmentRequestQueryFilter>
+public class ApartmentRequestQueryFilterValidator : AbstractValidator<ApartmentRequestPagedQueryFilter>
 {
     private string[] allowedApartmentRequestTypes = Enum.GetNames(typeof(ApartmentRequestType));
 

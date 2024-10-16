@@ -40,7 +40,7 @@ public class UserService(
 
         var userDto = mapper.Map<UserDto>(user);
 
-        if(apartment != null)
+        if (apartment != null)
         {
             var apartmentDto = mapper.Map<ApartmentDto>(apartment);
             userDto.CurrentApartment = apartmentDto;
@@ -48,19 +48,59 @@ public class UserService(
 
         return ServiceResult<UserDto>.SuccessResult(userDto);
     }
+    public async Task<ServiceResult<UserDto>> GetUserById(int id)
+    {
+        logger.LogInformation("Retrieving User with Id = {userId}", id);
 
-    public async Task<ServiceResult<string>> UpdateUserDetails(UpdateUserDto updateAppUserDto)
+        var user = await userRepository.GetBySysIdAsync(id) ??
+                   throw new NotFoundException("User not found");
+
+        var userDto = mapper.Map<UserDto>(user);
+
+        return ServiceResult<UserDto>.SuccessResult(userDto);
+    }
+    public async Task<ServiceResult<IEnumerable<UserDto>>> GetOwnerTenants()
+    {
+        var currentUser = userContext.GetCurrentUser();
+
+        logger.LogInformation("Retrieving Owner {userId} tenants", currentUser.Email);
+        var tenants = await userRepository.GetTenantsByOwnerIdAsync(currentUser.Id);
+
+        var tenantsDtos = mapper.Map<IEnumerable<UserDto>>(tenants);
+
+        return ServiceResult<IEnumerable<UserDto>>.SuccessResult(tenantsDtos);
+    }
+    public async Task<ServiceResult<UserDto>> UpdateUserDetails(UpdateUserDto updateAppUserDto)
     {
         var currentUser = userContext.GetCurrentUser();
 
         var user = await userManager.FindByIdAsync(currentUser.Id) ??
                    throw new NotFoundException("User not found");
 
+        if (updateAppUserDto.PhoneNumber != null) 
+        {
+            var isValid = CoreUtilities.ValidatePhoneNumber(updateAppUserDto.PhoneNumber);
+            if (!isValid) 
+            {
+                return ServiceResult<UserDto>.ErrorResult(StatusCodes.Status400BadRequest, "Invalid Phone Number");
+            }
+
+            var existingPhoneNumber = await userManager.Users.AnyAsync(x => x.PhoneNumber == updateAppUserDto.PhoneNumber);
+            if (existingPhoneNumber)
+            {
+                return ServiceResult<UserDto>.ErrorResult(StatusCodes.Status400BadRequest, "Phone Number exists already!");
+            }
+        }
+
+        var originalRecord = mapper.Map<User>(user);
+
         mapper.Map(updateAppUserDto, user);
-        await userManager.UpdateAsync(user);
+        await userRepository.UpdateAsync(originalRecord, user, currentUser.Email);
+
+        var userDto = mapper.Map<UserDto>(user);
 
         logger.LogInformation("User details updated successfully for {UserId}.", user.Id);
-        return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "User updated successfully.");
+        return ServiceResult<UserDto>.SuccessResult(userDto);
     }
     public async Task<ServiceResult<string>> UpdateUserPassword(ChangePasswordDto changePasswordDto)
     {
@@ -97,7 +137,7 @@ public class UserService(
             var normalizedEmail = CoreUtilities.NormalizeEmail(emailDto.Email);
 
             // Ensure no other user has the new email
-            if (await userManager.Users.AnyAsync(x => x.Email == normalizedEmail || x.TempEmail == normalizedEmail))
+            if (await userManager.Users.AnyAsync(x => x.Email == normalizedEmail))
             {
                 await transaction.RollbackAsync();
                 return ServiceResult<string>.ErrorResult(StatusCodes.Status409Conflict, $"Email ({emailDto.Email}) already exists.");
@@ -137,6 +177,19 @@ public class UserService(
             logger.LogError(ex, "Error occurred while updating email.");
             return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError, "An error occurred while updating the email.");
         }
+    }
+    public async Task<ServiceResult<TempEmailDto?>> GetTempEmail()
+    {
+        var currentUser = userContext.GetCurrentUser();
+        var user = await userRepository.GetByUserIdAsync(currentUser.Id) ??
+                   throw new NotFoundException("User not found");
+
+        var tempEmail = new TempEmailDto()
+        {
+            TempEmail = user.TempEmail
+        };
+
+        return ServiceResult<TempEmailDto?>.SuccessResult(tempEmail);
     }
     public async Task<ServiceResult<string>> VerifyEmailAsync(VerifyNewEmailDto verifyEmailDTO)
     {
@@ -178,8 +231,6 @@ public class UserService(
             user.UserName = normalizedEmail;
             user.NormalizedEmail = normalizedEmail.ToUpper();
             user.NormalizedUserName = normalizedEmail.ToUpper();
-            user.TempEmail = null;
-            user.TempEmailConfirmed = false;
             user.EmailConfirmed = true;
             user.EmailCode = null;
             user.EmailCodeExpiration = null;
@@ -195,6 +246,7 @@ public class UserService(
 
             if (await SendEmailNotificationAsync(notificationRequest, oldEmail))
             {
+                await userRepository.RemoveTempEmailAsync(normalizedEmail);
                 await userManager.UpdateAsync(user);
                 await transaction.CommitAsync();
                 return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Email verified successfully.");

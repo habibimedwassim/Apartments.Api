@@ -19,11 +19,11 @@ public interface IApartmentRepository
     Task UpdateApartmentListAsync(List<Apartment> originalRecords, List<Apartment> updatedRecords, string userEmail,
         string[]? additionalPropertiesToExclude = null);
 
-    Task DeleteApartmentAsync(Apartment apartment, string userEmail);
-    Task RestoreApartmentAsync(Apartment apartment, string userEmail);
+    Task DeleteRestoreApartmentAsync(Apartment apartment, string userEmail);
 
     Task CommitTransactionAsync(IDbContextTransaction transaction);
     Task<IDbContextTransaction> BeginTransactionAsync();
     Task RollbackTransactionAsync(IDbContextTransaction transaction);
     Task SaveChangesAsync();
+    Task DeleteApartmentPermanentlyAsync(Apartment apartment);
 }

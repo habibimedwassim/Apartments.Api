@@ -6,6 +6,7 @@ using Apartments.Application.Dtos.UserDtos;
 using Apartments.Application.IServices;
 using Apartments.Application.Services;
 using Apartments.Domain.Common;
+using Apartments.Domain.Entities;
 using Apartments.Domain.QueryFilters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,17 +34,19 @@ public class UserController(
     public async Task<IActionResult> UpdateUserDetails([FromBody] UpdateUserDto updateUserDto)
     {
         var result = await userService.UpdateUserDetails(updateUserDto);
-        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+
+        return Ok(result.Data);
     }
 
-    [HttpPatch("change-password")]
+    [HttpPost("change-password")]
     public async Task<IActionResult> UpdateUserPassword([FromBody] ChangePasswordDto changePasswordDto)
     {
         var result = await userService.UpdateUserPassword(changePasswordDto);
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 
-    [HttpPatch("change-email")]
+    [HttpPost("change-email")]
     public async Task<IActionResult> UpdateUserEmail([FromBody] EmailDto changeEmailDto)
     {
         var result = await userService.UpdateUserEmail(changeEmailDto);
@@ -72,6 +75,25 @@ public class UserController(
         [FromQuery] ApartmentRequestQueryFilter apartmentRequestQueryFilter)
     {
         var result = await apartmentRequestService.GetApartmentRequests(apartmentRequestQueryFilter);
+        return Ok(result.Data);
+    }
+    [HttpGet("me/tenants")]
+    public async Task<IActionResult> GetMyTenants()
+    {
+        var result = await userService.GetOwnerTenants();
+        return Ok(result.Data);
+    }
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetMyTenants([FromRoute] int id)
+    {
+        var result = await userService.GetUserById(id);
+        return Ok(result.Data);
+    }
+    [HttpGet("me/requests-paged")]
+    public async Task<IActionResult> GetApartmentRequestsPaged(
+        [FromQuery] ApartmentRequestPagedQueryFilter apartmentRequestQueryFilter)
+    {
+        var result = await apartmentRequestService.GetApartmentRequestsPaged(apartmentRequestQueryFilter);
         return Ok(result);
     }
 

@@ -1,6 +1,7 @@
 ﻿using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.Exceptions;
+using System.Text.RegularExpressions;
 
 namespace Apartments.Application.Utilities;
 
@@ -90,10 +91,16 @@ public static class CoreUtilities
     }
     public static string ConstructUserFullName(string firstName, string lastName)
     {
-        if(string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName)) 
+        if (string.IsNullOrEmpty(firstName) && string.IsNullOrEmpty(lastName)) 
             return string.Empty;
 
-        return $"{firstName}, {lastName}";
+        if (string.IsNullOrEmpty(firstName) && !string.IsNullOrEmpty(lastName))
+            return lastName;
+
+        if (!string.IsNullOrEmpty(firstName) && string.IsNullOrEmpty(lastName))
+            return firstName;
+
+        return $"{firstName} {lastName}";
     }
     public static string NormalizeEmail(string email)
     {
@@ -108,5 +115,12 @@ public static class CoreUtilities
         }
 
         return email;
+    }
+    public static bool ValidatePhoneNumber(string? phoneNumber)
+    {
+        return phoneNumber != null &&
+               phoneNumber.Length == 8 &&
+               (phoneNumber.StartsWith("9") || phoneNumber.StartsWith("5") || phoneNumber.StartsWith("2")) &&
+               phoneNumber.All(char.IsDigit);
     }
 }

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using Apartments.Domain.Common;
 using System.Net.Mail;
 using System.Net;
-using Microsoft.Extensions.Logging;
+
 
 namespace Apartments.Application.Services;
 public class EmailService(

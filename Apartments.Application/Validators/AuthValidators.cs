@@ -1,5 +1,8 @@
 ﻿using Apartments.Application.Dtos.AuthDtos;
+using Apartments.Application.Utilities;
 using FluentValidation;
+using System.Diagnostics.Eventing.Reader;
+using System.Text.RegularExpressions;
 
 namespace Apartments.Application.Validators;
 
@@ -41,8 +44,8 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
             .WithMessage("Invalid Email");
 
         RuleFor(x => x.PhoneNumber)
-            .Matches(@"^\d{8}")
-            .WithMessage("Please provide a valid phone number (8 digits).")
+            .Must(CoreUtilities.ValidatePhoneNumber)
+            .WithMessage("Please provide a valid phone number.")
             .When(x => x.PhoneNumber != null);
 
         RuleFor(x => x.CIN)
@@ -59,7 +62,7 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
             .When(x => x.DateOfBirth != null)
             .WithMessage("You must be at least 18 years old.");
     }
-
+    
     private bool BeAtLeast18YearsOld(DateOnly? dateOfBirth)
     {
         if (dateOfBirth == null) return false;

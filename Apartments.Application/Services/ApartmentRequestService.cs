@@ -1,5 +1,6 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.ApartmentRequestDtos;
+using Apartments.Application.Dtos.UserDtos;
 using Apartments.Application.IServices;
 using Apartments.Application.Services.ApartmentRequestHandlers;
 using Apartments.Application.Utilities;
@@ -9,7 +10,9 @@ using Apartments.Domain.Exceptions;
 using Apartments.Domain.IRepositories;
 using Apartments.Domain.QueryFilters;
 using AutoMapper;
+using Azure.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 
 namespace Apartments.Application.Services;
@@ -43,8 +46,8 @@ public class ApartmentRequestService(
         return await rentRequestHandler.SendRentRequest(currentUser, existingApartment);
     }
 
-    public async Task<PagedResult<ApartmentRequestDto>> GetApartmentRequests(
-        ApartmentRequestQueryFilter apartmentRequestQueryFilter)
+    public async Task<PagedResult<ApartmentRequestDto>> GetApartmentRequestsPaged(
+        ApartmentRequestPagedQueryFilter apartmentRequestQueryFilter)
     {
         var apartmentRequestType = CoreUtilities.ValidateEnum<ApartmentRequestType>(apartmentRequestQueryFilter.type);
 
@@ -66,7 +69,59 @@ public class ApartmentRequestService(
 
         return result;
     }
+    public async Task<ServiceResult<string>> ScheduleMeeting(int id, MeetingDateDto meetingDate)
+    {
+        var currentUser = userContext.GetCurrentUser();
 
+        var apartmentRequest = await apartmentRequestRepository.GetApartmentRequestByIdAsync(id) ??
+                               throw new NotFoundException(nameof(ApartmentRequest), id.ToString());
+
+        if(apartmentRequest.RequestType != ApartmentRequestType.Rent.ToString())
+        {
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status400BadRequest, 
+                "Only rent requests can have a scheduled meeting!");
+        }
+
+        var originalRecord = mapper.Map<ApartmentRequest>(apartmentRequest);
+        apartmentRequest.Status = RequestStatus.MeetingScheduled;
+        apartmentRequest.RequestDate = meetingDate.MeetingDate;
+
+        await apartmentRequestRepository.UpdateApartmentRequestAsync(originalRecord, apartmentRequest, currentUser.Email);
+        return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Meeting Scheduled");
+    }
+    public async Task<ServiceResult<IEnumerable<ApartmentRequestDto>>> GetApartmentRequests(
+        ApartmentRequestQueryFilter apartmentRequestQueryFilter)
+    {
+        var apartmentRequestType = CoreUtilities.ValidateEnum<ApartmentRequestType>(apartmentRequestQueryFilter.type);
+
+        var currentUser = userContext.GetCurrentUser();
+
+        logger.LogInformation($"Retrieving {apartmentRequestType.ToString()} Requests");
+
+        var requestType = currentUser.IsAdmin ? RequestType.All :
+            currentUser.IsOwner ? RequestType.Received :
+            RequestType.Sent;
+
+        var apartments =
+            await apartmentRequestRepository.GetApartmentRequestsAsync(apartmentRequestQueryFilter, requestType,
+                currentUser.Id);
+
+        var apartmentsDto = mapper.Map<IEnumerable<ApartmentRequestDto>>(apartments);
+
+        return ServiceResult<IEnumerable<ApartmentRequestDto>>.SuccessResult(apartmentsDto);
+    }
+    public async Task<ServiceResult<UserDto>> GetTenantByRequestId(int id)
+    {
+        logger.LogInformation("Getting Tenant By Request with Id = {Id} ", id);
+        var apartmentRequest = await apartmentRequestRepository.GetApartmentRequestByIdAsync(id) ??
+                               throw new NotFoundException(nameof(ApartmentRequest), id.ToString());
+
+        var tenant = apartmentRequest.Tenant ?? 
+                               throw new NotFoundException("User not found!");
+
+        var userDto = mapper.Map<UserDto>(tenant);
+        return ServiceResult<UserDto>.SuccessResult(userDto);
+    }
     public async Task<ServiceResult<ApartmentRequestDto>> GetApartmentRequestById(int requestId)
     {
         var currentUser = userContext.GetCurrentUser();

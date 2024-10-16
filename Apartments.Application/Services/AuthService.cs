@@ -65,6 +65,8 @@ public class AuthService(
             LastName = user.LastName,
             FullName = CoreUtilities.ConstructUserFullName(user.FirstName, user.LastName),
             DateOfBirth = user.DateOfBirth,
+            PhoneNumber = user.PhoneNumber,
+            TempEmail = user.TempEmail,
             Gender = user.Gender,
             Role = user.Role ?? UserRoles.User
         };

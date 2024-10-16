@@ -68,7 +68,7 @@ public class ApartmentRequestRepository(ApplicationDbContext dbContext)
     }
 
     public async Task<PagedModel<ApartmentRequest>> GetApartmentRequestsPagedAsync(
-        ApartmentRequestQueryFilter apartmentRequestQueryFilter, RequestType requestType, string userId)
+        ApartmentRequestPagedQueryFilter apartmentRequestQueryFilter, RequestType requestType, string userId)
     {
         var pageNumber = apartmentRequestQueryFilter.pageNumber;
         var typeLower = apartmentRequestQueryFilter.type.ToLower();
@@ -117,5 +117,54 @@ public class ApartmentRequestRepository(ApplicationDbContext dbContext)
             .ToListAsync();
 
         return new PagedModel<ApartmentRequest> { Data = apartmentRequests, DataCount = totalCount };
+    }
+    public async Task<IEnumerable<ApartmentRequest>> GetApartmentRequestsAsync(ApartmentRequestQueryFilter apartmentRequestQueryFilter,
+        RequestType requestType, string userId)
+    {
+        var typeLower = apartmentRequestQueryFilter.type.ToLower();
+        var statusLower = apartmentRequestQueryFilter.status?.ToLower();
+        var apartmentId = apartmentRequestQueryFilter.apartmentId;
+
+        var baseQuery = _dbContext.ApartmentRequests
+            .Include(x => x.Tenant)
+            .Where(x => x.RequestType.ToLower() == typeLower)
+            .AsQueryable();
+
+        if (requestType == RequestType.Received)
+            baseQuery = baseQuery.Where(x => x.OwnerId == userId);
+        else if (requestType == RequestType.Sent) baseQuery = baseQuery.Where(x => x.TenantId == userId);
+
+        if (apartmentId != null) baseQuery = baseQuery.Where(x => x.ApartmentId == apartmentId);
+
+        if (!string.IsNullOrEmpty(statusLower)) baseQuery = baseQuery.Where(x => x.Status.ToLower() == statusLower);
+
+        // Get total count before pagination
+        var totalCount = await baseQuery.CountAsync();
+
+        // Default sorting if no sortBy is provided
+        var sortBy = apartmentRequestQueryFilter.sortBy ?? nameof(ApartmentRequest.CreatedDate);
+        var sortDirection = apartmentRequestQueryFilter.sortDirection;
+
+        // Dictionary for mapping sort columns
+        var columnSelector = new Dictionary<string, Expression<Func<ApartmentRequest, object>>>
+        {
+            { nameof(ApartmentRequest.CreatedDate), x => x.CreatedDate }
+        };
+
+        // Apply sorting
+        if (columnSelector.ContainsKey(sortBy))
+        {
+            var selectedColumn = columnSelector[sortBy];
+
+            baseQuery = sortDirection == SortDirection.Descending
+                ? baseQuery.OrderByDescending(selectedColumn)
+                : baseQuery.OrderBy(selectedColumn);
+        }
+
+        // Apply pagination
+        var apartmentRequests = await baseQuery
+            .ToListAsync();
+
+        return apartmentRequests;
     }
 }

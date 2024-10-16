@@ -1,5 +1,6 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.ApartmentRequestDtos;
+using Apartments.Application.Dtos.UserDtos;
 using Apartments.Application.IServices;
 using Apartments.Domain.QueryFilters;
 using Microsoft.AspNetCore.Authorization;
@@ -14,9 +15,9 @@ public class ApartmentRequestController(IApartmentRequestService apartmentReques
 {
     [HttpGet]
     public async Task<IActionResult> GetApartmentRequests(
-        [FromQuery] ApartmentRequestQueryFilter apartmentRequestQueryFilter)
+        [FromQuery] ApartmentRequestPagedQueryFilter apartmentRequestQueryFilter)
     {
-        var result = await apartmentRequestService.GetApartmentRequests(apartmentRequestQueryFilter);
+        var result = await apartmentRequestService.GetApartmentRequestsPaged(apartmentRequestQueryFilter);
         return Ok(result);
     }
 
@@ -27,6 +28,21 @@ public class ApartmentRequestController(IApartmentRequestService apartmentReques
         if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
+    }
+
+    [HttpGet("{id:int}/user")]
+    public async Task<IActionResult> GetTenantFromApartmentRequest([FromRoute] int id)
+    {
+        var result = await apartmentRequestService.GetTenantByRequestId(id);
+        return Ok(result.Data);
+    }
+
+    [HttpPost("{id:int}/meeting")]
+    public async Task<IActionResult> ApartmentRequestMeeting([FromRoute] int id, [FromBody] MeetingDateDto meetingDate)
+    {
+        ServiceResult<string> result = await apartmentRequestService.ScheduleMeeting(id, meetingDate);
+
+        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 
     [HttpPost("{id:int}")]

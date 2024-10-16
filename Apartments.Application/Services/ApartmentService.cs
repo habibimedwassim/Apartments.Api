@@ -50,7 +50,7 @@ public class ApartmentService(
         return ServiceResult<ApartmentDto>.SuccessResult(apartmentDto);
     }
 
-    public async Task<ServiceResult<ApartmentDto>> CreateApartment(CreateApartmentDto createApartmentDto)
+    public async Task<ServiceResult<string>> CreateApartment(CreateApartmentDto createApartmentDto)
     {
         var currentUser = userContext.GetCurrentUser();
 
@@ -84,7 +84,7 @@ public class ApartmentService(
             {
                 var message = "An error occurred while attempting to create an apartment.";
                 logger.LogWarning(message);
-                return ServiceResult<ApartmentDto>.ErrorResult(StatusCodes.Status400BadRequest, message);
+                return ServiceResult<string>.ErrorResult(StatusCodes.Status400BadRequest, message);
             }
 
             // Upload photos to Azure Blob Storage and save URLs in the database
@@ -101,25 +101,19 @@ public class ApartmentService(
             // Commit the transaction
             await transaction.CommitAsync();
 
-            // Map to the DTO to return as a response
-            var createdApartmentDto = mapper.Map<ApartmentDto>(createdApartment);
-            createdApartmentDto.ApartmentPhotos = mapper.Map<List<ApartmentPhotoDto>>(apartmentPhotos);
-
-            logger.LogInformation("Apartment with ID {ApartmentId} created successfully by user {UserId}.",
-                createdApartment.Id, currentUser.Id);
-            return ServiceResult<ApartmentDto>.SuccessResult(createdApartmentDto, "Apartment created successfully.");
+            return ServiceResult<string>.InfoResult(StatusCodes.Status201Created, "Apartment created successfully.");
         }
         catch (Exception ex)
         {
             // Rollback in case of any exceptions
             await transaction.RollbackAsync();
             logger.LogError(ex, "An error occurred while creating the apartment with photos. Transaction rolled back.");
-            return ServiceResult<ApartmentDto>.ErrorResult(StatusCodes.Status500InternalServerError,
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError,
                 "An error occurred while creating the apartment with photos.");
         }
     }
 
-    public async Task<ServiceResult<ApartmentDto>> UpdateApartment(int id, UpdateApartmentDto updateApartmentDto)
+    public async Task<ServiceResult<string>> UpdateApartment(int id, UpdateApartmentDto updateApartmentDto)
     {
         var currentUser = userContext.GetCurrentUser();
 
@@ -137,44 +131,48 @@ public class ApartmentService(
 
         await apartmentRepository.UpdateApartmentAsync(originalApartment, existingApartment, currentUser.Email);
 
-        var updatedApartmentDto = mapper.Map<ApartmentDto>(existingApartment);
-        updatedApartmentDto.ApartmentPhotos = mapper.Map<List<ApartmentPhotoDto>>(existingApartment.ApartmentPhotos);
-
-        return ServiceResult<ApartmentDto>.SuccessResult(updatedApartmentDto, "Apartment updated successfully.");
+        return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Apartment updated successfully.");
     }
 
-    public async Task<ServiceResult<string>> DeleteApartment(int id)
+    public async Task<ServiceResult<string>> DeleteApartment(int id, bool permanent)
     {
-        var currentUser = userContext.GetCurrentUser();
+        try
+        {
+            var currentUser = userContext.GetCurrentUser();
 
-        logger.LogInformation("Deleting Apartment with Id = {Id}", id);
+            logger.LogInformation("Deleting Apartment with Id = {Id}", id);
 
-        var apartment = await apartmentRepository.GetApartmentByIdAsync(id) ??
-                        throw new NotFoundException(nameof(Apartment), id.ToString());
+            var apartment = await apartmentRepository.GetApartmentByIdAsync(id) ??
+                            throw new NotFoundException(nameof(Apartment), id.ToString());
 
-        if (!authorizationManager.AuthorizeApartment(currentUser, ResourceOperation.Delete, apartment))
-            throw new ForbiddenException($"{currentUser.Email} not authorized to Delete this Apartment");
+            if (!authorizationManager.AuthorizeApartment(currentUser, ResourceOperation.Delete, apartment))
+                throw new ForbiddenException($"{currentUser.Email} not authorized to Archive/Restore this Apartment");
 
-        await apartmentRepository.DeleteApartmentAsync(apartment, currentUser.Email);
+            if (permanent)
+            {
+                await apartmentRepository.DeleteApartmentPermanentlyAsync(apartment);
+                return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Apartment deleted permanently.");
+            }
 
-        return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Apartment deleted successfully.");
-    }
-
-    public async Task<ServiceResult<string>> RestoreApartment(int id)
-    {
-        var currentUser = userContext.GetCurrentUser();
-
-        logger.LogInformation("Restoring Apartment with Id = {Id}", id);
-
-        var apartment = await apartmentRepository.GetApartmentByIdAsync(id) ??
-                        throw new NotFoundException(nameof(Apartment), id.ToString());
-
-        if (!authorizationManager.AuthorizeApartment(currentUser, ResourceOperation.Restore, apartment))
-            throw new ForbiddenException($"{currentUser.Email} not authorized to Restore this Apartment");
-
-        await apartmentRepository.RestoreApartmentAsync(apartment, currentUser.Email);
-
-        return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Apartment restored successfully.");
+            await apartmentRepository.DeleteRestoreApartmentAsync(apartment, currentUser.Email);
+            var message = apartment.IsDeleted ? "archived successfully" : "restored successfully";
+            return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, $"Apartment {message}.");
+        }
+        catch (NotFoundException ex)
+        {
+            logger.LogWarning(ex, "Apartment with Id = {Id} not found", id);
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status404NotFound, ex.Message);
+        }
+        catch (ForbiddenException ex)
+        {
+            logger.LogWarning(ex, ex.Message);
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status403Forbidden, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while deleting apartment with Id = {Id}", id);
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError, "An error occurred while deleting the apartment.");
+        }
     }
 
     public async Task<ServiceResult<IEnumerable<ApartmentDto>>> GetOwnedApartments(int? ownerId = null)

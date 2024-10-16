@@ -2,8 +2,9 @@
 
 namespace Apartments.Domain.QueryFilters;
 
-public class ApartmentRequestQueryFilter
+public class ApartmentRequestPagedQueryFilter
 {
+    public int pageNumber { get; set; }
     public string type { get; set; } = default!;
     public string? sortBy { get; set; }
     public SortDirection sortDirection { get; set; } = SortDirection.Descending;

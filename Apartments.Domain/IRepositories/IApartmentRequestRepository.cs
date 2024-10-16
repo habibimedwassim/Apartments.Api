@@ -15,7 +15,10 @@ public interface IApartmentRequestRepository
         string[]? additionalPropertiesToExclude = null);
 
     Task<PagedModel<ApartmentRequest>> GetApartmentRequestsPagedAsync(
-        ApartmentRequestQueryFilter apartmentRequestQueryFilter, RequestType requestType, string id);
+        ApartmentRequestPagedQueryFilter apartmentRequestQueryFilter, RequestType requestType, string id);
+
+    Task<IEnumerable<ApartmentRequest>> GetApartmentRequestsAsync(ApartmentRequestQueryFilter apartmentRequestQueryFilter, 
+        RequestType requestType, string id);
 
     Task<ApartmentRequest?> GetApartmentRequestWithStatusAsync(int apartmentId, string tenantId, string type,
         string status);

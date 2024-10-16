@@ -64,4 +64,28 @@ public class UserRepository(ApplicationDbContext dbContext) : BaseRepository<Use
     {
         return await _dbContext.Database.BeginTransactionAsync();
     }
+
+    public async Task RemoveTempEmailAsync(string tempEmail)
+    {
+        var normalizedEmail = tempEmail.ToUpper();
+
+        await _dbContext.Users
+            .Where(x => x.TempEmail != null && x.TempEmail.ToUpper() == normalizedEmail)
+            .ForEachAsync(user => 
+                { 
+                    user.TempEmail = null;
+                });
+
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<User>> GetTenantsByOwnerIdAsync(string ownerId)
+    {
+        return await _dbContext.Apartments
+            .Where(apartment => apartment.OwnerId == ownerId && apartment.TenantId != null)
+            .Include(apartment => apartment.Tenant)
+            .Select(apartment => apartment.Tenant!)
+            .ToListAsync()
+            ?? Enumerable.Empty<User>();
+    }
 }

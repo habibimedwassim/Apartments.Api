@@ -51,19 +51,33 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
         return await _dbContext.Apartments.Include(x => x.ApartmentPhotos)
             .FirstOrDefaultAsync(x => x.TenantId == tenantId);
     }
-    public async Task DeleteApartmentAsync(Apartment apartment, string userEmail)
+    public async Task DeleteRestoreApartmentAsync(Apartment apartment, string userEmail)
     {
-        bool action = true;
-        if (apartment.IsDeleted) action = false;
+        var action = !apartment.IsDeleted;
 
         await DeleteRestoreAsync(apartment, action, userEmail, apartment.Id.ToString());
     }
 
-    public async Task RestoreApartmentAsync(Apartment apartment, string userEmail)
+    public async Task DeleteApartmentPermanentlyAsync(Apartment apartment)
     {
-        if (!apartment.IsDeleted) return;
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            var apartmentRequests = await _dbContext.ApartmentRequests.Where(x => x.ApartmentId == apartment.Id).ToListAsync();
+            var rentTransactions = await _dbContext.RentTransactions.Where(x => x.ApartmentId == apartment.Id).ToListAsync();
 
-        await DeleteRestoreAsync(apartment, false, userEmail, apartment.Id.ToString());
+            _dbContext.Apartments.Remove(apartment);
+            _dbContext.ApartmentPhotos.RemoveRange(apartment.ApartmentPhotos);
+            _dbContext.ApartmentRequests.RemoveRange(apartmentRequests);
+            _dbContext.RentTransactions.RemoveRange(rentTransactions);
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task<Apartment?> GetApartmentByIdAsync(int id)
@@ -173,6 +187,7 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
     {
         return await _dbContext.Apartments
                                .Include(x => x.ApartmentPhotos)
+                               .Include(x => x.Tenant)
                                .Where(x => x.OwnerId == ownerId)
                                .OrderByDescending(x => x.CreatedDate)
                                .ToListAsync();

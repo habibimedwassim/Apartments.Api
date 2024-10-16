@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Apartments.Application.Dtos.UserDtos;
+using Microsoft.AspNetCore.Http;
 
 namespace Apartments.Application.Common;
 
@@ -30,5 +31,10 @@ public class ServiceResult<T>
     public static ServiceResult<T> InfoResult(int statusCode, string message)
     {
         return new ServiceResult<T>(true, statusCode, message, default);
+    }
+
+    public static implicit operator ServiceResult<T>(List<UserDto> v)
+    {
+        throw new NotImplementedException();
     }
 }

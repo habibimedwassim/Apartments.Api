@@ -11,11 +11,10 @@ namespace Apartments.API.Controllers;
 [Authorize]
 public class RentTransactionController(IRentTransactionService rentTransactionService) : ControllerBase
 {
-    [HttpPost]
-    public async Task<IActionResult> CreateRentTransaction([FromBody] CreateRentTransactionDto createRentTransactionDto)
+    [HttpPost("{id:int}")]
+    public async Task<IActionResult> CreateRentTransaction([FromRoute] int id)
     {
-        var result =
-            await rentTransactionService.CreateRentTransactionForApartment(createRentTransactionDto.ApartmentId);
+        var result = await rentTransactionService.CreateRentTransactionForApartment(id);
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 

@@ -16,4 +16,6 @@ public interface IUserRepository
 
     Task UpdateAsync(User originalRecord, User updatedRecord, string userEmail,
         string[]? additionalPropertiesToExclude = null);
+    Task RemoveTempEmailAsync(string normalizedEmail);
+    Task<IEnumerable<User>> GetTenantsByOwnerIdAsync(string id);
 }

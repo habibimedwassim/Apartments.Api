@@ -10,4 +10,5 @@ public class ApartmentRequestDto
     public string? Reason { get; set; }
     public string Status { get; set; } = default!;
     public string RequestType { get; set; } = default!;
+    public bool IsDeleted { get; set; }
 }
