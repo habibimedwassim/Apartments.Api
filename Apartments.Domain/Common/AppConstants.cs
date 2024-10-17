@@ -76,7 +76,8 @@ public enum ApartmentRequestType
 {
     Rent,
     Leave,
-    Dismiss
+    Dismiss,
+    Payment
 }
 
 public enum PaymentRequestAction

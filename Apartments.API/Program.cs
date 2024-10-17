@@ -4,6 +4,7 @@ using Apartments.API.Middlewares;
 using Apartments.Application.Extensions;
 using Apartments.Infrastructure.Extensions;
 using Apartments.Infrastructure.Seeders;
+using Apartments.Infrastructure.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +41,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseWebSockets();
+
 app.UseHttpsRedirection();
+
+app.MapHub<NotificationHub>("/notifications");
 
 app.MapControllers();
 

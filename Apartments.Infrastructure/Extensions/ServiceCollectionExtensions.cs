@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Apartments.Domain.IRepositories;
 using Apartments.Infrastructure.Repositories;
 using Apartments.Infrastructure.Seeders;
+using Apartments.Application.IServices;
+using Apartments.Infrastructure.Hubs;
 
 namespace Apartments.Infrastructure.Extensions;
 
@@ -29,5 +31,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IApartmentPhotoRepository, ApartmentPhotoRepository>();
         services.AddScoped<IRentTransactionRepository, RentTransactionRepository>();
         services.AddScoped<IApartmentRequestRepository, ApartmentRequestRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+
+        services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
     }
 }

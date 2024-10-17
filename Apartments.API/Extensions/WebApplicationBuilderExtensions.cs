@@ -1,5 +1,6 @@
 ﻿using Apartments.API.Middlewares;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -13,9 +14,10 @@ public static class WebApplicationBuilderExtensions
         {
             options.AddPolicy("AllowSpecificOrigin", policy =>
             {
-                policy.WithOrigins("http://localhost:5173")
+                policy.WithOrigins("http://localhost:5173") // Frontend URL
                       .AllowAnyHeader()
-                      .AllowAnyMethod();
+                      .AllowAnyMethod()
+                      .AllowCredentials(); // Allow credentials for WebSockets
             });
         });
 

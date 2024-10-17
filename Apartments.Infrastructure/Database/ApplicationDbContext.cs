@@ -13,6 +13,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ApartmentRequest> ApartmentRequests { get; init; }
     public DbSet<ApartmentPhoto> ApartmentPhotos { get; init; }
     public DbSet<RentTransaction> RentTransactions { get; init; }
+    public DbSet<Notification> Notifications { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

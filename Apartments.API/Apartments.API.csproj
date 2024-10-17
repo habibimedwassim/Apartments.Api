@@ -11,13 +11,13 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Serilog.AspNetCore" Version="8.0.2"/>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3"/>
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Apartments.Application\Apartments.Application.csproj"/>
-        <ProjectReference Include="..\Apartments.Infrastructure\Apartments.Infrastructure.csproj"/>
+        <ProjectReference Include="..\Apartments.Application\Apartments.Application.csproj" />
+        <ProjectReference Include="..\Apartments.Infrastructure\Apartments.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>

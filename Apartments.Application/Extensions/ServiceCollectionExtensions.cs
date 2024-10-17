@@ -2,10 +2,12 @@
 using Apartments.Application.IServices;
 using Apartments.Application.Services;
 using Apartments.Application.Services.ApartmentRequestHandlers;
+using Apartments.Application.Utilities;
 using Apartments.Domain.Common;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -30,6 +32,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRentTransactionService, RentTransactionService>();
         services.AddScoped<IAzureBlobStorageService, AzureBlobStorageService>();
         services.AddScoped<IApartmentRequestService, ApartmentRequestService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         services.AddHttpContextAccessor();
 
@@ -41,8 +44,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRentRequestHandler, RentRequestHandler>();
         services.AddScoped<ILeaveRequestHandler, LeaveRequestHandler>();
         services.AddScoped<IDismissRequestHandler, DismissRequestHandler>();
+        services.AddSingleton<IUserIdProvider, ClaimsPrincipalUserIdProvider>();
 
         services.RegisterConfigurations(configuration);
+
+        services.AddSignalR();
     }
 
     private static void RegisterConfigurations(this IServiceCollection services, IConfiguration configuration)
@@ -75,6 +81,24 @@ public static class ServiceCollectionExtensions
                 IssuerSigningKey = new SymmetricSecurityKey(
                     Encoding.UTF8.GetBytes(jwtSettings.Key)
                 )
+            };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    // Allow token in query string for SignalR WebSockets
+                    var accessToken = context.Request.Query["access_token"];
+
+                    // If the request is for the SignalR hub...
+                    var path = context.HttpContext.Request.Path;
+                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notifications"))
+                    {
+                        // Attach the token to the request
+                        context.Token = accessToken;
+                    }
+                    return Task.CompletedTask;
+                }
             };
         });
     }

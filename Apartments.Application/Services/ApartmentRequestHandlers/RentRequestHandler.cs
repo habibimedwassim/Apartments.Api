@@ -1,9 +1,11 @@
 ﻿using Apartments.Application.Common;
+using Apartments.Application.IServices;
 using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.IRepositories;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
 namespace Apartments.Application.Services.ApartmentRequestHandlers;
@@ -21,7 +23,9 @@ public class RentRequestHandler(
     IMapper mapper,
     IApartmentRepository apartmentRepository,
     IRentTransactionRepository rentTransactionRepository,
-    IApartmentRequestRepository apartmentRequestRepository
+    IApartmentRequestRepository apartmentRequestRepository,
+    INotificationRepository notificationRepository,
+    INotificationDispatcher notificationDispatcher
 ) : IRentRequestHandler
 {
     public async Task<ServiceResult<string>> ApproveReject(CurrentUser currentUser, ApartmentRequest apartmentRequest,
@@ -74,7 +78,7 @@ public class RentRequestHandler(
     {
         try
         {
-            var requestType = ApartmentRequestType.Rent;
+            var requestType = ApartmentRequestType.Rent.ToString();
 
             if (existingApartment.IsOccupied)
                 return ServiceResult<string>.ErrorResult(StatusCodes.Status401Unauthorized,
@@ -82,12 +86,12 @@ public class RentRequestHandler(
 
             var existingRequest =
                 await apartmentRequestRepository.GetApartmentRequestWithStatusAsync(existingApartment.Id,
-                    currentUser.Id, requestType.ToString(), RequestStatus.Pending);
+                    currentUser.Id, requestType, RequestStatus.Pending);
 
             if (existingRequest != null)
                 return ServiceResult<string>.ErrorResult(StatusCodes.Status401Unauthorized, "Request exists already!");
 
-            var apartmentRequest = new ApartmentRequest(requestType.ToString())
+            var apartmentRequest = new ApartmentRequest(requestType)
             {
                 TenantId = currentUser.Id,
                 ApartmentId = existingApartment.Id,
@@ -96,6 +100,21 @@ public class RentRequestHandler(
             };
 
             await apartmentRequestRepository.AddApartmentRequestAsync(apartmentRequest);
+
+            // Trigger Notification
+            var notificationMessage = $"A new rent request has been submitted for your apartment '{existingApartment.Title}' ";
+            await notificationDispatcher.SendNotificationAsync(existingApartment.OwnerId, 
+                notificationMessage, requestType);
+
+            // Store it in the Db
+            var notification = new Notification
+            {
+                UserId = apartmentRequest.OwnerId,
+                Message = notificationMessage,
+                Type = requestType,
+                IsRead = false
+            };
+            await notificationRepository.AddNotificationAsync(notification);
 
             return ServiceResult<string>.InfoResult(StatusCodes.Status201Created,
                 "Apartment application sent successfully.");
@@ -112,6 +131,8 @@ public class RentRequestHandler(
     {
         try
         {
+            var requestType = ApartmentRequestType.Rent.ToString();
+
             // Update apartment IsOccupied = True
             var apartment = apartmentRequest.Apartment;
             var originalApartment = mapper.Map<Apartment>(apartment);
@@ -138,9 +159,25 @@ public class RentRequestHandler(
                 Status = RequestStatus.Paid.ToString()
             };
             await rentTransactionRepository.AddRentTransactionAsync(rentTransaction);
+
+            // Trigger Notification
+            var notificationMessage = "Your rent request has been approved";
+            await notificationDispatcher.SendNotificationAsync(apartmentRequest.TenantId, notificationMessage,
+                requestType);
+
+            // Store it in the Db
+            var notification = new Notification
+            {
+                UserId = apartmentRequest.OwnerId,
+                Message = notificationMessage,
+                Type = requestType,
+                IsRead = false
+            };
+            await notificationRepository.AddNotificationAsync(notification);
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Error while approving rent request");
             throw;
         }
     }
