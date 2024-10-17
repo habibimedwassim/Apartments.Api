@@ -5,6 +5,6 @@ namespace Apartments.Domain.IRepositories;
 public interface INotificationRepository
 {
     Task<Notification> AddNotificationAsync(Notification notification);
-    Task<IEnumerable<Notification>> GetNotificationsAsync(string id);
+    Task<IEnumerable<Notification>> GetAllUnreadNotificationsAsync(string id);
     Task MarkAsReadAsync(string id, string type);
 }

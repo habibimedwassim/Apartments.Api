@@ -76,6 +76,12 @@ public enum ApartmentRequestType
 {
     Rent,
     Leave,
+    Dismiss
+}
+public enum NotificationType
+{
+    Rent,
+    Leave,
     Dismiss,
     Payment
 }

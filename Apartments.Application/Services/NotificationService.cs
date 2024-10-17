@@ -1,6 +1,8 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.NotificationDtos;
 using Apartments.Application.IServices;
+using Apartments.Application.Utilities;
+using Apartments.Domain.Common;
 using Apartments.Domain.IRepositories;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
@@ -20,7 +22,7 @@ public class NotificationService(
 
         logger.LogInformation("Retrieving User ({Email}) unread notifications", currentUser.Email);
 
-        var notifications = await notificationRepository.GetNotificationsAsync(currentUser.Id);
+        var notifications = await notificationRepository.GetAllUnreadNotificationsAsync(currentUser.Id);
 
         var notificationsDtos = mapper.Map<IEnumerable<NotificationDto>>(notifications);
 
@@ -30,9 +32,10 @@ public class NotificationService(
     public async Task MarkAsReadAsync(string type)
     {
         var currentUser = userContext.GetCurrentUser();
+        var requestType = CoreUtilities.ValidateEnumToString<NotificationType>(type);
 
         logger.LogInformation("Marking notifications as read for User ({Email})", currentUser.Email);
 
-        await notificationRepository.MarkAsReadAsync(currentUser.Id, type);
+        await notificationRepository.MarkAsReadAsync(currentUser.Id, requestType.ToLower());
     }
 }

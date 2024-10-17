@@ -12,6 +12,18 @@ public static class CoreUtilities
         "ID", "Id", "User", "Apartment", "Tenant", "CreatedDate"
     };
 
+    public static string ValidateEnumToString<T>(string type) where T : struct, Enum
+    {
+        if (!Enum.TryParse<T>(type, true, out var result))
+        {
+            throw new BadRequestException(
+                $"Invalid type. Allowed values are: {string.Join(", ", Enum.GetNames(typeof(T)))}");
+        }
+
+        // Return the string representation of the enum value
+        return result.ToString();
+    }
+
     public static T ValidateEnum<T>(string type) where T : struct, Enum
     {
         if (!Enum.TryParse<T>(type, true, out var result))

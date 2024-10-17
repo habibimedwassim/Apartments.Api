@@ -8,6 +8,9 @@ public class NotificationConfigurations : IEntityTypeConfiguration<Notification>
 {
     public void Configure(EntityTypeBuilder<Notification> builder)
     {
+        builder.HasIndex(a => a.UserId);
+        builder.HasIndex(a => a.IsRead);
+
         builder.Property(a => a.UserId)
             .HasMaxLength(50);
 

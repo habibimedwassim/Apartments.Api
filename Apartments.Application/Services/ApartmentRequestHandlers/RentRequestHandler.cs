@@ -102,16 +102,17 @@ public class RentRequestHandler(
             await apartmentRequestRepository.AddApartmentRequestAsync(apartmentRequest);
 
             // Trigger Notification
+            var notificationType = NotificationType.Rent.ToString().ToLower();
             var notificationMessage = $"A new rent request has been submitted for your apartment '{existingApartment.Title}' ";
             await notificationDispatcher.SendNotificationAsync(existingApartment.OwnerId, 
-                notificationMessage, requestType);
+                notificationMessage, notificationType);
 
             // Store it in the Db
             var notification = new Notification
             {
                 UserId = apartmentRequest.OwnerId,
                 Message = notificationMessage,
-                Type = requestType,
+                Type = notificationType,
                 IsRead = false
             };
             await notificationRepository.AddNotificationAsync(notification);
@@ -131,7 +132,7 @@ public class RentRequestHandler(
     {
         try
         {
-            var requestType = ApartmentRequestType.Rent.ToString();
+            var notificationType = NotificationType.Rent.ToString().ToLower();
 
             // Update apartment IsOccupied = True
             var apartment = apartmentRequest.Apartment;
@@ -163,14 +164,14 @@ public class RentRequestHandler(
             // Trigger Notification
             var notificationMessage = "Your rent request has been approved";
             await notificationDispatcher.SendNotificationAsync(apartmentRequest.TenantId, notificationMessage,
-                requestType);
+                notificationType);
 
             // Store it in the Db
             var notification = new Notification
             {
                 UserId = apartmentRequest.OwnerId,
                 Message = notificationMessage,
-                Type = requestType,
+                Type = notificationType,
                 IsRead = false
             };
             await notificationRepository.AddNotificationAsync(notification);
