@@ -17,11 +17,10 @@ public class ApartmentPhotoRepository(ApplicationDbContext dbContext)
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task DeleteApartmentPhotoAsync(ApartmentPhoto apartmentPhoto, string userEmail)
+    public async Task DeleteApartmentPhotoAsync(ApartmentPhoto apartmentPhoto)
     {
-        if (apartmentPhoto.IsDeleted) return;
-
-        await DeleteRestoreAsync(apartmentPhoto, true, userEmail, apartmentPhoto.Id.ToString());
+        _dbContext.Remove(apartmentPhoto);
+        await _dbContext.SaveChangesAsync();
     }
 
     public async Task RestoreApartmentAsync(ApartmentPhoto apartmentPhoto, string userEmail)

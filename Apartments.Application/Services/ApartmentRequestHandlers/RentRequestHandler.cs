@@ -24,6 +24,7 @@ public class RentRequestHandler(
     IApartmentRepository apartmentRepository,
     IRentTransactionRepository rentTransactionRepository,
     IApartmentRequestRepository apartmentRequestRepository,
+    IEmailService emailService,
     INotificationRepository notificationRepository,
     INotificationDispatcher notificationDispatcher
 ) : IRentRequestHandler
@@ -169,7 +170,7 @@ public class RentRequestHandler(
             // Store it in the Db
             var notification = new Notification
             {
-                UserId = apartmentRequest.OwnerId,
+                UserId = apartmentRequest.TenantId,
                 Message = notificationMessage,
                 Type = notificationType,
                 IsRead = false

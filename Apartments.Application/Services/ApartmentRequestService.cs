@@ -22,13 +22,16 @@ public class ApartmentRequestService(
     IMapper mapper,
     IUserContext userContext,
     IAuthorizationManager authorizationManager,
+    IEmailService emailService,
     IDismissRequestHandler dismissTenantHandler,
     ILeaveRequestHandler leaveRequestHandler,
     IRentRequestHandler rentRequestHandler,
     IUserRepository userRepository,
     IApartmentRepository apartmentRepository,
     IApartmentRequestRepository apartmentRequestRepository,
-    IRentTransactionRepository rentTransactionRepository)
+    IRentTransactionRepository rentTransactionRepository,
+    INotificationRepository notificationRepository,
+    INotificationDispatcher notificationDispatcher)
     : IApartmentRequestService
 {
     public async Task<ServiceResult<string>> ApplyForApartment(int apartmentId)
@@ -39,6 +42,14 @@ public class ApartmentRequestService(
                 ApartmentRequestType.Rent)) throw new ForbiddenException("Not authorized to apply for an apartment");
 
         logger.LogInformation("Applying for Apartment with ID = {ApartmentId}", apartmentId);
+
+        var userApartment = await apartmentRepository.GetApartmentByTenantId(currentUser.Id);
+
+        if(userApartment != null)
+        {
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status401Unauthorized, 
+                "Leave your current apartment before applying for a new one");
+        }
 
         var existingApartment = await apartmentRepository.GetApartmentByIdAsync(apartmentId) ??
                                 throw new NotFoundException(nameof(Apartment), apartmentId.ToString());
@@ -76,7 +87,10 @@ public class ApartmentRequestService(
         var apartmentRequest = await apartmentRequestRepository.GetApartmentRequestByIdAsync(id) ??
                                throw new NotFoundException(nameof(ApartmentRequest), id.ToString());
 
-        if(apartmentRequest.RequestType != ApartmentRequestType.Rent.ToString())
+        var tenant = apartmentRequest.Tenant ?? throw new NotFoundException("User not found!");
+        var owner = apartmentRequest.Owner ?? throw new NotFoundException("User not found!");
+
+        if (apartmentRequest.RequestType != ApartmentRequestType.Rent.ToString())
         {
             return ServiceResult<string>.ErrorResult(StatusCodes.Status400BadRequest, 
                 "Only rent requests can have a scheduled meeting!");
@@ -87,6 +101,28 @@ public class ApartmentRequestService(
         apartmentRequest.RequestDate = meetingDate.MeetingDate;
 
         await apartmentRequestRepository.UpdateApartmentRequestAsync(originalRecord, apartmentRequest, currentUser.Email);
+
+        // Trigger Notification
+        var notificationType = NotificationType.Rent.ToString().ToLower();
+        var notificationMessage = $"A meeting for Apartment '{apartmentRequest.Apartment.Title}' has been scheduled " +
+            $"on {meetingDate.MeetingDate.ToString()}";
+        await notificationDispatcher.SendNotificationAsync(tenant.Id,
+            notificationMessage, notificationType);
+
+        // Store it in the Db
+        var notification = new Notification
+        {
+            UserId = tenant.Id,
+            Message = notificationMessage,
+            Type = notificationType,
+            IsRead = false
+        };
+        await notificationRepository.AddNotificationAsync(notification);
+
+        var emailMessage = notificationMessage + 
+                            $"<br/>For more details, you can contact {owner.Email} or give them a call at +216-{owner.PhoneNumber}";
+        await emailService.SendEmailAsync(tenant.Email!, "Meeting Scheduled", notificationMessage);
+
         return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Meeting Scheduled");
     }
     public async Task<ServiceResult<IEnumerable<ApartmentRequestDto>>> GetApartmentRequests(

@@ -114,6 +114,14 @@ public class UserController(
 
         return Ok(result.Data);
     }
+    //[HttpGet("apartments/{apartmentId:int}")]
+    //public async Task<IActionResult> GetOwnedApartmentById([FromRoute] int userId, [FromRoute] int apartmentId)
+    //{
+    //    var result = await apartmentService.GetOwnedApartments(id);
+    //    if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+
+    //    return Ok(result.Data);
+    //}
 
     [HttpGet("{id:int}/transactions")]
     public async Task<IActionResult> GetRentTransactions([FromRoute] int id)

@@ -27,7 +27,7 @@ public class RentTransactionRepository(ApplicationDbContext dbContext)
             .Include(x => x.Apartment)
             .Include(x => x.Apartment.ApartmentPhotos).AsQueryable();
 
-        if (!string.IsNullOrEmpty(ownerRole))
+        if (!string.IsNullOrEmpty(ownerRole) && ownerRole == UserRoles.Owner)
         {
             query = query.Where(x => x.OwnerId == id);
         }
@@ -65,11 +65,13 @@ public class RentTransactionRepository(ApplicationDbContext dbContext)
     public async Task DeletePendingRentTransactionsAsync(RentTransaction rentTransaction)
     {
         var transactionsToRemove = await _dbContext.RentTransactions
-                                                   .Where(x => x.TenantId == rentTransaction.TenantId &&
-                                                               x.ApartmentId == rentTransaction.ApartmentId &&
+                                                   .Where(x => x.ApartmentId == rentTransaction.ApartmentId &&
                                                                x.OwnerId == rentTransaction.OwnerId &&
-                                                               x.Status == RequestStatus.Pending)
+                                                               (x.Status == RequestStatus.Pending || 
+                                                               x.Status == RequestStatus.MeetingScheduled))
                                                    .ToListAsync();
+
         _dbContext.RentTransactions.RemoveRange(transactionsToRemove);
+        await _dbContext.SaveChangesAsync();
     }
 }

@@ -2,5 +2,5 @@
 
 public class MeetingDateDto
 {
-    public DateOnly? MeetingDate {  get; set; }
+    public DateOnly MeetingDate {  get; set; }
 }

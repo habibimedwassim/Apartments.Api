@@ -7,7 +7,7 @@ public interface IApartmentPhotoRepository
 {
     Task<List<ApartmentPhoto>> GetPhotosInBatchesAsync(int batchSize);
     Task AddApartmentPhotosAsync(IEnumerable<ApartmentPhoto> apartmentPhotos);
-    Task DeleteApartmentPhotoAsync(ApartmentPhoto apartmentPhoto, string userEmail);
+    Task DeleteApartmentPhotoAsync(ApartmentPhoto apartmentPhoto);
     Task PermanentDeleteApartmentPhotosAsync(IEnumerable<ApartmentPhoto> apartmentPhotos);
     Task RestoreApartmentAsync(ApartmentPhoto apartmentPhoto, string userEmail);
 

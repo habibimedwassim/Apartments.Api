@@ -115,28 +115,42 @@ public class ApartmentPhotoService(
 
     public async Task<ServiceResult<string>> DeletePhotoFromApartment(int photoId, int apartmentId)
     {
-        var currentUser = userContext.GetCurrentUser();
+        await using var transaction = await apartmentRepository.BeginTransactionAsync();
+        try
+        {
+            var currentUser = userContext.GetCurrentUser();
 
-        logger.LogInformation("Deleting photo with Id = {photoId} from apartment with Id = {apartmentId}", photoId,
-            apartmentId);
+            logger.LogInformation("Deleting photo with Id = {photoId} from apartment with Id = {apartmentId}", photoId,
+                apartmentId);
 
-        var apartment = await apartmentRepository.GetApartmentByIdAsync(apartmentId) ??
-                        throw new NotFoundException(nameof(Apartment), apartmentId.ToString());
+            var apartment = await apartmentRepository.GetApartmentByIdAsync(apartmentId) ??
+                            throw new NotFoundException(nameof(Apartment), apartmentId.ToString());
 
-        if (!authorizationManager.AuthorizeApartmentPhoto(currentUser, ResourceOperation.Delete, apartment.OwnerId))
-            throw new ForbiddenException($"{currentUser.Email} not authorized to delete this apartment photo");
+            if (!authorizationManager.AuthorizeApartmentPhoto(currentUser, ResourceOperation.Delete, apartment.OwnerId))
+                throw new ForbiddenException($"{currentUser.Email} not authorized to delete this apartment photo");
 
-        var apartmentPhoto = apartment.ApartmentPhotos.FirstOrDefault(x => x.Id == photoId) ??
-                             throw new NotFoundException(nameof(ApartmentPhoto), photoId.ToString());
+            var apartmentPhoto = apartment.ApartmentPhotos.FirstOrDefault(x => x.Id == photoId) ??
+                                 throw new NotFoundException(nameof(ApartmentPhoto), photoId.ToString());
 
-        await apartmentPhotoRepository.DeleteApartmentPhotoAsync(apartmentPhoto, currentUser.Email);
+            if(await azureBlobStorageService.DeleteAsync(apartmentPhoto.Url))
+            {
+                await apartmentPhotoRepository.DeleteApartmentPhotoAsync(apartmentPhoto);
 
-        await azureBlobStorageService.DeleteAsync(apartmentPhoto.Url);
+                await transaction.CommitAsync();
+                logger.LogInformation("Apartment photo deleted successfully.");
+                return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Apartment photo deleted successfully.");
+            }
 
-        var logMessage = "Apartment photo deleted successfully.";
-        logger.LogInformation(logMessage);
-
-        return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, logMessage);
+            await transaction.RollbackAsync();
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError, "Apartment photo not deleted");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, ex.Message);
+            await transaction.RollbackAsync();
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError, "Photo not deleted");
+        }
+        
     }
 
     public async Task<ServiceResult<string>> RestoreApartmentPhoto(int photoId, int apartmentId)
