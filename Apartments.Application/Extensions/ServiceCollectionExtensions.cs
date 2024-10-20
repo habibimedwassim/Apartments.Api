@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAzureBlobStorageService, AzureBlobStorageService>();
         services.AddScoped<IApartmentRequestService, ApartmentRequestService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IDashboardService, DashboardService>();
 
         services.AddHttpContextAccessor();
 

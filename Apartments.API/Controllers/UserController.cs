@@ -20,7 +20,8 @@ public class UserController(
     IUserService userService,
     IApartmentService apartmentService,
     IRentTransactionService rentTransactionService,
-    IApartmentRequestService apartmentRequestService)
+    IApartmentRequestService apartmentRequestService,
+    IDashboardService dashboardService)
     : ControllerBase
 {
     [HttpGet("me")]
@@ -139,5 +140,15 @@ public class UserController(
         var result = await apartmentRequestService.DismissTenantById(id, dismissReasonDto);
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+    }
+
+    [HttpGet("me/dashboard")]
+    public async Task<IActionResult> GetOwnerDashboard()
+    {
+        var result = await dashboardService.GetOwnerDashboard();
+
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+
+        return Ok(result.Data);
     }
 }

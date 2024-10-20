@@ -1,11 +1,14 @@
-﻿namespace Apartments.Application.Dtos.RentTransactionDtos;
+﻿using Apartments.Application.Dtos.ApartmentDtos;
+using Apartments.Application.Dtos.UserDtos;
+
+namespace Apartments.Application.Dtos.RentTransactionDtos;
 
 public class RentTransactionDto
 {
     public int Id { get; set; }
     public DateTime CreatedDate { get; set; }
     public int ApartmentId { get; set; }
-    public string ApartmentOwner { get; set; } = string.Empty;
+    public ApartmentPreviewModel Apartment { get; set; } = default!;
     public DateOnly DateFrom { get; set; }
     public DateOnly DateTo { get; set; }
     public decimal RentAmount { get; set; }

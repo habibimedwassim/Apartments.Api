@@ -46,7 +46,11 @@ public class RentTransactionService(
 
         var rentTransactions = await rentTransactionRepository.GetRentTransactionsForUserAsync(user.Id, user.Role);
 
-        var rentTransactionsDto = mapper.Map<List<RentTransactionDto>>(rentTransactions);
+        // Pass the current user's role to the mapping configuration
+        var rentTransactionsDto = mapper.Map<List<RentTransactionDto>>(rentTransactions, opt =>
+        {
+            opt.Items["UserRole"] = user.Role;
+        });
 
         return ServiceResult<List<RentTransactionDto>>.SuccessResult(rentTransactionsDto);
     }

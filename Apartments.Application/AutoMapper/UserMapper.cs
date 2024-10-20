@@ -1,4 +1,5 @@
-﻿using Apartments.Application.Dtos.UserDtos;
+﻿using Apartments.Application.Dtos.RentTransactionDtos;
+using Apartments.Application.Dtos.UserDtos;
 using Apartments.Application.Utilities;
 using Apartments.Domain.Entities;
 using AutoMapper;
@@ -16,7 +17,7 @@ public class UserMapper : Profile
             .ForMember(dest => dest.CurrentApartment, opt => opt.Ignore())
             .ForMember(dest => dest.FullName,
                opt => opt.MapFrom(src => CoreUtilities.ConstructUserFullName(src.FirstName, src.LastName)));
-    
+
         CreateMap<UserDto, User>()
             .ForMember(dest => dest.SysId, opt => opt.MapFrom(src => src.Id));
 

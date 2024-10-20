@@ -188,6 +188,7 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
         return await _dbContext.Apartments
                                .Include(x => x.ApartmentPhotos)
                                .Include(x => x.Tenant)
+                               .Include(x => x.Owner)
                                .Where(x => x.OwnerId == ownerId)
                                .OrderByDescending(x => x.CreatedDate)
                                .ToListAsync();
