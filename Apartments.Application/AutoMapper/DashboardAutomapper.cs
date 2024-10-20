@@ -11,8 +11,9 @@ public class OwnerDashboardMappingProfile : Profile
     public OwnerDashboardMappingProfile()
     {
         CreateMap<OwnerDashboardDetails, OwnerDashboardDto>()
-            .ForMember(dest => dest.RecentTransactions, opt => opt.MapFrom(src => src.RecentTransactions))
-            .ForMember(dest => dest.RecentRequests, opt => opt.MapFrom(src => src.RecentRequests))
+            .ForMember(dest => dest.RecentRentRequests, opt => opt.MapFrom(src => src.RecentRentRequests))
+            .ForMember(dest => dest.RecentLeaveRequests, opt => opt.MapFrom(src => src.RecentLeaveRequests))
+            .ForMember(dest => dest.RecentDismissRequests, opt => opt.MapFrom(src => src.RecentDismissRequests))
             .ForMember(dest => dest.RevenueByMonth, opt => opt.MapFrom(src => src.RevenueByMonth));
 
         CreateMap<(string Month, decimal Revenue), RevenueByMonthDto>()

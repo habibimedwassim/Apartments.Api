@@ -11,7 +11,9 @@ public class OwnerDashboardDto
     public int TotalTenants { get; set; }
     public decimal TotalRevenue { get; set; }
     public List<RentTransactionDto> RecentTransactions { get; set; } = [];
-    public List<ApartmentRequestDto> RecentRequests { get; set; } = [];
+    public List<ApartmentRequestDto> RecentRentRequests { get; set; } = [];
+    public List<ApartmentRequestDto> RecentLeaveRequests { get; set; } = [];
+    public List<ApartmentRequestDto> RecentDismissRequests { get; set; } = [];
     public List<RevenueByMonthDto> RevenueByMonth { get; set; } = [];
 }
 

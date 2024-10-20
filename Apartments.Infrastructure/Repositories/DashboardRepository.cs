@@ -25,35 +25,51 @@ public class DashboardRepository(ApplicationDbContext dbContext) : IDashboardRep
         var totalTenants = await dbContext.Apartments
             .CountAsync(x => x.OwnerId == ownerId && x.TenantId != null);
 
-        // Calculate the total revenue from paid transactions
+        // Calculate the total revenue from transactions that are Paid or Late
         var totalRevenue = await dbContext.RentTransactions
-            .Where(rt => rt.OwnerId == ownerId && rt.Status == RequestStatus.Paid)
+            .Where(rt => rt.OwnerId == ownerId &&
+                         (rt.Status == RequestStatus.Paid || rt.Status == RequestStatus.Late))
             .SumAsync(rt => rt.RentAmount);
 
-        // Get the top 5 recent transactions
+        // Get the top 5 recent rent requests
+        var recentRentRequests = await dbContext.ApartmentRequests
+                .Where(ar => ar.OwnerId == ownerId && ar.RequestType == ApartmentRequestType.Rent.ToString())
+                .OrderByDescending(ar => ar.CreatedDate)
+                .Take(5)
+                .ToListAsync();
+
+        // Get the top 5 recent leave requests
+        var recentLeaveRequests = await dbContext.ApartmentRequests
+            .Where(ar => ar.OwnerId == ownerId && ar.RequestType == ApartmentRequestType.Leave.ToString())
+            .OrderByDescending(ar => ar.CreatedDate)
+            .Take(5)
+            .ToListAsync();
+
+        // Get the top 5 recent dismiss requests
+        var recentDismissRequests = await dbContext.ApartmentRequests
+            .Where(ar => ar.OwnerId == ownerId && ar.RequestType == ApartmentRequestType.Dismiss.ToString())
+            .OrderByDescending(ar => ar.CreatedDate)
+            .Take(5)
+            .ToListAsync();
+
+        // Get the top 5 recent transactions with status Paid or Late
         var recentTransactions = await dbContext.RentTransactions
             .Where(rt => rt.OwnerId == ownerId)
             .OrderByDescending(rt => rt.CreatedDate)
             .Take(5)
             .ToListAsync();
 
-        // Get the top 5 recent apartment requests (rent and leave)
-        var recentRequests = await dbContext.ApartmentRequests
-            .Where(ar => ar.OwnerId == ownerId)
-            .OrderByDescending(ar => ar.RequestDate)
-            .Take(5)
-            .ToListAsync();
-
-        // Get the revenue by month
-        var revenueByMonth = await dbContext.RentTransactions
-            .Where(rt => rt.OwnerId == ownerId && rt.Status == RequestStatus.Paid)
-            .GroupBy(rt => new { rt.DateFrom.Year, rt.DateFrom.Month })
-            .Select(g => new
-            {
-                Month = $"{g.Key.Year}-{g.Key.Month:00}",
-                Revenue = g.Sum(rt => rt.RentAmount)
-            })
-            .ToListAsync();
+        // Get the revenue by month for this year
+        var currentYear = DateTime.Now.Year;
+        var revenueByMonth = Enumerable.Range(1, 12).Select(month => new
+        {
+            Month = $"{currentYear}-{month:00}",
+            Revenue = dbContext.RentTransactions
+                .Where(rt => rt.OwnerId == ownerId &&
+                             (rt.Status == RequestStatus.Paid || rt.Status == RequestStatus.Late) &&
+                             rt.DateFrom.Year == currentYear && rt.DateFrom.Month == month)
+                .Sum(rt => rt.RentAmount)
+        }).ToList();
 
         // Create and return the OwnerDashboardDetails object
         return new OwnerDashboardDetails
@@ -63,10 +79,13 @@ public class DashboardRepository(ApplicationDbContext dbContext) : IDashboardRep
             AvailableApartments = availableApartments,
             TotalTenants = totalTenants,
             TotalRevenue = totalRevenue,
+            RecentRentRequests = recentRentRequests,
+            RecentLeaveRequests = recentLeaveRequests,
+            RecentDismissRequests = recentDismissRequests,
             RecentTransactions = recentTransactions,
-            RecentRequests = recentRequests,
             RevenueByMonth = revenueByMonth.Select(r => (r.Month, r.Revenue)).ToList()
         };
     }
+
 
 }
