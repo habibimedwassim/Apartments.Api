@@ -26,6 +26,7 @@ public class AuthService(
     IEmailService emailService,
     IOptions<JwtSettings> jwtSettings,
     IUserRepository userRepository,
+    IAzureBlobStorageService azureBlobStorageService,
     UserManager<User> userManager) : IAuthService
 {
     private readonly JwtSettings _jwtSettings = jwtSettings.Value;
@@ -59,6 +60,7 @@ public class AuthService(
         var accessToken = await GenerateAccessTokenAsync(user);
         var response = new LoginResponseDto
         {
+            Avatar = user.Avatar,
             AccessToken = accessToken,
             Email = user.Email!,
             FirstName = user.FirstName,
@@ -97,7 +99,9 @@ public class AuthService(
                 return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status409Conflict, existsMessage);
             }
 
-            var user = CreateUser(registerDto);
+            var avatarUrl = await azureBlobStorageService.UploadSingleFileAsync(registerDto.Avatar);
+
+            var user = CreateUser(registerDto, avatarUrl);
             var result = await userManager.CreateAsync(user, registerDto.Password);
 
             if (!result.Succeeded)
@@ -155,7 +159,9 @@ public class AuthService(
                 return ServiceResult<ResultDetails>.ErrorResult(StatusCodes.Status409Conflict, existsMessage);
             }
 
-            var user = CreateUserWithRole(registerDto, role);
+            var avatarUrl = await azureBlobStorageService.UploadSingleFileAsync(registerDto.Avatar);
+
+            var user = CreateUserWithRole(registerDto, avatarUrl, role);
             var result = await userManager.CreateAsync(user, registerDto.Password);
 
             if (!result.Succeeded)
@@ -471,11 +477,12 @@ public class AuthService(
             return false;
         }
     }
-    private User CreateUser(RegisterDto registerDTO)
+    private User CreateUser(RegisterDto registerDTO, string? avatarUrl)
     {
         var normalizedEmail = CoreUtilities.NormalizeEmail(registerDTO.Email);
         return new User
         {
+            Avatar = avatarUrl,
             CIN = registerDTO.CIN,
             UserName = normalizedEmail,
             Email = normalizedEmail,
@@ -487,13 +494,14 @@ public class AuthService(
             Role = UserRoles.User,
         };
     }
-    private User CreateUserWithRole(RegisterDto registerDTO, string role)
+    private User CreateUserWithRole(RegisterDto registerDTO, string? avatarUrl, string role)
     {
         if (role == UserRoles.Admin || role == UserRoles.Owner)
         {
             var normalizedEmail = CoreUtilities.NormalizeEmail(registerDTO.Email);
             return new User
             {
+                Avatar = avatarUrl,
                 CIN = registerDTO.CIN,
                 UserName = normalizedEmail,
                 Email = normalizedEmail,

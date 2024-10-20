@@ -14,7 +14,14 @@ public class RentTransactionMapper : Profile
     {
         CreateMap<RentTransaction, RentTransaction>();
         CreateMap<RentTransaction, RentTransactionDto>()
-            .ForMember(dest => dest.Apartment, opt => opt.MapFrom(src => src.Apartment));
+            .ForMember(dest => dest.Apartment, opt => opt.MapFrom(src => src.Apartment))
+            .ForMember(dest => dest.TenantId, opt => opt.MapFrom(src => src.Tenant.SysId))
+            .ForMember(dest => dest.Avatar,
+                opt =>
+                {
+                    opt.MapFrom(src => src.Tenant.Avatar);
+                    opt.Condition(src => src.Tenant != null && !string.IsNullOrEmpty(src.Tenant.Avatar));
+                });
 
         CreateMap<Apartment, ApartmentPreviewModel>()
             .ForMember(dest => dest.Owner, opt => opt.MapFrom((src, dest, destMember, context) =>

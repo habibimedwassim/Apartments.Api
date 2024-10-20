@@ -22,7 +22,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
+    public async Task<IActionResult> Register([FromForm] RegisterDto registerDto)
     {
         var result = await authService.RegisterAsync(registerDto);
 
@@ -31,7 +31,7 @@ public class AuthController(IAuthService authService) : ControllerBase
 
     [HttpPost("register-owner")]
     [Authorize(Roles = UserRoles.Admin)]
-    public async Task<IActionResult> RegisterOwner([FromBody] RegisterDto registerDto)
+    public async Task<IActionResult> RegisterOwner([FromForm] RegisterDto registerDto)
     {
         var result = await authService.RegisterWithRoleAsync(registerDto, UserRoles.Owner);
 

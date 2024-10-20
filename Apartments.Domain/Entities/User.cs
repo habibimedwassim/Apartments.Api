@@ -6,6 +6,7 @@ public class User : IdentityUser
 {
     public int SysId { get; init; }
     public string CIN { get; init; } = string.Empty;
+    public string? Avatar { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string? EmailCode { get; set; }

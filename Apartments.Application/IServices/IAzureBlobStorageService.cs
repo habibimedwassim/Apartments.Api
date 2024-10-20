@@ -12,4 +12,5 @@ public interface IAzureBlobStorageService
     Task<IEnumerable<ApartmentPhoto>> UploadApartmentPhotos(UploadApartmentPhotoDto addApartmentPhotosDto);
     Task DeletePhotosInBatchesAsync(List<string> orphanedPhotos, int batchSize);
     Task<IEnumerable<string>> FindMissingPhotosInAzureAsync(HashSet<string> dbPhotoUrls, int batchSize);
+    Task<string?> UploadSingleFileAsync(IFormFile? file);
 }

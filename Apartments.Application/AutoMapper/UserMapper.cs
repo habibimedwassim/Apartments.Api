@@ -16,7 +16,13 @@ public class UserMapper : Profile
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.SysId))
             .ForMember(dest => dest.CurrentApartment, opt => opt.Ignore())
             .ForMember(dest => dest.FullName,
-               opt => opt.MapFrom(src => CoreUtilities.ConstructUserFullName(src.FirstName, src.LastName)));
+               opt => opt.MapFrom(src => CoreUtilities.ConstructUserFullName(src.FirstName, src.LastName)))
+            .ForMember(dest => dest.Avatar,
+                opt =>
+                {
+                    opt.MapFrom(src => src.Avatar);
+                    opt.Condition(src => !string.IsNullOrEmpty(src.Avatar));
+                });
 
         CreateMap<UserDto, User>()
             .ForMember(dest => dest.SysId, opt => opt.MapFrom(src => src.Id));
@@ -31,6 +37,7 @@ public class UserMapper : Profile
             .ForMember(dest => dest.LastName, opt => opt.Condition(src => src.LastName != null))
             .ForMember(dest => dest.PhoneNumber, opt => opt.Condition(src => src.PhoneNumber != null))
             .ForMember(dest => dest.Gender, opt => opt.Condition(src => src.Gender != null))
+            .ForMember(dest => dest.Avatar, opt => opt.Ignore())
             .ForMember(dest => dest.DateOfBirth, opt => opt.Condition(src => src.DateOfBirth != null));
     }
 }

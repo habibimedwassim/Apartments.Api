@@ -32,7 +32,7 @@ public class UserController(
     }
 
     [HttpPatch("me")]
-    public async Task<IActionResult> UpdateUserDetails([FromBody] UpdateUserDto updateUserDto)
+    public async Task<IActionResult> UpdateUserDetails([FromForm] UpdateUserDto updateUserDto)
     {
         var result = await userService.UpdateUserDetails(updateUserDto);
         if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));

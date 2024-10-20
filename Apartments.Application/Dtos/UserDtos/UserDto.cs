@@ -7,6 +7,7 @@ namespace Apartments.Application.Dtos.UserDtos;
 public class UserDto
 {
     public int Id { get; set; }
+    public string? Avatar { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;

@@ -26,6 +26,7 @@ public class RentTransactionRepository(ApplicationDbContext dbContext)
         var query = _dbContext.RentTransactions
             .Include(x => x.Apartment)
             .ThenInclude(x => x.Owner)
+            .Include(x => x.Tenant)
             .Include(x => x.Apartment.ApartmentPhotos).AsQueryable();
 
         if (!string.IsNullOrEmpty(ownerRole) && ownerRole == UserRoles.Owner)

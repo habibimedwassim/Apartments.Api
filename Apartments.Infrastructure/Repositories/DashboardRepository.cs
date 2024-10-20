@@ -3,6 +3,7 @@ using Apartments.Domain.Entities;
 using Apartments.Domain.IRepositories;
 using Apartments.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Apartments.Infrastructure.Repositories;
 
@@ -63,7 +64,7 @@ public class DashboardRepository(ApplicationDbContext dbContext) : IDashboardRep
         var currentYear = DateTime.Now.Year;
         var revenueByMonth = Enumerable.Range(1, 12).Select(month => new
         {
-            Month = $"{currentYear}-{month:00}",
+            Month = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month),
             Revenue = dbContext.RentTransactions
                 .Where(rt => rt.OwnerId == ownerId &&
                              (rt.Status == RequestStatus.Paid || rt.Status == RequestStatus.Late) &&
@@ -86,6 +87,4 @@ public class DashboardRepository(ApplicationDbContext dbContext) : IDashboardRep
             RevenueByMonth = revenueByMonth.Select(r => (r.Month, r.Revenue)).ToList()
         };
     }
-
-
 }

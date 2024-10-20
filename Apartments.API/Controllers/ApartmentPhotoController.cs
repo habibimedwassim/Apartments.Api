@@ -43,6 +43,8 @@ public class ApartmentPhotoController(IApartmentPhotoService apartmentPhotoServi
     {
         var result = await apartmentPhotoService.DeletePhotoFromApartment(photoId, apartmentId);
 
-        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+
+        return Ok(result.Data);
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Apartments.Application.Dtos.AuthDtos;
+﻿using Microsoft.AspNetCore.Http;
+
+namespace Apartments.Application.Dtos.AuthDtos;
 
 public class RegisterDto
 {
@@ -10,4 +12,5 @@ public class RegisterDto
     public string? PhoneNumber { get; set; }
     public string? Gender { get; set; }
     public DateOnly? DateOfBirth { get; set; }
+    public IFormFile? Avatar { get; set; }
 }

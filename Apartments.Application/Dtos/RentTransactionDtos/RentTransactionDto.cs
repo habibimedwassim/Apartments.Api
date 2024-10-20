@@ -8,6 +8,8 @@ public class RentTransactionDto
     public int Id { get; set; }
     public DateTime CreatedDate { get; set; }
     public int ApartmentId { get; set; }
+    public int TenantId { get; set; }
+    public string? Avatar { get; set; }
     public ApartmentPreviewModel Apartment { get; set; } = default!;
     public DateOnly DateFrom { get; set; }
     public DateOnly DateTo { get; set; }

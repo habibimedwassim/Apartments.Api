@@ -10,8 +10,14 @@ public class ApartmentRequestMapper : Profile
     {
         CreateMap<ApartmentRequest, ApartmentRequest>();
         CreateMap<ApartmentRequest, ApartmentRequestDto>()
-            .ForMember(dest => dest.TenantId, opt => opt.MapFrom(src => src.Tenant.SysId));
-            //.ForMember(dest => dest.TenantId, opt => opt.Ignore());
+            .ForMember(dest => dest.TenantId, opt => opt.MapFrom(src => src.Tenant.SysId))
+            .ForMember(dest => dest.Avatar,
+                opt =>
+                {
+                    opt.MapFrom(src => src.Tenant.Avatar);
+                    opt.Condition(src => src.Tenant != null && !string.IsNullOrEmpty(src.Tenant.Avatar));
+                });
+        //.ForMember(dest => dest.TenantId, opt => opt.Ignore());
 
         CreateMap<UpdateApartmentRequestDto, ApartmentRequest>()
             .ForMember(dest => dest.Reason, opt => opt.Condition(src => src.Reason != null))

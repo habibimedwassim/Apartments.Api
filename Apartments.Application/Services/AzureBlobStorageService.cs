@@ -134,7 +134,27 @@ public class AzureBlobStorageService(
 
         return apartmentPhotos;
     }
+    public async Task<string?> UploadSingleFileAsync(IFormFile? file)
+    {
+        if (file == null) return null;
 
+        if (!allowedImageMimeTypes.Contains(file.ContentType.ToLower()) ||
+            !allowedImageExtensions.Contains(Path.GetExtension(file.FileName).ToLower()))
+        {
+            logger.LogWarning("Invalid file type for: {FileName}", file.FileName);
+            return null;
+        }
+
+        var fileUrl = await UploadAsync(file);
+
+        if (string.IsNullOrEmpty(fileUrl))
+        {
+            logger.LogWarning("Failed to upload file: {FileName}", file.FileName);
+            return null;
+        }
+
+        return fileUrl;
+    }
     public async Task<IEnumerable<string>> FindMissingPhotosInAzureAsync(HashSet<string> dbPhotoUrls, int batchSize)
     {
         var blobServiceClient = new BlobServiceClient(_blobStorageSettings.ConnectionString);

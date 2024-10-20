@@ -23,6 +23,7 @@ public class UserService(
     IUserContext userContext,
     IUserRepository userRepository,
     IEmailService emailService,
+    IAzureBlobStorageService azureBlobStorageService,
     UserManager<User> userManager,
     IApartmentRepository apartmentRepository)
     : IUserService
@@ -72,35 +73,59 @@ public class UserService(
     }
     public async Task<ServiceResult<UserDto>> UpdateUserDetails(UpdateUserDto updateAppUserDto)
     {
-        var currentUser = userContext.GetCurrentUser();
-
-        var user = await userManager.FindByIdAsync(currentUser.Id) ??
-                   throw new NotFoundException("User not found");
-
-        if (updateAppUserDto.PhoneNumber != null) 
+        await using var transaction = await userRepository.BeginTransactionAsync();
+        try
         {
-            var isValid = CoreUtilities.ValidatePhoneNumber(updateAppUserDto.PhoneNumber);
-            if (!isValid) 
+            var currentUser = userContext.GetCurrentUser();
+
+            var user = await userManager.FindByIdAsync(currentUser.Id) ??
+                       throw new NotFoundException("User not found");
+
+            if (updateAppUserDto.PhoneNumber != null)
             {
-                return ServiceResult<UserDto>.ErrorResult(StatusCodes.Status400BadRequest, "Invalid Phone Number");
+                var isValid = CoreUtilities.ValidatePhoneNumber(updateAppUserDto.PhoneNumber);
+                if (!isValid)
+                {
+                    return ServiceResult<UserDto>.ErrorResult(StatusCodes.Status400BadRequest, "Invalid Phone Number");
+                }
+
+                var existingPhoneNumber = await userManager.Users.AnyAsync(x => x.PhoneNumber == updateAppUserDto.PhoneNumber);
+                if (existingPhoneNumber)
+                {
+                    return ServiceResult<UserDto>.ErrorResult(StatusCodes.Status400BadRequest, "Phone Number exists already!");
+                }
             }
 
-            var existingPhoneNumber = await userManager.Users.AnyAsync(x => x.PhoneNumber == updateAppUserDto.PhoneNumber);
-            if (existingPhoneNumber)
+            var originalRecord = mapper.Map<User>(user);
+
+            mapper.Map(updateAppUserDto, user);
+
+            var avatarUrl = await azureBlobStorageService.UploadSingleFileAsync(updateAppUserDto.Avatar);
+            if (avatarUrl != null) 
             {
-                return ServiceResult<UserDto>.ErrorResult(StatusCodes.Status400BadRequest, "Phone Number exists already!");
+                user.Avatar = avatarUrl;
             }
+
+            await userRepository.UpdateAsync(originalRecord, user, currentUser.Email);
+
+            var userDto = mapper.Map<UserDto>(user);
+            userDto.Avatar = user.Avatar;
+
+            await transaction.CommitAsync();
+
+            logger.LogInformation("User details updated successfully for {UserId}.", user.Id);
+
+            return ServiceResult<UserDto>.SuccessResult(userDto);
         }
+        catch (Exception ex) 
+        {
+            logger.LogError(ex, ex.Message);
 
-        var originalRecord = mapper.Map<User>(user);
+            await transaction.RollbackAsync();
 
-        mapper.Map(updateAppUserDto, user);
-        await userRepository.UpdateAsync(originalRecord, user, currentUser.Email);
-
-        var userDto = mapper.Map<UserDto>(user);
-
-        logger.LogInformation("User details updated successfully for {UserId}.", user.Id);
-        return ServiceResult<UserDto>.SuccessResult(userDto);
+            return ServiceResult<UserDto>.ErrorResult(StatusCodes.Status500InternalServerError, "User not updated");
+        }
+        
     }
     public async Task<ServiceResult<string>> UpdateUserPassword(ChangePasswordDto changePasswordDto)
     {

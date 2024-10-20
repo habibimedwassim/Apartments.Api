@@ -13,6 +13,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(a => a.Id)
             .HasMaxLength(50);
 
+        builder.Property(a => a.Avatar)
+            .HasMaxLength(2048);
+
         builder.HasIndex(u => u.CIN)
             .IsUnique();
 
