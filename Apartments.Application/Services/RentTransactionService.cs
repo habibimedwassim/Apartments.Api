@@ -1,4 +1,5 @@
 ﻿using Apartments.Application.Common;
+using Apartments.Application.Dtos.ApartmentDtos;
 using Apartments.Application.Dtos.RentTransactionDtos;
 using Apartments.Application.IServices;
 using Apartments.Application.Utilities;
@@ -6,6 +7,7 @@ using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.Exceptions;
 using Apartments.Domain.IRepositories;
+using Apartments.Domain.QueryFilters;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -34,25 +36,46 @@ public class RentTransactionService(
         return ServiceResult<RentTransactionDto>.SuccessResult(rentTransactionDto);
     }
 
-    public async Task<ServiceResult<List<RentTransactionDto>>> GetRentTransactions(int? id = null)
+    //public async Task<ServiceResult<List<RentTransactionDto>>> GetRentTransactions(int? id = null)
+    //{
+    //    var currentUser = userContext.GetCurrentUser();
+    //    var sysId = id ?? currentUser.SysId;
+
+    //    logger.LogInformation("Retrieving User with Id = {id} rent transactions", sysId);
+
+    //    var user = await userRepository.GetBySysIdAsync(sysId) ??
+    //               throw new NotFoundException("User not found");
+
+    //    var rentTransactions = await rentTransactionRepository.GetRentTransactionsForUserAsync(user.Id, user.Role);
+
+    //    // Pass the current user's role to the mapping configuration
+    //var rentTransactionsDto = mapper.Map<List<RentTransactionDto>>(rentTransactions, opt =>
+    //{
+    //    opt.Items["UserRole"] = user.Role;
+    //});
+
+    //    return ServiceResult<List<RentTransactionDto>>.SuccessResult(rentTransactionsDto);
+    //}
+    public async Task<PagedResult<RentTransactionDto>> GetRentTransactionsPaged(RentTransactionQueryFilter filter)
     {
         var currentUser = userContext.GetCurrentUser();
-        var sysId = id ?? currentUser.SysId;
+        var sysId = filter.userId ?? currentUser.SysId;
 
         logger.LogInformation("Retrieving User with Id = {id} rent transactions", sysId);
 
         var user = await userRepository.GetBySysIdAsync(sysId) ??
                    throw new NotFoundException("User not found");
 
-        var rentTransactions = await rentTransactionRepository.GetRentTransactionsForUserAsync(user.Id, user.Role);
+        var pagedModel = await rentTransactionRepository.GetRentTransactionsPagedAsync(filter, user.Id, user.Role);
 
-        // Pass the current user's role to the mapping configuration
-        var rentTransactionsDto = mapper.Map<List<RentTransactionDto>>(rentTransactions, opt =>
+        var rentTransactionsDto = mapper.Map<IEnumerable<RentTransactionDto>>(pagedModel.Data, opt => 
         {
             opt.Items["UserRole"] = user.Role;
         });
 
-        return ServiceResult<List<RentTransactionDto>>.SuccessResult(rentTransactionsDto);
+        var result = new PagedResult<RentTransactionDto>(rentTransactionsDto, pagedModel.DataCount, filter.PageNumber);
+
+        return result;
     }
 
     public async Task<ServiceResult<string>> CreateRentTransactionForApartment(int id)

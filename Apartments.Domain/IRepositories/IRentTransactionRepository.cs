@@ -1,4 +1,6 @@
-﻿using Apartments.Domain.Entities;
+﻿using Apartments.Domain.Common;
+using Apartments.Domain.Entities;
+using Apartments.Domain.QueryFilters;
 
 namespace Apartments.Domain.IRepositories;
 
@@ -13,4 +15,5 @@ public interface IRentTransactionRepository
 
     Task UpdateRentTransactionAsync(RentTransaction originalRecord, RentTransaction updatedRecord, string userEmail,
         string[]? additionalPropertiesToExclude = null);
+    Task<PagedModel<RentTransaction>> GetRentTransactionsPagedAsync(RentTransactionQueryFilter filter, string userId, string? ownerRole);
 }

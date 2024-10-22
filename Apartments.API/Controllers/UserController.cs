@@ -63,20 +63,20 @@ public class UserController(
     }
 
     [HttpGet("me/apartments")]
-    public async Task<IActionResult> GetOwnedApartments()
+    public async Task<IActionResult> GetOwnedApartmentsPaged([FromQuery] int pageNumber)
     {
-        var result = await apartmentService.GetOwnedApartments();
-        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+        var query = new ApartmentQueryFilter() { pageNumber = pageNumber };
+        var result = await apartmentService.GetOwnedApartmentsPaged(query);
 
-        return Ok(result.Data);
+        return Ok(result);
     }
 
     [HttpGet("me/requests")]
     public async Task<IActionResult> GetApartmentRequests(
-        [FromQuery] ApartmentRequestQueryFilter apartmentRequestQueryFilter)
+        [FromQuery] ApartmentRequestPagedQueryFilter apartmentRequestQueryFilter)
     {
-        var result = await apartmentRequestService.GetApartmentRequests(apartmentRequestQueryFilter);
-        return Ok(result.Data);
+        var result = await apartmentRequestService.GetApartmentRequestsPaged(apartmentRequestQueryFilter);
+        return Ok(result);
     }
     [HttpGet("me/tenants")]
     public async Task<IActionResult> GetMyTenants()
@@ -99,12 +99,11 @@ public class UserController(
     }
 
     [HttpGet("me/transactions")]
-    public async Task<IActionResult> GetRentTransactions()
+    public async Task<IActionResult> GetRentTransactions([FromQuery] RentTransactionQueryFilter queryFilter)
     {
-        var result = await rentTransactionService.GetRentTransactions();
-        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+        var result = await rentTransactionService.GetRentTransactionsPaged(queryFilter);
 
-        return Ok(result.Data);
+        return Ok(result);
     }
 
     [HttpGet("{id:int}/apartments")]
@@ -125,12 +124,13 @@ public class UserController(
     //}
 
     [HttpGet("{id:int}/transactions")]
-    public async Task<IActionResult> GetRentTransactions([FromRoute] int id)
+    public async Task<IActionResult> GetRentTransactions([FromRoute] int id, 
+        [FromQuery] RentTransactionQueryFilter queryFilter)
     {
-        var result = await rentTransactionService.GetRentTransactions(id);
-        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+        queryFilter.userId = id;
+        var result = await rentTransactionService.GetRentTransactionsPaged(queryFilter);
 
-        return Ok(result.Data);
+        return Ok(result);
     }
 
     [HttpPost("{id:int}/dismiss")]
