@@ -1,6 +1,7 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.UserReportDtos;
 using Apartments.Application.IServices;
+using Apartments.Application.Utilities;
 using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.Exceptions;
@@ -128,6 +129,12 @@ public class UserReportService(
 
     public async Task<ServiceResult<string>> UpdateUserReport(int id, UpdateUserReportDto updateReportDto)
     {
+        if (!string.IsNullOrEmpty(updateReportDto.Status))
+        {
+            var statusEnum = CoreUtilities.ValidateEnum<ReportStatus>(updateReportDto.Status);
+            updateReportDto.Status = statusEnum.ToString();
+        }
+
         await using var transaction = await userRepository.BeginTransactionAsync();
         try
         {
