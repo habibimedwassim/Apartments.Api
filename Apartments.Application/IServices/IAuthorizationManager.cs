@@ -14,4 +14,5 @@ public interface IAuthorizationManager
 
     bool AuthorizeApartmentRequest(CurrentUser user, ResourceOperation operation, ApartmentRequestType type,
         ApartmentRequest? apartmentRequest = null);
+    bool AuthorizeUserReport(CurrentUser user, ResourceOperation operation, UserReport userReport);
 }

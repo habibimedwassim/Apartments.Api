@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IApartmentRequestRepository, ApartmentRequestRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();
+        services.AddScoped<IUserReportRepository, UserReportRepository>();
 
         services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
     }

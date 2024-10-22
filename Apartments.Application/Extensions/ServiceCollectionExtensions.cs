@@ -28,6 +28,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<IApartmentService, ApartmentService>();
+        services.AddScoped<IUserReportService, UserReportService>();
         services.AddScoped<IApartmentPhotoService, ApartmentPhotoService>();
         services.AddScoped<IRentTransactionService, RentTransactionService>();
         services.AddScoped<IAzureBlobStorageService, AzureBlobStorageService>();

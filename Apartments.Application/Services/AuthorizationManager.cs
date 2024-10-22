@@ -2,12 +2,34 @@
 using Apartments.Application.IServices;
 using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Apartments.Application.Services;
 
 public class AuthorizationManager(ILogger<AuthorizationManager> logger) : IAuthorizationManager
 {
+    public bool AuthorizeUserReport(CurrentUser user, ResourceOperation operation, UserReport userReport)
+    {
+        if (user.IsAdmin) return true;
+
+        if (operation == ResourceOperation.Delete && userReport.ReporterId == user.Id)
+        {
+            return true;
+        }
+
+        if (operation == ResourceOperation.Update)
+        {
+            if (user.IsUser && userReport.ReporterId == user.Id) return true;
+
+            if(user.IsOwner && (userReport.ReporterId == user.Id || userReport.TargetId == user.Id))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
     public bool AuthorizeApartment(CurrentUser user, ResourceOperation operation, Apartment? apartment = null)
     {
         if (user.IsAdmin) return true;

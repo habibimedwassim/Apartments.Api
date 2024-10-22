@@ -14,6 +14,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ApartmentPhoto> ApartmentPhotos { get; init; }
     public DbSet<RentTransaction> RentTransactions { get; init; }
     public DbSet<Notification> Notifications { get; init; }
+    public DbSet<UserReport> UserReports { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

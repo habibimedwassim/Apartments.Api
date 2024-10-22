@@ -68,10 +68,12 @@ public class AzureBlobStorageService(
         }
     }
 
-    public async Task<bool> DeleteAsync(string blobUri)
+    public async Task<bool> DeleteAsync(string? blobUri)
     {
         try
         {
+            if (string.IsNullOrEmpty(blobUri)) return false;
+
             var blobServiceClient = new BlobServiceClient(_blobStorageSettings.ConnectionString);
             var containerClient = blobServiceClient.GetBlobContainerClient(_blobStorageSettings.ContainerName);
 
