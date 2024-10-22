@@ -12,6 +12,7 @@ public class UserReportMapper : Profile
 
         // Mapping from UserReport to UserReportDto
         CreateMap<UserReport, UserReportDto>()
+            .ForMember(dest => dest.ReporterAvatar, opt => opt.MapFrom(src => src.Reporter.Avatar))
             .ForMember(dest => dest.ReporterId, opt => opt.MapFrom(src => src.Reporter.SysId))
             .ForMember(dest => dest.TargetId, opt => opt.MapFrom(src => src.Target != null ? src.Target.SysId : (int?)null));
 

@@ -65,7 +65,16 @@ public enum RequestType
     Received,
     All
 }
-
+public enum ReportType
+{
+    Sent,
+    Received
+}
+public enum ReportTarget
+{
+    Admin,
+    Owner
+}
 public enum RequestAction
 {
     Approve,

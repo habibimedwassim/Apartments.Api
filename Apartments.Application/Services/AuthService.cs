@@ -60,6 +60,7 @@ public class AuthService(
         var accessToken = await GenerateAccessTokenAsync(user);
         var response = new LoginResponseDto
         {
+            Id = user.SysId,
             Avatar = user.Avatar,
             AccessToken = accessToken,
             Email = user.Email!,

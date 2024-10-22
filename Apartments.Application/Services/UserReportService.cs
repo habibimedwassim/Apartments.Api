@@ -6,6 +6,7 @@ using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.Exceptions;
 using Apartments.Domain.IRepositories;
+using Apartments.Domain.QueryFilters;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -24,6 +25,9 @@ public class UserReportService(
 {
     public async Task<ServiceResult<string>> CreateUserReport(CreateUserReportDto createUserReportDto)
     {
+        var targetRole = CoreUtilities.ValidateEnum<ReportTarget>(createUserReportDto.TargetRole);
+        createUserReportDto.TargetRole = targetRole.ToString();
+
         await using var transaction = await userRepository.BeginTransactionAsync();
         try
         {
@@ -105,27 +109,98 @@ public class UserReportService(
                 "Failed updating the Report!");
         }
     }
-
-    public async Task<ServiceResult<List<UserReportDto>>> GetUserReports()
+    public async Task<ServiceResult<PagedResult<UserReportDto>>> GetUserReportsPaged(UserReportQueryFilter filter)
     {
-        logger.LogInformation("Retrieving User Reports");
+        var reportType = CoreUtilities.ValidateEnum<ReportType>(filter.type);
+
+        logger.LogInformation("Retrieving Sent Reports");
 
         var currentUser = userContext.GetCurrentUser();
 
-        var userReports = new List<UserReport>();
-        if (currentUser.IsAdmin) 
+        var pagedModel = new PagedModel<UserReport>();
+
+        if (reportType == ReportType.Sent)
         {
-            userReports = await userReportRepository.GetAdminReports();
+            pagedModel = await userReportRepository.GetSentReportsPagedAsync(filter, currentUser.Id);
+        }
+        else if(reportType == ReportType.Received)
+        {
+            var isAdmin = currentUser.Role == UserRoles.Admin;
+
+            pagedModel = await userReportRepository.GetReceivedReportsPagedAsync(filter, currentUser.Id, isAdmin);
+        }
+
+        var userReportsDto = mapper.Map<IEnumerable<UserReportDto>>(pagedModel.Data);
+
+        var result = new PagedResult<UserReportDto>(userReportsDto, pagedModel.DataCount, filter.PageNumber);
+
+        return ServiceResult<PagedResult<UserReportDto>>.SuccessResult(result);
+    }
+    public async Task<ServiceResult<PagedResult<UserReportDto>>> GetSentReportsPaged(UserReportQueryFilter filter)
+    {
+        var reportType = CoreUtilities.ValidateEnum<ReportType>(filter.type);
+
+        logger.LogInformation("Retrieving Sent Reports");
+
+        var currentUser = userContext.GetCurrentUser();
+
+        var pagedModel = new PagedModel<UserReport>();
+
+        if(reportType == ReportType.Sent)
+        {
+            pagedModel = await userReportRepository.GetSentReportsPagedAsync(filter, currentUser.Id);
         }
         else
         {
-            userReports = await userReportRepository.GetMyReports(currentUser.Id);
+            var isAdmin = currentUser.Role == UserRoles.Admin;
+
+            pagedModel = await userReportRepository.GetReceivedReportsPagedAsync(filter, currentUser.Id, isAdmin);
         }
 
-        var userReportsDto = mapper.Map<List<UserReportDto>>(userReports);
+        var userReportsDto = mapper.Map<IEnumerable<UserReportDto>>(pagedModel.Data);
 
-        return ServiceResult<List<UserReportDto>>.SuccessResult(userReportsDto);
+        var result = new PagedResult<UserReportDto>(userReportsDto, pagedModel.DataCount, filter.PageNumber);
+
+        return ServiceResult<PagedResult<UserReportDto>>.SuccessResult(result);
     }
+
+    public async Task<ServiceResult<PagedResult<UserReportDto>>> GetReceivedReportsPaged(UserReportQueryFilter filter)
+    {
+        logger.LogInformation("Retrieving Received Reports");
+
+        var currentUser = userContext.GetCurrentUser();
+
+        var isAdmin = currentUser.Role == UserRoles.Admin;
+
+        var pagedModel = await userReportRepository.GetReceivedReportsPagedAsync(filter, currentUser.Id, isAdmin);
+
+        var userReportsDto = mapper.Map<IEnumerable<UserReportDto>>(pagedModel.Data);
+
+        var result = new PagedResult<UserReportDto>(userReportsDto, pagedModel.DataCount, filter.PageNumber);
+
+        return ServiceResult<PagedResult<UserReportDto>>.SuccessResult(result);
+    }
+
+    //public async Task<ServiceResult<List<UserReportDto>>> GetUserReports()
+    //{
+    //    logger.LogInformation("Retrieving User Reports");
+
+    //    var currentUser = userContext.GetCurrentUser();
+
+    //    var userReports = new List<UserReport>();
+    //    if (currentUser.IsAdmin) 
+    //    {
+    //        userReports = await userReportRepository.GetAdminReports();
+    //    }
+    //    else
+    //    {
+    //        userReports = await userReportRepository.GetMyReports(currentUser.Id);
+    //    }
+
+    //    var userReportsDto = mapper.Map<List<UserReportDto>>(userReports);
+
+    //    return ServiceResult<List<UserReportDto>>.SuccessResult(userReportsDto);
+    //}
 
     public async Task<ServiceResult<string>> UpdateUserReport(int id, UpdateUserReportDto updateReportDto)
     {
@@ -182,5 +257,17 @@ public class UserReportService(
             return ServiceResult<string>.InfoResult(StatusCodes.Status500InternalServerError,
                 "Failed updating the Report!");
         }
+    }
+
+    public async Task<ServiceResult<UserReportDto>> GetReportById(int id)
+    {
+        logger.LogInformation("Retrieving Report with Id = {Id}",id);
+
+        var report = await userReportRepository.GetReportByIdAsync(id) ??
+                     throw new NotFoundException("Report not found");
+
+        var reportDto = mapper.Map<UserReportDto>(report);
+
+        return ServiceResult<UserReportDto>.SuccessResult(reportDto);
     }
 }
