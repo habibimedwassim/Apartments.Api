@@ -12,6 +12,23 @@ public static class CoreUtilities
         "ID", "Id", "User", "Apartment", "Tenant", "CreatedDate"
     };
 
+    public static string GetInitials(User? user)
+    {
+        if (user == null) return string.Empty;
+
+        var firstName = user.FirstName;
+        var lastName = user.LastName;
+
+        if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+        {
+            return string.Empty;
+        }
+
+        var firstInitial = firstName.Trim()[0].ToString().ToUpper();
+        var lastInitial = lastName.Trim()[0].ToString().ToUpper();
+
+        return firstInitial + lastInitial;
+    }
     public static string ValidateEnumToString<T>(string type) where T : struct, Enum
     {
         if (!Enum.TryParse<T>(type, true, out var result))

@@ -5,7 +5,6 @@ using Apartments.Domain.QueryFilters;
 using Apartments.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Apartments.Infrastructure.Repositories;
 
@@ -14,17 +13,32 @@ public class RentTransactionRepository(ApplicationDbContext dbContext)
 {
     private readonly ApplicationDbContext _dbContext = dbContext;
 
+    public async Task<List<RentTransaction>> GetTransactionsWithDueDate(DateOnly dueDate)
+    {
+        return await _dbContext.RentTransactions
+            .Where(x => x.DateTo == dueDate &&
+                        x.Status == RequestStatus.Paid &&
+                        !x.IsDeleted)
+            .ToListAsync();
+    }
     public async Task<RentTransaction?> GetLatestRentTransactionAsync(int apartmentId, string userId)
     {
         return await _dbContext.RentTransactions
             .Where(x => x.ApartmentId == apartmentId && 
                         x.TenantId == userId && 
-                        x.Status == RequestStatus.Paid &&
+                        (x.Status == RequestStatus.Paid || x.Status == RequestStatus.Late) &&
                         !x.IsDeleted)
             .OrderByDescending(x => x.DateTo)
             .FirstOrDefaultAsync();
     }
-    
+    public async Task<bool> CheckExistingTransactionAsync(int apartmentId, string userId, DateOnly dateFrom, DateOnly dateTo)
+    {
+        return await _dbContext.RentTransactions
+            .AnyAsync(x => x.ApartmentId == apartmentId &&
+                           x.TenantId == userId &&
+                           (x.DateFrom < dateTo &&  x.DateTo > dateFrom) &&
+                           !x.IsDeleted);
+    }
     public async Task<RentTransaction> AddRentTransactionAsync(RentTransaction rentTransaction)
     {
         return await AddAsync(rentTransaction);

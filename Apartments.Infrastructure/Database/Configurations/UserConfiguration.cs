@@ -26,6 +26,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(u => u.SysId)
             .IsUnique();
 
+        builder.HasIndex(u => u.Role);
+
         builder.Property(u => u.SysId)
             .ValueGeneratedOnAdd()
             .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);

@@ -16,4 +16,6 @@ public interface IRentTransactionRepository
     Task UpdateRentTransactionAsync(RentTransaction originalRecord, RentTransaction updatedRecord, string userEmail,
         string[]? additionalPropertiesToExclude = null);
     Task<PagedModel<RentTransaction>> GetRentTransactionsPagedAsync(RentTransactionQueryFilter filter, string userId, string? ownerRole);
+    Task<bool> CheckExistingTransactionAsync(int apartmentId, string userId, DateOnly dateFrom, DateOnly dateTo);
+    Task<List<RentTransaction>> GetTransactionsWithDueDate(DateOnly dateOnly);
 }

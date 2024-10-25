@@ -7,6 +7,8 @@ public class UserReportDto
     public DateTime? ResolvedDate { get; set; }
     public int ReporterId { get; set; }
     public string? ReporterAvatar {  get; set; }
+    public string? ReporterInitials { get; set; }
+    public string? ReporterRole { get; set; }
     public int? TargetId { get; set; }
     public string TargetRole { get; set; } = default!;
     public string Message { get; set; } = default!;

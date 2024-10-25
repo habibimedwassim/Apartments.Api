@@ -14,4 +14,5 @@ public interface IApartmentService
     Task<ServiceResult<string>> DeleteApartment(int id, bool permanent);
     Task<ServiceResult<IEnumerable<ApartmentDto>>> GetOwnedApartments(int? ownerId = null);
     Task<PagedResult<ApartmentDto>> GetOwnedApartmentsPaged(ApartmentQueryFilter apartmentQueryFilter);
+    Task<PagedResult<ApartmentDto>> GetOwnedApartmentsPaged(int ownerId, int pageNumber);
 }

@@ -1,4 +1,6 @@
-﻿using Apartments.Domain.Entities;
+﻿using Apartments.Domain.Common;
+using Apartments.Domain.Entities;
+using Apartments.Domain.QueryFilters;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Apartments.Domain.IRepositories;
@@ -18,4 +20,6 @@ public interface IUserRepository
         string[]? additionalPropertiesToExclude = null);
     Task RemoveTempEmailAsync(string normalizedEmail);
     Task<IEnumerable<User>> GetTenantsByOwnerIdAsync(string id);
+    Task<PagedModel<User>> GetUsersPagedAsync(UserQueryFilter userQueryFilter);
+    Task<List<string>> GetAdmins();
 }

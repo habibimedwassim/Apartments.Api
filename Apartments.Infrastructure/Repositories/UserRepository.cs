@@ -1,6 +1,7 @@
 ﻿using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.IRepositories;
+using Apartments.Domain.QueryFilters;
 using Apartments.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -87,5 +88,81 @@ public class UserRepository(ApplicationDbContext dbContext) : BaseRepository<Use
             .Select(apartment => apartment.Tenant!)
             .ToListAsync()
             ?? Enumerable.Empty<User>();
+    }
+    public async Task<PagedModel<User>> GetUsersPagedAsync(UserQueryFilter userQueryFilter)
+    {
+        IQueryable<User> baseQuery;
+
+        if (!string.IsNullOrEmpty(userQueryFilter.Role))
+        {
+            if (userQueryFilter.Role == UserRoles.User)
+            {
+                // Fetch tenants from Apartments table where IsOccupied == true and TenantId is not null
+                baseQuery = _dbContext.Apartments
+                    .Include(x => x.Tenant)
+                    .Where(a => a.IsOccupied && a.TenantId != null)
+                    .Select(a => a.Tenant!)
+                    .Where(t => t != null)
+                    .AsQueryable();
+            }
+            else
+            {
+                // Fetch users based on specified role (Owner or Admin)
+                baseQuery = _dbContext.Users
+                    .Where(u => u.Role == userQueryFilter.Role);
+            }
+        }
+        else
+        {
+            // Fetch all Owners and Admins from Users table
+            var userRolesQuery = _dbContext.Users
+                .Where(u => u.Role == UserRoles.Admin || u.Role == UserRoles.Owner);
+
+            // Fetch tenants from Apartments table where IsOccupied == true and TenantId is not null
+            var tenantQuery = _dbContext.Apartments
+                .Include(x => x.Tenant)
+                .Where(a => a.IsOccupied && a.TenantId != null)
+                .Select(a => a.Tenant!)
+                .Where(t => t != null);
+
+            // Combine both queries
+            baseQuery = userRolesQuery
+                .Concat(tenantQuery) // Use Concat instead of Union to avoid type mismatch
+                .AsQueryable();
+        }
+
+        // Apply search term filter if provided
+        if (!string.IsNullOrEmpty(userQueryFilter.SearchTerm))
+        {
+            baseQuery = baseQuery.Where(x =>
+                x.FirstName.Contains(userQueryFilter.SearchTerm) ||
+                x.LastName.Contains(userQueryFilter.SearchTerm) ||
+                (x.Email != null && x.Email.Contains(userQueryFilter.SearchTerm)));
+        }
+
+        // Get total count before pagination
+        var totalCount = await baseQuery.CountAsync();
+
+        // Apply sorting
+        if (!string.IsNullOrEmpty(userQueryFilter.SortBy))
+        {
+            baseQuery = userQueryFilter.SortDescending
+                ? baseQuery.OrderByDescending(x => EF.Property<object>(x, userQueryFilter.SortBy))
+                : baseQuery.OrderBy(x => EF.Property<object>(x, userQueryFilter.SortBy));
+        }
+
+        // Apply pagination
+        var users = await baseQuery
+            .Skip(AppConstants.PageSize * (userQueryFilter.PageNumber - 1))
+            .Take(AppConstants.PageSize)
+            .ToListAsync();
+
+        return new PagedModel<User> { Data = users, DataCount = totalCount };
+    }
+
+    public async Task<List<string>> GetAdmins()
+    {
+        return await _dbContext.Users.Where(x => x.Role == UserRoles.Admin && x.IsDeleted == false)
+                    .Select(x => x.Id).ToListAsync();
     }
 }

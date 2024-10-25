@@ -1,4 +1,5 @@
 ﻿using Apartments.Application.Dtos.UserReportDtos;
+using Apartments.Application.Utilities;
 using Apartments.Domain.Entities;
 using AutoMapper;
 
@@ -13,6 +14,8 @@ public class UserReportMapper : Profile
         // Mapping from UserReport to UserReportDto
         CreateMap<UserReport, UserReportDto>()
             .ForMember(dest => dest.ReporterAvatar, opt => opt.MapFrom(src => src.Reporter.Avatar))
+            .ForMember(dest => dest.ReporterInitials, opt => opt.MapFrom(src => CoreUtilities.GetInitials(src.Reporter)))
+            .ForMember(dest => dest.ReporterRole, opt => opt.MapFrom(src => src.Reporter.Role))
             .ForMember(dest => dest.ReporterId, opt => opt.MapFrom(src => src.Reporter.SysId))
             .ForMember(dest => dest.TargetId, opt => opt.MapFrom(src => src.Target != null ? src.Target.SysId : (int?)null));
 

@@ -13,3 +13,20 @@ public class OwnerDashboardDetails
     public List<ApartmentRequest> RecentDismissRequests { get; set; } = [];
     public List<(string Month, decimal Revenue)> RevenueByMonth { get; set; } = [];
 }
+
+public class AdminDashboardDetails
+{
+    public int TotalUsers { get; set; }
+    public int TotalOwners { get; set; }
+    public int TotalTenants { get; set; }
+    public int ActiveUsersLast30Days { get; set; }
+    public List<ReportsByMonth> ReportsByMonth { get; set; } = [];
+    public List<UserReport> RecentReports { get; set; } = [];
+    public List<ChangeLog> RecentChangeLogs { get; set; } = [];
+}
+
+public class ReportsByMonth
+{
+    public string Month { get; set; } = string.Empty;
+    public int Reports { get; set; }
+}

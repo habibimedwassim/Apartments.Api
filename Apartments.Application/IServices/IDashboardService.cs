@@ -6,5 +6,6 @@ namespace Apartments.Application.IServices;
 
 public interface IDashboardService
 {
+    Task<ServiceResult<AdminDashboardDto>> GetAdminDashboard();
     Task<ServiceResult<OwnerDashboardDto>> GetOwnerDashboard();
 }

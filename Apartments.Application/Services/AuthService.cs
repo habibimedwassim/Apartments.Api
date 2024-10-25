@@ -74,6 +74,9 @@ public class AuthService(
             Role = user.Role ?? UserRoles.User
         };
 
+        user.LastLoginDate = DateTime.UtcNow;
+        await userManager.UpdateAsync(user);
+
         return ServiceResult<LoginResponseDto>.SuccessResult(response, "Login successful.");
     }
     public async Task<ServiceResult<ResultDetails>> RegisterAsync(RegisterDto registerDto)

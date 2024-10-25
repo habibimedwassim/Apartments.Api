@@ -12,4 +12,5 @@ public interface IRentTransactionService
     Task<ServiceResult<string>> CreateRentTransactionForApartment(int id);
     Task<ServiceResult<string>> UpdateRentTransaction(int id, string action);
     Task<PagedResult<RentTransactionDto>> GetRentTransactionsPaged(RentTransactionQueryFilter filter);
+    Task CheckAndCreateUpcomingRentTransactionsAsync();
 }

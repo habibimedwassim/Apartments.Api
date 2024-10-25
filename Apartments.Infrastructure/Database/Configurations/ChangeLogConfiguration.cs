@@ -25,5 +25,8 @@ public class ChangeLogConfiguration : IEntityTypeConfiguration<ChangeLog>
 
         builder.Property(a => a.ChangedBy)
             .HasMaxLength(50);
+
+        builder.HasIndex(x => x.EntityType);
+        builder.HasIndex(x => x.PropertyName);
     }
 }

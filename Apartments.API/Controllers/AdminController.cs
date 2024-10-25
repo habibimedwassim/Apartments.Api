@@ -1,7 +1,11 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.AdminDtos;
+using Apartments.Application.Dtos.ApartmentDtos;
+using Apartments.Application.Dtos.UserDtos;
 using Apartments.Application.IServices;
+using Apartments.Application.Services;
 using Apartments.Domain.Common;
+using Apartments.Domain.QueryFilters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,14 +14,34 @@ namespace Apartments.API.Controllers;
 [ApiController]
 [Route("api/admin")]
 [Authorize(Roles = UserRoles.Admin)]
-public class AdminController(IAdminService adminService) : ControllerBase
+public class AdminController(
+    IAdminService adminService, 
+    IDashboardService dashboardService) 
+    : ControllerBase
 {
-    [HttpPost("changelogs")]
-    public async Task<IActionResult> GetChangeLogs([FromBody] ChangeLogDto changeLogDto)
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetAdminDashboard()
     {
-        var result = await adminService.GetChangeLogs(changeLogDto);
+        var result = await dashboardService.GetAdminDashboard();
+
+        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
+    }
+
+    [HttpGet("users")]
+    public async Task<IActionResult> GetAllUsers([FromQuery] UserQueryFilter userQueryFilter)
+    {
+        var result = await adminService.GetAllUsers(userQueryFilter);
+
+        return Ok(result);
+    }
+
+    [HttpPost("changelogs")]
+    public async Task<IActionResult> GetChangeLogs([FromBody] ChangeLogDto changeLogDto, [FromQuery] ChangeLogQueryFilter filter)
+    {
+        var result = await adminService.GetChangeLogsPaged(changeLogDto, filter);
+        return Ok(result);
     }
 
     [HttpGet("photos-cleanup")]

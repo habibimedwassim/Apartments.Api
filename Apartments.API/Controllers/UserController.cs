@@ -18,6 +18,7 @@ namespace Apartments.API.Controllers;
 [Authorize]
 public class UserController(
     IUserService userService,
+    IAuthService authService,
     IApartmentService apartmentService,
     IRentTransactionService rentTransactionService,
     IApartmentRequestService apartmentRequestService,
@@ -107,12 +108,11 @@ public class UserController(
     }
 
     [HttpGet("{id:int}/apartments")]
-    public async Task<IActionResult> GetOwnedApartments([FromRoute] int id)
+    public async Task<IActionResult> GetOwnedApartments([FromRoute] int id, [FromQuery] int pageNumber)
     {
-        var result = await apartmentService.GetOwnedApartments(id);
-        if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+        var result = await apartmentService.GetOwnedApartmentsPaged(id, pageNumber);
 
-        return Ok(result.Data);
+        return Ok(result);
     }
     //[HttpGet("apartments/{apartmentId:int}")]
     //public async Task<IActionResult> GetOwnedApartmentById([FromRoute] int userId, [FromRoute] int apartmentId)
@@ -150,5 +150,23 @@ public class UserController(
         if (!result.Success) return StatusCode(result.StatusCode, new ResultDetails(result.Message));
 
         return Ok(result.Data);
+    }
+
+    [HttpPost("register-owner")]
+    [Authorize(Roles = UserRoles.Admin)]
+    public async Task<IActionResult> RegisterOwner([FromForm] RegisterDto registerDto)
+    {
+        var result = await authService.RegisterWithRoleAsync(registerDto, UserRoles.Owner);
+
+        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
+    }
+
+    [HttpPost("register-admin")]
+    [Authorize(Roles = UserRoles.Admin)]
+    public async Task<IActionResult> RegisterAdmin([FromForm] RegisterDto registerDto)
+    {
+        var result = await authService.RegisterWithRoleAsync(registerDto, UserRoles.Admin);
+
+        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 }

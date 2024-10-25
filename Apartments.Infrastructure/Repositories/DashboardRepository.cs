@@ -1,4 +1,5 @@
-﻿using Apartments.Domain.Common;
+﻿using Apartments.Application.Dtos.DashboardDtos;
+using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.IRepositories;
 using Apartments.Infrastructure.Database;
@@ -85,6 +86,62 @@ public class DashboardRepository(ApplicationDbContext dbContext) : IDashboardRep
             RecentDismissRequests = recentDismissRequests,
             RecentTransactions = recentTransactions,
             RevenueByMonth = revenueByMonth.Select(r => (r.Month, r.Revenue)).ToList()
+        };
+    }
+    public async Task<AdminDashboardDetails> GetAdminDashboardDetailsAsync()
+    {
+        var currentYear = DateTime.UtcNow.Year;
+        var past30Days = DateTime.UtcNow.AddDays(-30);
+
+        // Get the total number of non-admin users
+        var totalUsers = await dbContext.Users
+            .CountAsync(u => u.Role != UserRoles.Admin && !u.IsDeleted);
+
+        // Get the total number of owners
+        var totalOwners = await dbContext.Users
+            .CountAsync(u => u.Role == UserRoles.Owner && !u.IsDeleted);
+
+        // Get the total number of tenants
+        var totalTenants = await dbContext.Apartments
+            .CountAsync(a => a.IsOccupied && a.TenantId != null && !a.IsDeleted);
+
+        // Get the total number of active users in the last 30 days (excluding admins)
+        var activeUsersLast30Days = await dbContext.Users
+            .CountAsync(u => u.LastLoginDate >= past30Days && u.Role != UserRoles.Admin && !u.IsDeleted);
+
+        // Get the recent 5 user reports
+        var recentReports = await dbContext.UserReports
+            .Where(x => x.TargetRole == UserRoles.Admin)
+            .OrderByDescending(r => r.CreatedDate)
+            .Take(5)
+            .ToListAsync();
+
+        // Get the recent 5 change logs
+        var recentChangeLogs = await dbContext.ChangeLogs
+            .OrderByDescending(cl => cl.ChangedAt)
+            .Take(5)
+            .ToListAsync();
+
+        // Generate a list for reports by month for the current year
+        var reportsByMonth = Enumerable.Range(1, 12).Select(month => new ReportsByMonth
+        {
+            Month = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month),
+            Reports = dbContext.UserReports
+                .Count(rt => rt.CreatedDate.Year == currentYear &&
+                             rt.TargetRole == UserRoles.Admin &&
+                             rt.CreatedDate.Month == month)
+        }).ToList();
+
+        // Create and return the AdminDashboardDetails object
+        return new AdminDashboardDetails
+        {
+            TotalUsers = totalUsers,
+            TotalOwners = totalOwners,
+            TotalTenants = totalTenants,
+            ActiveUsersLast30Days = activeUsersLast30Days,
+            ReportsByMonth = reportsByMonth,
+            RecentReports = recentReports,
+            RecentChangeLogs = recentChangeLogs
         };
     }
 }

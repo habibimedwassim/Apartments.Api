@@ -18,6 +18,8 @@ public class UserReportService(
     IMapper mapper,
     IUserContext userContext,
     IAuthorizationManager authorizationManager,
+    INotificationDispatcher notificationDispatcher,
+    INotificationRepository notificationRepository,
     IAzureBlobStorageService azureBlobStorageService,
     IUserReportRepository userReportRepository,
     IUserRepository userRepository
@@ -32,11 +34,9 @@ public class UserReportService(
         try
         {
             var currentUser = userContext.GetCurrentUser();
-
-            logger.LogInformation("User: {UserEmail} creating new report", currentUser.Email);
+            logger.LogInformation("User: {UserEmail} creating new report for {TargetRole}", currentUser.Email, targetRole);
 
             string? targetId = null;
-
             if (createUserReportDto.TargetId.HasValue)
             {
                 var targetUser = await userRepository.GetBySysIdAsync(createUserReportDto.TargetId.Value) ??
@@ -54,20 +54,20 @@ public class UserReportService(
                 Message = createUserReportDto.Message,
                 AttachmentUrl = attachmentUrl,
             };
-
             await userReportRepository.AddReportAsync(userReport);
+
+            await CreateAndSendNotifications(targetRole, targetId, "A New Report has been submitted for you");
 
             await transaction.CommitAsync();
 
-            logger.LogInformation($"Created user report: {currentUser.Email}");
+            logger.LogInformation("Created user report by: {UserEmail}", currentUser.Email);
             return ServiceResult<string>.InfoResult(StatusCodes.Status201Created, "Report created successfully!");
         }
-        catch (Exception ex) 
-        {   
+        catch (Exception ex)
+        {
             await transaction.RollbackAsync();
-            logger.LogError(ex, ex.Message);
-            return ServiceResult<string>.InfoResult(StatusCodes.Status500InternalServerError,
-                "Failed creating the Report!");
+            logger.LogError(ex, "Failed to create user report: {Message}", ex.Message);
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError, "Failed creating the Report!");
         }
     }
 
@@ -269,5 +269,35 @@ public class UserReportService(
         var reportDto = mapper.Map<UserReportDto>(report);
 
         return ServiceResult<UserReportDto>.SuccessResult(reportDto);
+    }
+
+    private async Task CreateAndSendNotifications(ReportTarget targetRole, string? targetId, string notificationMessage)
+    {
+        var notificationType = NotificationType.Report.ToString().ToLower();
+        if (targetRole == ReportTarget.Admin)
+        {
+            var admins = await userRepository.GetAdmins();
+            var notificationsList = admins.Select(admin => new Notification
+            {
+                UserId = admin,
+                Message = notificationMessage,
+                Type = notificationType,
+                IsRead = false
+            }).ToList();
+
+            await notificationDispatcher.SendBulkNotificationsAsync(admins, notificationMessage, notificationType);
+            await notificationRepository.AddNotificationListAsync(notificationsList);
+        }
+        else if (targetId != null)
+        {
+            await notificationDispatcher.SendNotificationAsync(targetId, notificationMessage, notificationType);
+            await notificationRepository.AddNotificationAsync(new Notification
+            {
+                UserId = targetId,
+                Message = notificationMessage,
+                Type = notificationType,
+                IsRead = false
+            });
+        }
     }
 }

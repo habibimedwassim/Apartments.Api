@@ -1,4 +1,5 @@
-﻿using Apartments.Application.Common;
+﻿using Apartments.Application.BackgroundServices;
+using Apartments.Application.Common;
 using Apartments.Application.IServices;
 using Apartments.Application.Services;
 using Apartments.Application.Services.ApartmentRequestHandlers;
@@ -47,6 +48,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ILeaveRequestHandler, LeaveRequestHandler>();
         services.AddScoped<IDismissRequestHandler, DismissRequestHandler>();
         services.AddSingleton<IUserIdProvider, ClaimsPrincipalUserIdProvider>();
+
+        // Background Services
+        services.AddHostedService<RentTransactionScheduler>();
 
         services.RegisterConfigurations(configuration);
 

@@ -19,6 +19,8 @@ public class RentTransactionService(
     IMapper mapper,
     IUserContext userContext,
     IAuthorizationManager authorizationManager,
+    INotificationDispatcher notificationDispatcher,
+    INotificationRepository notificationRepository,
     IUserRepository userRepository,
     IApartmentRepository apartmentRepository,
     IRentTransactionRepository rentTransactionRepository)
@@ -105,6 +107,11 @@ public class RentTransactionService(
                      latestTransaction.DateTo.Value 
                      : DateOnly.FromDateTime(DateTime.UtcNow);
 
+        if(await rentTransactionRepository.CheckExistingTransactionAsync(apartment.Id, user.Id, dateTo, dateTo.AddMonths(1)))
+        {
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status409Conflict, "Transaction exists already!");
+        }
+
         var rentTransaction = new RentTransaction
         {
             OwnerId = apartment.OwnerId,
@@ -116,6 +123,22 @@ public class RentTransactionService(
         };
 
         await rentTransactionRepository.AddRentTransactionAsync(rentTransaction);
+
+        // Trigger Notification
+        var notificationType = NotificationType.Payment.ToString().ToLower();
+        var notificationMessage = $"A new transaction has been created for your apartment '{apartment.Title}' ";
+        await notificationDispatcher.SendNotificationAsync(apartment.OwnerId,
+            notificationMessage, notificationType);
+
+        // Store it in the Db
+        var notification = new Notification
+        {
+            UserId = apartment.OwnerId,
+            Message = notificationMessage,
+            Type = notificationType,
+            IsRead = false
+        };
+        await notificationRepository.AddNotificationAsync(notification);
 
         return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Transaction created successfully!");
     }
@@ -153,5 +176,41 @@ public class RentTransactionService(
     {
         await rentTransactionRepository.DeleteRentTransactionAsync(rentTransaction, currentUser.Email);
         return RequestStatus.Cancelled;
+    }
+
+    public async Task CheckAndCreateUpcomingRentTransactionsAsync()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var upcomingTransactions = await rentTransactionRepository.GetTransactionsWithDueDate(today.AddDays(4));
+
+        foreach (var transaction in upcomingTransactions)
+        {
+            var nextDateFrom = transaction.DateTo.HasValue ? transaction.DateTo.Value : DateOnly.FromDateTime(DateTime.UtcNow);
+            var nextDateTo = nextDateFrom.AddMonths(1);
+
+            // Check if a transaction already exists for the next period
+            if (await rentTransactionRepository.CheckExistingTransactionAsync(transaction.ApartmentId, transaction.TenantId, nextDateFrom, nextDateTo))
+            {
+                continue; // Skip if transaction already exists
+            }
+
+            var newTransaction = new RentTransaction
+            {
+                OwnerId = transaction.OwnerId,
+                TenantId = transaction.TenantId,
+                ApartmentId = transaction.ApartmentId,
+                DateFrom = nextDateFrom,
+                DateTo = nextDateTo,
+                RentAmount = transaction.RentAmount,
+                Status = RequestStatus.Pending // Set to Pending initially
+            };
+
+            await rentTransactionRepository.AddRentTransactionAsync(newTransaction);
+
+            // Optionally, notify the tenant and owner about the new transaction
+            var notificationMessage = $"A new rent transaction has been created for your apartment from {nextDateFrom} to {nextDateTo}.";
+            await notificationDispatcher.SendNotificationAsync(transaction.OwnerId, notificationMessage, "payment");
+            await notificationDispatcher.SendNotificationAsync(transaction.TenantId, notificationMessage, "payment");
+        }
     }
 }

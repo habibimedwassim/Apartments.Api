@@ -15,9 +15,11 @@ public class User : IdentityUser
     public bool TempEmailConfirmed { get; set; }
     public string? ResetCode { get; set; }
     public DateTime? ResetCodeExpiration { get; set; }
+    public DateTime? LastLoginDate { get; set; }
     public string? Gender { get; set; } = UserGender.Male;
     public DateOnly? DateOfBirth { get; set; }
     public string? Role { get; set; }
+
     public bool IsDeleted { get; set; }
 }
 

@@ -29,24 +29,6 @@ public class AuthController(IAuthService authService) : ControllerBase
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
 
-    [HttpPost("register-owner")]
-    [Authorize(Roles = UserRoles.Admin)]
-    public async Task<IActionResult> RegisterOwner([FromForm] RegisterDto registerDto)
-    {
-        var result = await authService.RegisterWithRoleAsync(registerDto, UserRoles.Owner);
-
-        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-    }
-
-    [HttpPost("register-admin")]
-    [Authorize(Roles = UserRoles.Admin)]
-    public async Task<IActionResult> RegisterAdmin([FromBody] RegisterDto registerDto)
-    {
-        var result = await authService.RegisterWithRoleAsync(registerDto, UserRoles.Admin);
-
-        return StatusCode(result.StatusCode, new ResultDetails(result.Message));
-    }
-
     [HttpPost("verify-email")]
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto verifyEmailDTO)
     {

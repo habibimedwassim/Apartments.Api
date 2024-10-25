@@ -14,7 +14,11 @@ public class NotificationRepository(ApplicationDbContext dbContext)
     {
         return await AddAsync(notification);
     }
-
+    public async Task AddNotificationListAsync(List<Notification> notifications)
+    {
+        await _dbContext.Notifications.AddRangeAsync(notifications);
+        await dbContext.SaveChangesAsync();
+    }
     public async Task<IEnumerable<Notification>> GetAllUnreadNotificationsAsync(string id)
     {
         return await _dbContext.Notifications

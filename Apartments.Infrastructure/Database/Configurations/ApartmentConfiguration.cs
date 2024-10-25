@@ -44,5 +44,8 @@ public class ApartmentConfiguration : IEntityTypeConfiguration<Apartment>
         builder.Property(a => a.Description)
             .HasMaxLength(500)
             .HasDefaultValue("");
+
+        builder.HasIndex(a => a.TenantId);
+        builder.HasIndex(a => a.OwnerId);
     }
 }

@@ -32,4 +32,19 @@ public class DashboardService(
 
         return ServiceResult<OwnerDashboardDto>.SuccessResult(dashboardDto);
     }
+    public async Task<ServiceResult<AdminDashboardDto>> GetAdminDashboard()
+    {
+        var currentUser = userContext.GetCurrentUser();
+        logger.LogInformation("Retrieving owner '{Email}' dashboard info", currentUser.Email);
+
+        if (!currentUser.IsAdmin)
+        {
+            return ServiceResult<AdminDashboardDto>.ErrorResult(StatusCodes.Status403Forbidden, "Unauthorized");
+        }
+
+        var dashboardDetails = await dashboardRepository.GetAdminDashboardDetailsAsync();
+        var dashboardDto = mapper.Map<AdminDashboardDto>(dashboardDetails);
+
+        return ServiceResult<AdminDashboardDto>.SuccessResult(dashboardDto);
+    }
 }

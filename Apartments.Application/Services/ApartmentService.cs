@@ -195,6 +195,26 @@ public class ApartmentService(
 
         return ServiceResult<IEnumerable<ApartmentDto>>.SuccessResult(apartmentsDto);
     }
+    public async Task<PagedResult<ApartmentDto>> GetOwnedApartmentsPaged(int ownerId, int pageNumber)
+    {
+        var currentUser = userContext.GetCurrentUser();
+
+        var apartmentQueryFilter = new ApartmentQueryFilter() {pageNumber = pageNumber };
+
+        logger.LogInformation("Retrieving All Apartments");
+
+        var user = await userRepository.GetBySysIdAsync(ownerId) ??
+                  throw new NotFoundException("User not found");
+
+        var pagedModel = await apartmentRepository.GetApartmentsPagedAsync(apartmentQueryFilter, user.Id);
+
+        var apartmentsDto = mapper.Map<IEnumerable<ApartmentDto>>(pagedModel.Data);
+
+        var result =
+            new PagedResult<ApartmentDto>(apartmentsDto, pagedModel.DataCount, apartmentQueryFilter.pageNumber);
+
+        return result;
+    }
     public async Task<PagedResult<ApartmentDto>> GetOwnedApartmentsPaged(ApartmentQueryFilter apartmentQueryFilter)
     {
         var currentUser = userContext.GetCurrentUser();

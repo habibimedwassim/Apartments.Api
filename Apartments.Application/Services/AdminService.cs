@@ -1,11 +1,14 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.AdminDtos;
+using Apartments.Application.Dtos.ApartmentDtos;
+using Apartments.Application.Dtos.UserDtos;
 using Apartments.Application.IServices;
 using Apartments.Application.Utilities;
 using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.Exceptions;
 using Apartments.Domain.IRepositories;
+using Apartments.Domain.QueryFilters;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -26,6 +29,26 @@ public class AdminService(
     RoleManager<IdentityRole> roleManager
 ) : IAdminService
 {
+    public async Task<PagedResult<ChangeLog>> GetChangeLogsPaged(ChangeLogDto changeLogDto, ChangeLogQueryFilter filter)
+    {
+        var startDate = changeLogDto.StartDate.ToDateTime(TimeOnly.MinValue);
+        var endDate = changeLogDto.EndDate?.ToDateTime(TimeOnly.MaxValue) ?? DateTime.UtcNow;
+
+        logger.LogInformation("Retrieving change logs for entity {EntityName} between {StartDate} and {EndDate}.",
+            changeLogDto.EntityName, startDate, endDate);
+
+        var pagedModel = await adminRepository.GetChangeLogsPagedAsync(
+            changeLogDto.EntityName, startDate, endDate, filter);
+
+        var result = new PagedResult<ChangeLog>(
+            pagedModel.Data,
+            pagedModel.DataCount,
+            filter.PageNumber
+        );
+
+        return result;
+    }
+
     public async Task<ServiceResult<string>> CleanupAllOrphanedPhotosAsync(int batchSize = 100)
     {
         logger.LogInformation("Admin cleanup: Cleaning up all orphaned photos with batch size {BatchSize}", batchSize);
@@ -54,17 +77,17 @@ public class AdminService(
     }
 
 
-    public async Task<ServiceResult<IEnumerable<ChangeLog>>> GetChangeLogs(ChangeLogDto changeLogDto)
-    {
-        var endDate = changeLogDto.EndDate ?? DateTime.UtcNow;
-        logger.LogInformation("Retrieving change logs for entity {EntityName} between {StartDate} and {EndDate}.",
-            changeLogDto.EntityName, changeLogDto.StartDate, endDate);
+    //public async Task<ServiceResult<IEnumerable<ChangeLog>>> GetChangeLogs(ChangeLogDto changeLogDto)
+    //{
+    //    var endDate = changeLogDto.EndDate ?? DateTime.UtcNow;
+    //    logger.LogInformation("Retrieving change logs for entity {EntityName} between {StartDate} and {EndDate}.",
+    //        changeLogDto.EntityName, changeLogDto.StartDate, endDate);
 
-        var changeLogs =
-            await adminRepository.GetChangeLogsAsync(changeLogDto.EntityName, changeLogDto.StartDate, endDate);
+    //    var changeLogs =
+    //        await adminRepository.GetChangeLogsAsync(changeLogDto.EntityName, changeLogDto.StartDate, endDate);
 
-        return ServiceResult<IEnumerable<ChangeLog>>.SuccessResult(changeLogs);
-    }
+    //    return ServiceResult<IEnumerable<ChangeLog>>.SuccessResult(changeLogs);
+    //}
 
     public async Task<ServiceResult<AdminStatisticsDto>> GetStatistics(string type)
     {
@@ -191,5 +214,18 @@ public class AdminService(
             logger.LogError(ex, ex.Message);
             return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError, $"{message} failed");
         }
+    }
+
+    public async Task<PagedResult<UserDto>> GetAllUsers(UserQueryFilter userQueryFilter)
+    {
+        logger.LogInformation("Retrieving All Users");
+
+        var pagedModel = await userRepository.GetUsersPagedAsync(userQueryFilter);
+
+        var usersDto = mapper.Map<IEnumerable<UserDto>>(pagedModel.Data);
+
+        var result = new PagedResult<UserDto>(usersDto, pagedModel.DataCount, userQueryFilter.PageNumber);
+
+        return result;
     }
 }
