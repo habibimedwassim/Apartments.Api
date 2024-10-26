@@ -38,26 +38,6 @@ public class RentTransactionService(
         return ServiceResult<RentTransactionDto>.SuccessResult(rentTransactionDto);
     }
 
-    //public async Task<ServiceResult<List<RentTransactionDto>>> GetRentTransactions(int? id = null)
-    //{
-    //    var currentUser = userContext.GetCurrentUser();
-    //    var sysId = id ?? currentUser.SysId;
-
-    //    logger.LogInformation("Retrieving User with Id = {id} rent transactions", sysId);
-
-    //    var user = await userRepository.GetBySysIdAsync(sysId) ??
-    //               throw new NotFoundException("User not found");
-
-    //    var rentTransactions = await rentTransactionRepository.GetRentTransactionsForUserAsync(user.Id, user.Role);
-
-    //    // Pass the current user's role to the mapping configuration
-    //var rentTransactionsDto = mapper.Map<List<RentTransactionDto>>(rentTransactions, opt =>
-    //{
-    //    opt.Items["UserRole"] = user.Role;
-    //});
-
-    //    return ServiceResult<List<RentTransactionDto>>.SuccessResult(rentTransactionsDto);
-    //}
     public async Task<PagedResult<RentTransactionDto>> GetRentTransactionsPaged(RentTransactionQueryFilter filter)
     {
         var currentUser = userContext.GetCurrentUser();
