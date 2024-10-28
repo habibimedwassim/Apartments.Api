@@ -24,8 +24,10 @@ var scope = app.Services.CreateScope();
 var seeder = scope.ServiceProvider.GetRequiredService<IAppSeeder>();
 await seeder.Seed();
 
+app.Urls.Add("http://0.0.0.0:5286");
+
 // Middlewares - Error Handling should be first to catch all exceptions
-app.UseCors("AllowSpecificOrigin");
+app.UseCors("AllowAll");
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Add Authentication and Authorization
@@ -43,7 +45,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseWebSockets();
 
-app.UseHttpsRedirection();
+if (app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 
 app.MapHub<NotificationHub>("/notifications");
 

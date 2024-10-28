@@ -10,14 +10,23 @@ public static class WebApplicationBuilderExtensions
 {
     public static void AddPresentation(this WebApplicationBuilder builder)
     {
+        //builder.WebHost.ConfigureKestrel(serverOptions =>
+        //{
+        //    serverOptions.ListenLocalhost(5286, listenOptions =>
+        //    {
+        //        listenOptions.UseHttps();
+        //    });
+        //});
+
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowSpecificOrigin", policy =>
             {
-                policy.WithOrigins("http://localhost:5173") // Frontend URL
+                policy.WithOrigins("http://localhost:5173",
+                                   "http://localhost:8080")
                       .AllowAnyHeader()
                       .AllowAnyMethod()
-                      .AllowCredentials(); // Allow credentials for WebSockets
+                      .AllowCredentials();
             });
         });
 
