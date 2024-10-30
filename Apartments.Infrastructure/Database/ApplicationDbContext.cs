@@ -15,6 +15,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<RentTransaction> RentTransactions { get; init; }
     public DbSet<Notification> Notifications { get; init; }
     public DbSet<UserReport> UserReports { get; init; }
+    public DbSet<UserDeviceToken> UserDeviceTokens { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
