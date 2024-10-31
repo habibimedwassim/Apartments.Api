@@ -24,10 +24,9 @@ var scope = app.Services.CreateScope();
 var seeder = scope.ServiceProvider.GetRequiredService<IAppSeeder>();
 await seeder.Seed();
 
-app.Urls.Add("http://0.0.0.0:5286");
 
 // Middlewares - Error Handling should be first to catch all exceptions
-app.UseCors("AllowAll");
+app.UseCors("AllowSpecificOrigin");
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Add Authentication and Authorization

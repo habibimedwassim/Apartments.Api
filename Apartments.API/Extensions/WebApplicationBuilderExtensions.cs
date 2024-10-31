@@ -23,7 +23,7 @@ public static class WebApplicationBuilderExtensions
             options.AddPolicy("AllowSpecificOrigin", policy =>
             {
                 policy.WithOrigins("http://localhost:5173",
-                                   "http://localhost:8080")
+                                   "http://0.0.0.0:5286")
                       .AllowAnyHeader()
                       .AllowAnyMethod()
                       .AllowCredentials();

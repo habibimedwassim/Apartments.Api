@@ -27,3 +27,8 @@ public class SendGridSettings
     public string FromEmail { get; set; } = default!;
     public string FromName { get; set; } = default!;
 }
+public class FcmSettings
+{
+    public string ServerKey { get; set; } = string.Empty;
+    public string SenderId { get; set; } = string.Empty;
+}

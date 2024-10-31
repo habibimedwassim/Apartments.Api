@@ -17,8 +17,30 @@ public class NotificationRepository(ApplicationDbContext dbContext)
     public async Task AddNotificationListAsync(List<Notification> notifications)
     {
         await _dbContext.Notifications.AddRangeAsync(notifications);
-        await dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync();
     }
+
+    public async Task AddOrUpdateDeviceTokenAsync(string userId, string deviceToken)
+    {
+        var existingToken = await _dbContext.UserDeviceTokens
+            .FirstOrDefaultAsync(x => x.UserId == userId && x.DeviceToken == deviceToken);
+
+        if (existingToken == null)
+        {
+            _dbContext.UserDeviceTokens.Add(new UserDeviceToken
+            {
+                UserId = userId,
+                DeviceToken = deviceToken
+            });
+        }
+        else
+        {
+            existingToken.LastUpdated = DateTime.UtcNow;
+        }
+
+        await _dbContext.SaveChangesAsync();
+    }
+
     public async Task<IEnumerable<Notification>> GetAllUnreadNotificationsAsync(string id)
     {
         return await _dbContext.Notifications
@@ -44,5 +66,12 @@ public class NotificationRepository(ApplicationDbContext dbContext)
 
             await _dbContext.SaveChangesAsync();
         }
+    }
+    public async Task<List<string>> GetDeviceTokensByUserIdAsync(string userId)
+    {
+        return await _dbContext.UserDeviceTokens
+            .Where(x => x.UserId == userId)
+            .Select(x => x.DeviceToken)
+            .ToListAsync();
     }
 }

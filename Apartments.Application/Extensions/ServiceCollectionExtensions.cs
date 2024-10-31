@@ -5,8 +5,10 @@ using Apartments.Application.Services;
 using Apartments.Application.Services.ApartmentRequestHandlers;
 using Apartments.Application.Utilities;
 using Apartments.Domain.Common;
+using FirebaseAdmin;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
@@ -36,6 +38,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IApartmentRequestService, ApartmentRequestService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IFcmService, FcmService>();
 
         services.AddHttpContextAccessor();
 
@@ -106,6 +109,11 @@ public static class ServiceCollectionExtensions
                     return Task.CompletedTask;
                 }
             };
+        });
+
+        FirebaseApp.Create(new AppOptions()
+        {
+            Credential = GoogleCredential.FromFile(Path.GetFullPath("Templates\\firebase-adminsdk.json")),
         });
     }
 }

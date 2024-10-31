@@ -1,5 +1,6 @@
 ﻿using Apartments.Application.Dtos.NotificationDtos;
 using Apartments.Application.IServices;
+using Apartments.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,6 +23,21 @@ public class NotificationController(INotificationService notificationService) : 
     public async Task<IActionResult> MarkAsRead([FromQuery] string type)
     {
         await notificationService.MarkAsReadAsync(type);
+        return Ok();
+    }
+
+    [HttpPost("save-device")]
+    public async Task<IActionResult> SaveDeviceToken([FromBody] SaveDeviceTokenRequest request)
+    {
+        await notificationService.SaveDeviceToken(request.DeviceToken);
+        return Ok();
+    }
+
+    [HttpPost("send")]
+    public async Task<IActionResult> NotifyUser([FromBody] NotifyUserRequest notifyUserRequest)
+    {
+        await notificationService.SendNotificationToUser(notifyUserRequest);
+        
         return Ok();
     }
 }
