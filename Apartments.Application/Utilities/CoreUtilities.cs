@@ -149,7 +149,8 @@ public static class CoreUtilities
     {
         return phoneNumber != null &&
                phoneNumber.Length == 8 &&
-               (phoneNumber.StartsWith("9") || phoneNumber.StartsWith("5") || phoneNumber.StartsWith("2")) &&
+               (phoneNumber.StartsWith("9") || phoneNumber.StartsWith("5") || phoneNumber.StartsWith("2")
+               || phoneNumber.StartsWith("4") || phoneNumber.StartsWith("7")) &&
                phoneNumber.All(char.IsDigit);
     }
 }

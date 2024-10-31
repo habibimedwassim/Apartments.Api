@@ -25,7 +25,8 @@ public class AzureBlobStorageService(
         "image/gif",
         "image/bmp",
         "image/tiff",
-        "image/webp"
+        "image/webp",
+        "image/avif"
     };
 
     private readonly List<string> allowedImageExtensions = new()
@@ -36,7 +37,8 @@ public class AzureBlobStorageService(
         ".gif",
         ".bmp",
         ".tiff",
-        ".webp"
+        ".webp",
+        ".avif"
     };
 
     public async Task<string> UploadAsync(IFormFile file)
