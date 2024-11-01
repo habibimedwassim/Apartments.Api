@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Apartments.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class dbschema : Migration
+    public partial class addDbSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -33,6 +33,7 @@ namespace Apartments.Infrastructure.Migrations
                     SysId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CIN = table.Column<string>(type: "nchar(8)", fixedLength: true, maxLength: 8, nullable: false),
+                    Avatar = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true),
                     FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     EmailCode = table.Column<string>(type: "nchar(6)", fixedLength: true, maxLength: 6, nullable: true),
@@ -41,6 +42,7 @@ namespace Apartments.Infrastructure.Migrations
                     TempEmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     ResetCode = table.Column<string>(type: "nchar(6)", fixedLength: true, maxLength: 6, nullable: true),
                     ResetCodeExpiration = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastLoginDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Gender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
                     DateOfBirth = table.Column<DateOnly>(type: "date", nullable: true),
                     Role = table.Column<string>(type: "nvarchar(5)", maxLength: 5, nullable: true),
@@ -228,6 +230,83 @@ namespace Apartments.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notifications_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserDeviceTokens",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    DeviceToken = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LastUpdated = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserDeviceTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserDeviceTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserReports",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ResolvedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReporterId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    TargetId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    TargetRole = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    Message = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
+                    AttachmentUrl = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true),
+                    Comments = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserReports", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserReports_AspNetUsers_ReporterId",
+                        column: x => x.ReporterId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_UserReports_AspNetUsers_TargetId",
+                        column: x => x.TargetId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ApartmentPhotos",
                 columns: table => new
                 {
@@ -396,6 +475,11 @@ namespace Apartments.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_Role",
+                table: "AspNetUsers",
+                column: "Role");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AspNetUsers_SysId",
                 table: "AspNetUsers",
                 column: "SysId",
@@ -407,6 +491,26 @@ namespace Apartments.Infrastructure.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChangeLogs_EntityType",
+                table: "ChangeLogs",
+                column: "EntityType");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChangeLogs_PropertyName",
+                table: "ChangeLogs",
+                column: "PropertyName");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_IsRead",
+                table: "Notifications",
+                column: "IsRead");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_UserId",
+                table: "Notifications",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RentTransactions_ApartmentId",
@@ -422,6 +526,21 @@ namespace Apartments.Infrastructure.Migrations
                 name: "IX_RentTransactions_TenantId",
                 table: "RentTransactions",
                 column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserDeviceTokens_UserId",
+                table: "UserDeviceTokens",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserReports_ReporterId",
+                table: "UserReports",
+                column: "ReporterId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserReports_TargetId",
+                table: "UserReports",
+                column: "TargetId");
         }
 
         /// <inheritdoc />
@@ -452,7 +571,16 @@ namespace Apartments.Infrastructure.Migrations
                 name: "ChangeLogs");
 
             migrationBuilder.DropTable(
+                name: "Notifications");
+
+            migrationBuilder.DropTable(
                 name: "RentTransactions");
+
+            migrationBuilder.DropTable(
+                name: "UserDeviceTokens");
+
+            migrationBuilder.DropTable(
+                name: "UserReports");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
