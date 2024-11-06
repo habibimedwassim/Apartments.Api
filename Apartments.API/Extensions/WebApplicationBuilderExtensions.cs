@@ -1,6 +1,7 @@
 ﻿using Apartments.API.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -10,13 +11,6 @@ public static class WebApplicationBuilderExtensions
 {
     public static void AddPresentation(this WebApplicationBuilder builder)
     {
-        //builder.WebHost.ConfigureKestrel(serverOptions =>
-        //{
-        //    serverOptions.ListenLocalhost(5286, listenOptions =>
-        //    {
-        //        listenOptions.UseHttps();
-        //    });
-        //});
 
         builder.Services.AddCors(options =>
         {

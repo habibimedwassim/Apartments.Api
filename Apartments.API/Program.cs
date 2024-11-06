@@ -5,12 +5,15 @@ using Apartments.Application.Extensions;
 using Apartments.Infrastructure.Extensions;
 using Apartments.Infrastructure.Seeders;
 using Apartments.Infrastructure.Hubs;
+using Apartments.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>("Database");
 
 // Add services to the container.
 builder.AddPresentation();
@@ -48,6 +51,8 @@ if (app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
 }
+
+app.MapHealthChecks("/health");
 
 app.MapHub<NotificationHub>("/notifications");
 

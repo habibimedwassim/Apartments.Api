@@ -26,6 +26,7 @@ public class AuthService(
     IEmailService emailService,
     IOptions<JwtSettings> jwtSettings,
     IUserRepository userRepository,
+    IApartmentRepository apartmentRepository,
     IAzureBlobStorageService azureBlobStorageService,
     UserManager<User> userManager) : IAuthService
 {
@@ -58,6 +59,7 @@ public class AuthService(
         }
 
         var accessToken = await GenerateAccessTokenAsync(user);
+        var userApartment = await apartmentRepository.GetApartmentByTenantId(user.Id);
         var response = new LoginResponseDto
         {
             Id = user.SysId,
@@ -67,6 +69,7 @@ public class AuthService(
             FirstName = user.FirstName,
             LastName = user.LastName,
             FullName = CoreUtilities.ConstructUserFullName(user.FirstName, user.LastName),
+            CurrentApartmentId = userApartment?.Id,
             DateOfBirth = user.DateOfBirth,
             PhoneNumber = user.PhoneNumber,
             TempEmail = user.TempEmail,
