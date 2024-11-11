@@ -9,6 +9,7 @@ public class PagedResult<T>
     public int TotalCount { get; set; }
     public int ItemsFrom { get; set; }
     public int ItemsTo { get; set; }
+    public int PageNumber { get; set; }
 
     public PagedResult(IEnumerable<T> items, int totalCount, int pageNumber)
     {
@@ -34,6 +35,8 @@ public class PagedResult<T>
             ItemsFrom = AppConstants.PageSize * (pageNumber - 1) + 1;
             ItemsTo = Math.Min(totalCount, ItemsFrom + AppConstants.PageSize - 1);
         }
+
+        PageNumber = pageNumber;
     }
 }
 

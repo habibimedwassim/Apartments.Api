@@ -89,4 +89,12 @@ public class ApartmentController(
 
         return StatusCode(result.StatusCode, new ResultDetails(result.Message));
     }
+
+    [HttpPost("bookmarked")]
+    public async Task<IActionResult> GetBookmarkedApartments([FromBody] BookmarkedApartmentsDto apartmentsDto)
+    {
+        var result = await apartmentService.GetBookmarkedApartments(apartmentsDto.ApartmentsIds);
+
+        return Ok(result);
+    }
 }

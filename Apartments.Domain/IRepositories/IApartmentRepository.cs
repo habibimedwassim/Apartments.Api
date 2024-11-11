@@ -26,4 +26,5 @@ public interface IApartmentRepository
     Task RollbackTransactionAsync(IDbContextTransaction transaction);
     Task SaveChangesAsync();
     Task DeleteApartmentPermanentlyAsync(Apartment apartment);
+    Task<IEnumerable<Apartment>> GetApartmentsList(List<int> apartmentsIds);
 }

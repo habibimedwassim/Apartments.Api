@@ -15,4 +15,5 @@ public interface IApartmentService
     Task<ServiceResult<IEnumerable<ApartmentDto>>> GetOwnedApartments(int? ownerId = null);
     Task<PagedResult<ApartmentDto>> GetOwnedApartmentsPaged(ApartmentQueryFilter apartmentQueryFilter);
     Task<PagedResult<ApartmentDto>> GetOwnedApartmentsPaged(int ownerId, int pageNumber);
+    Task<IEnumerable<ApartmentDto>> GetBookmarkedApartments(List<int> apartmentsIds);
 }

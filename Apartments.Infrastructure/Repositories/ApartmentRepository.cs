@@ -193,4 +193,10 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
                                .OrderByDescending(x => x.CreatedDate)
                                .ToListAsync();
     }
+
+    public async Task<IEnumerable<Apartment>> GetApartmentsList(List<int> apartmentsIds)
+    {
+        return await _dbContext.Apartments.Include(x => x.ApartmentPhotos)
+            .Where(x => apartmentsIds.Contains(x.Id)).ToListAsync();
+    }
 }

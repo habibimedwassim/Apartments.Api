@@ -10,6 +10,7 @@ using Apartments.Domain.QueryFilters;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Apartments.Application.Services;
 
@@ -229,5 +230,17 @@ public class ApartmentService(
             new PagedResult<ApartmentDto>(apartmentsDto, pagedModel.DataCount, apartmentQueryFilter.pageNumber);
 
         return result;
+    }
+    public async Task<IEnumerable<ApartmentDto>> GetBookmarkedApartments(List<int> apartmentsIds)
+    {
+        if (apartmentsIds.IsNullOrEmpty())
+        {
+            return [];
+        }
+        var apartments = await apartmentRepository.GetApartmentsList(apartmentsIds);
+
+        var apartmentDtos = mapper.Map<IEnumerable<ApartmentDto>>(apartments);
+
+        return apartmentDtos;
     }
 }
