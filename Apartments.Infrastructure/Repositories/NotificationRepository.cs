@@ -1,8 +1,10 @@
 ﻿using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.IRepositories;
+using Apartments.Domain.QueryFilters;
 using Apartments.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Apartments.Infrastructure.Repositories;
 
@@ -54,6 +56,18 @@ public class NotificationRepository(ApplicationDbContext dbContext)
                                .Where(x => x.UserId == userId && x.Type == type)
                                .ToListAsync();
     }
+    public async Task MarkAsReadAsync(int id)
+    {
+        var notification = await _dbContext.Notifications
+            .FirstOrDefaultAsync(x => x.Id == id && x.IsRead == false);
+
+        if (notification != null)
+        {
+            notification.IsRead = true;
+
+            await _dbContext.SaveChangesAsync();
+        }
+    }
     public async Task MarkAsReadAsync(string userId, string type)
     {
         var notifications = await _dbContext.Notifications
@@ -73,5 +87,31 @@ public class NotificationRepository(ApplicationDbContext dbContext)
             .Where(x => x.UserId == userId)
             .Select(x => x.DeviceToken)
             .ToListAsync();
+    }
+
+    public async Task<PagedModel<Notification>> GetNotificationsPagedAsync(int pageNumber, string id)
+    {
+        // Start with the base query
+        var baseQuery = _dbContext.Notifications
+                                .Where(x => x.UserId == id)
+                                .OrderBy(x => x.IsRead)
+                                .ThenByDescending(x => x.CreatedAt)
+                                .AsQueryable();
+
+        // Get total count before pagination
+        var totalCount = await baseQuery.CountAsync();
+
+        // Apply pagination
+        var apartments = await baseQuery
+            .Skip(AppConstants.PageSize * (pageNumber - 1))
+            .Take(AppConstants.PageSize)
+            .ToListAsync();
+
+        return new PagedModel<Notification> { Data = apartments, DataCount = totalCount };
+    }
+
+    public async Task<int> GetUnreadNotificationsCountAsync(string id)
+    {
+        return await _dbContext.Notifications.CountAsync(x => x.UserId == id && x.IsRead == false);
     }
 }

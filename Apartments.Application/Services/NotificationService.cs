@@ -1,10 +1,12 @@
 ﻿using Apartments.Application.Common;
+using Apartments.Application.Dtos.ApartmentDtos;
 using Apartments.Application.Dtos.NotificationDtos;
 using Apartments.Application.IServices;
 using Apartments.Application.Utilities;
 using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.IRepositories;
+using Apartments.Domain.QueryFilters;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 
@@ -18,6 +20,22 @@ public class NotificationService(
     INotificationRepository notificationRepository
     ) : INotificationService
 {
+    public async Task<PagedResult<NotificationDto>> GetAllNotifications(int pageNumber)
+    {
+        logger.LogInformation("Retrieving All Notifications");
+        var currentUser = userContext.GetCurrentUser();
+
+        if (!currentUser.IsUser) return new PagedResult<NotificationDto>([], 0, pageNumber); ;
+
+        PagedModel<Notification> pagedModel = await notificationRepository.GetNotificationsPagedAsync(pageNumber, currentUser.Id);
+
+        var notificationDtos = mapper.Map<IEnumerable<NotificationDto>>(pagedModel.Data);
+
+        var result =
+            new PagedResult<NotificationDto>(notificationDtos, pagedModel.DataCount, pageNumber);
+
+        return result;
+    }
     public async Task SaveDeviceToken(string deviceToken)
     {
         var currentUser = userContext.GetCurrentUser();
@@ -49,7 +67,12 @@ public class NotificationService(
 
         await notificationRepository.MarkAsReadAsync(currentUser.Id, requestType.ToLower());
     }
+    public async Task MarkAsReadAsync(int id)
+    {
+        logger.LogInformation("Marking notification {Id} as read", id);
 
+        await notificationRepository.MarkAsReadAsync(id);
+    }
     public async Task SendNotificationToUser(NotifyUserRequest notifyUserRequest)
     {
         var deviceTokens = await notificationRepository.GetDeviceTokensByUserIdAsync(notifyUserRequest.UserId);
@@ -58,5 +81,17 @@ public class NotificationService(
         {
             await fcmService.SendNotificationsToMultipleDevicesAsync(deviceTokens, notifyUserRequest.Title, notifyUserRequest.Body);
         }
+    }
+
+    public async Task<ServiceResult<UnreadCount>> GetUnreadNotificationsCount()
+    {
+        var currentUser = userContext.GetCurrentUser();
+        if(currentUser == null)
+        {
+            return ServiceResult<UnreadCount>.SuccessResult(new() { Count = 0});
+        }
+
+        int count = await notificationRepository.GetUnreadNotificationsCountAsync(currentUser.Id);
+        return ServiceResult<UnreadCount>.SuccessResult(new() { Count = count });
     }
 }

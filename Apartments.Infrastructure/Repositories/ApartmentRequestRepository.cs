@@ -45,14 +45,15 @@ public class ApartmentRequestRepository(ApplicationDbContext dbContext)
     }
 
     public async Task<ApartmentRequest?> GetApartmentRequestWithStatusAsync(int apartmentId, string tenantId,
-        string type, string status)
+        string type)
     {
         return await _dbContext.ApartmentRequests
             .FirstOrDefaultAsync(x => !x.IsDeleted &&
                                       x.ApartmentId == apartmentId &&
                                       x.TenantId == tenantId &&
                                       x.RequestType.ToLower() == type.ToLower() &&
-                                      x.Status.ToLower() == status.ToLower());
+                                      (x.Status.ToLower() == RequestStatus.Pending.ToLower() ||
+                                      x.Status.ToLower() == RequestStatus.MeetingScheduled.ToLower()));
     }
 
     public async Task<ApartmentRequest?> GetApartmentRequestByApartmentIdAndUserIdAsync(int apartmentId,
@@ -77,7 +78,8 @@ public class ApartmentRequestRepository(ApplicationDbContext dbContext)
 
         var baseQuery = _dbContext.ApartmentRequests
             .Include(x => x.Tenant)
-            .Where(x => x.RequestType.ToLower() == typeLower)
+            .Include(x => x.Apartment)
+            .Where(x => x.RequestType.ToLower() == typeLower && x.IsDeleted == false)
             .AsQueryable();
 
         if (requestType == RequestType.Received)
@@ -166,5 +168,22 @@ public class ApartmentRequestRepository(ApplicationDbContext dbContext)
             .ToListAsync();
 
         return apartmentRequests;
+    }
+
+    public async Task CancelRemainingRequests(ApartmentRequest apartmentRequest)
+    {
+        var remainingRequests = await _dbContext.ApartmentRequests
+                                                .Where(x => x.TenantId == apartmentRequest.TenantId &&
+                                                            x.OwnerId == apartmentRequest.OwnerId &&
+                                                            x.Id != apartmentRequest.Id &&
+                                                            (x.Status == RequestStatus.Pending || x.Status == RequestStatus.MeetingScheduled))
+                                                .ToListAsync();
+
+        foreach(var request in remainingRequests)
+        {
+            request.Status = RequestStatus.Cancelled;
+            request.IsDeleted = true;
+        }
+        await _dbContext.SaveChangesAsync();
     }
 }

@@ -42,6 +42,17 @@ public class RentRequestHandler(
                 return ServiceResult<string>.ErrorResult(StatusCodes.Status400BadRequest,
                     $"Rent Request is already {targetStatus}");
 
+            var alreadyATenant = await apartmentRepository.GetApartmentByTenantId(apartmentRequest.TenantId);
+            if (alreadyATenant != null)
+            {
+                return ServiceResult<string>.ErrorResult(StatusCodes.Status400BadRequest,
+                    "User is already a tenant in another apartment");
+            }
+            else
+            {
+                await apartmentRequestRepository.CancelRemainingRequests(apartmentRequest);
+            }
+
             var originalRequest = mapper.Map<ApartmentRequest>(apartmentRequest);
             string successMessage;
 
@@ -87,7 +98,7 @@ public class RentRequestHandler(
 
             var existingRequest =
                 await apartmentRequestRepository.GetApartmentRequestWithStatusAsync(existingApartment.Id,
-                    currentUser.Id, requestType, RequestStatus.Pending);
+                    currentUser.Id, requestType);
 
             if (existingRequest != null)
                 return ServiceResult<string>.ErrorResult(StatusCodes.Status401Unauthorized, "Request exists already!");
@@ -134,7 +145,7 @@ public class RentRequestHandler(
         try
         {
             var notificationType = NotificationType.Rent.ToString().ToLower();
-
+            
             // Update apartment IsOccupied = True
             var apartment = apartmentRequest.Apartment;
             var originalApartment = mapper.Map<Apartment>(apartment);

@@ -10,19 +10,22 @@ public class NotificationHub : Hub
 public class NotificationDispatcher(IHubContext<NotificationHub> hubContext) : INotificationDispatcher
 {
 
-    public async Task SendNotificationAsync(string userId, string message, string type)
+    public async Task SendNotificationAsync(string userId, string message, string type, string? status = null)
     {
-        await hubContext.Clients.User(userId).SendAsync("ReceiveNotification", new
+        var notification = new
         {
             Message = message,
-            Type = type
-        });
+            Type = type,
+            Status = status
+        };
+
+        await hubContext.Clients.User(userId).SendAsync("ReceiveNotification", notification);
     }
-    public async Task SendBulkNotificationsAsync(List<string> userIds, string message, string type)
+    public async Task SendBulkNotificationsAsync(List<string> userIds, string message, string type, string? status = null)
     {
         foreach (var userId in userIds)
         {
-            await SendNotificationAsync(userId, message, type);
+            await SendNotificationAsync(userId, message, type, status);
         }
     }
 }

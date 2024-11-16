@@ -20,6 +20,6 @@ public interface IApartmentRequestRepository
     Task<IEnumerable<ApartmentRequest>> GetApartmentRequestsAsync(ApartmentRequestQueryFilter apartmentRequestQueryFilter, 
         RequestType requestType, string id);
 
-    Task<ApartmentRequest?> GetApartmentRequestWithStatusAsync(int apartmentId, string tenantId, string type,
-        string status);
+    Task<ApartmentRequest?> GetApartmentRequestWithStatusAsync(int apartmentId, string tenantId, string type);
+    Task CancelRemainingRequests(ApartmentRequest apartmentRequest);
 }

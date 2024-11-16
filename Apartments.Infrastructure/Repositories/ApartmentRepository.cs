@@ -14,7 +14,7 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
 {
     private readonly ApplicationDbContext _dbContext = dbContext;
 
-    public async Task<PagedModel<Apartment>> GetApartmentsPagedAsync(ApartmentQueryFilter apartmentsQueryFilter, string? ownerId = null)
+    public async Task<PagedModel<Apartment>> GetApartmentsPagedAsync(ApartmentQueryFilter apartmentsQueryFilter, string? ownerId = null, string? userId = null)
     {
         // Start with the base query
         var baseQuery = _dbContext.Apartments.AsQueryable();
@@ -26,6 +26,11 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
         if (!string.IsNullOrEmpty(ownerId))
         {
             baseQuery = baseQuery.Where(x => x.OwnerId == ownerId);
+        }
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            baseQuery = baseQuery.Where(x => x.TenantId != userId);
         }
 
         // Apply filters

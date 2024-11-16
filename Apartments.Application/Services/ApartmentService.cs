@@ -29,7 +29,9 @@ public class ApartmentService(
     {
         logger.LogInformation("Retrieving All Apartments");
 
-        var pagedModel = await apartmentRepository.GetApartmentsPagedAsync(apartmentQueryFilter);
+        var currentUser = userContext.GetCurrentUser();
+
+        var pagedModel = await apartmentRepository.GetApartmentsPagedAsync(apartmentQueryFilter, null, currentUser.Id);
 
         var apartmentsDto = mapper.Map<IEnumerable<ApartmentDto>>(pagedModel.Data);
 

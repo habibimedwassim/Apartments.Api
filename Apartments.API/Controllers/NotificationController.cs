@@ -1,4 +1,5 @@
-﻿using Apartments.Application.Dtos.NotificationDtos;
+﻿using Apartments.Application.Common;
+using Apartments.Application.Dtos.NotificationDtos;
 using Apartments.Application.IServices;
 using Apartments.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,6 +13,13 @@ namespace Apartments.API.Controllers;
 
 public class NotificationController(INotificationService notificationService) : ControllerBase
 {
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllNotifications([FromQuery] int pageNumber)
+    {
+        var result = await notificationService.GetAllNotifications(pageNumber);
+        return Ok(result);
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetUnreadNotifications()
     {
@@ -19,8 +27,22 @@ public class NotificationController(INotificationService notificationService) : 
         return Ok(result);
     }
 
+    [HttpGet("unread-count")]
+    public async Task<IActionResult> GetUnreadNotificationsCount()
+    {
+        ServiceResult<UnreadCount> result = await notificationService.GetUnreadNotificationsCount();
+        return Ok(result.Data);
+    }
+
+    [HttpPost("{id:int}")]
+    public async Task<IActionResult> MarkAsRead([FromRoute] int id)
+    {
+        await notificationService.MarkAsReadAsync(id);
+        return Ok();
+    }
+
     [HttpPost]
-    public async Task<IActionResult> MarkAsRead([FromQuery] string type)
+    public async Task<IActionResult> MarkAllAsReadByType([FromQuery] string type)
     {
         await notificationService.MarkAsReadAsync(type);
         return Ok();

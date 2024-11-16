@@ -16,7 +16,13 @@ public class ApartmentRequestMapper : Profile
                 {
                     opt.MapFrom(src => src.Tenant.Avatar);
                     opt.Condition(src => src.Tenant != null && !string.IsNullOrEmpty(src.Tenant.Avatar));
+                })
+            .ForMember(dest => dest.Location, 
+                opt => 
+                {
+                    opt.MapFrom(src => $"{src.Apartment.City}, {src.Apartment.Street}");
                 });
+
         //.ForMember(dest => dest.TenantId, opt => opt.Ignore());
 
         CreateMap<UpdateApartmentRequestDto, ApartmentRequest>()

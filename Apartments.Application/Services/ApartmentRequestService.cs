@@ -1,5 +1,6 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.ApartmentRequestDtos;
+using Apartments.Application.Dtos.NotificationDtos;
 using Apartments.Application.Dtos.UserDtos;
 using Apartments.Application.IServices;
 using Apartments.Application.Services.ApartmentRequestHandlers;
@@ -23,6 +24,7 @@ public class ApartmentRequestService(
     IUserContext userContext,
     IAuthorizationManager authorizationManager,
     IEmailService emailService,
+    INotificationService notificationService,
     IDismissRequestHandler dismissTenantHandler,
     ILeaveRequestHandler leaveRequestHandler,
     IRentRequestHandler rentRequestHandler,
@@ -123,6 +125,12 @@ public class ApartmentRequestService(
                             $"<br/>For more details, you can contact {owner.Email} or give them a call at +216-{owner.PhoneNumber}";
         await emailService.SendEmailAsync(tenant.Email!, "Meeting Scheduled", notificationMessage);
 
+        await notificationService.SendNotificationToUser(new NotifyUserRequest()
+        {
+            UserId = tenant.Id,
+            Title = "Meeting Scheduled",
+            Body = notificationMessage
+        });
         return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Meeting Scheduled");
     }
     public async Task<ServiceResult<IEnumerable<ApartmentRequestDto>>> GetApartmentRequests(
