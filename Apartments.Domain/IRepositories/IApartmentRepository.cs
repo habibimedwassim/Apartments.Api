@@ -27,4 +27,5 @@ public interface IApartmentRepository
     Task SaveChangesAsync();
     Task DeleteApartmentPermanentlyAsync(Apartment apartment);
     Task<IEnumerable<Apartment>> GetApartmentsList(List<int> apartmentsIds);
+    Task<int?> GetCurrentApartmentId(string id);
 }

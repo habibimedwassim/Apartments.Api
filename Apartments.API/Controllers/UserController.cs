@@ -32,6 +32,13 @@ public class UserController(
         return Ok(user.Data);
     }
 
+    [HttpGet("me/current-apartment-id")]
+    public async Task<IActionResult> GetCurrentApartmentId()
+    {
+        var currentApartmentId = await apartmentService.GetCurrentApartmentId();
+        return Ok(currentApartmentId.Data);
+    }
+
     [HttpPatch("me")]
     public async Task<IActionResult> UpdateUserDetails([FromForm] UpdateUserDto updateUserDto)
     {

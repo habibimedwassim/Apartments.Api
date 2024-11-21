@@ -1,11 +1,13 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.ApartmentRequestDtos;
+using Apartments.Application.Dtos.NotificationDtos;
 using Apartments.Application.IServices;
 using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.Exceptions;
 using Apartments.Domain.IRepositories;
 using AutoMapper;
+using FirebaseAdmin.Auth.Multitenancy;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -27,6 +29,7 @@ public class LeaveRequestHandler(
     IApartmentRepository apartmentRepository,
     IRentTransactionRepository rentTransactionRepository,
     INotificationRepository notificationRepository,
+    INotificationService notificationService,
     INotificationDispatcher notificationDispatcher
 ) : ILeaveRequestHandler
 {
@@ -34,7 +37,7 @@ public class LeaveRequestHandler(
         RequestAction requestAction)
     {
         await using var transaction = await apartmentRepository.BeginTransactionAsync();
-
+        string notificationMessage = string.Empty;
         try
         {
             var latestTransaction =
@@ -49,25 +52,22 @@ public class LeaveRequestHandler(
                     $"Leave Request is already {targetStatus}");
 
             var originalRequest = mapper.Map<ApartmentRequest>(apartmentRequest);
-            string successMessage;
-
             if (requestAction == RequestAction.Approve)
             {
                 apartmentRequest.Status = RequestStatus.Approved;
-                successMessage = "Leave Request approved successfully.";
-                await HandleApprovedRequest(apartmentRequest, latestTransaction, currentUser.Email);
+                notificationMessage = "Leave Request approved successfully.";
+                await HandleApprovedRequest(apartmentRequest, latestTransaction, currentUser.Email, notificationMessage);
             }
             else
             {
                 apartmentRequest.Status = RequestStatus.Rejected;
-                successMessage = "Leave Request rejected successfully.";
+                notificationMessage = "Leave Request rejected";
             }
 
             await apartmentRequestRepository.UpdateApartmentRequestAsync(originalRequest, apartmentRequest,
                 currentUser.Email);
 
             await transaction.CommitAsync();
-            return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, successMessage);
         }
         catch (Exception ex)
         {
@@ -78,10 +78,35 @@ public class LeaveRequestHandler(
             return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError,
                 $"Failed to {requestAction.ToString()} the leave request");
         }
+
+        try
+        {
+            if (!string.IsNullOrEmpty(notificationMessage))
+            {
+                var notificationType = NotificationType.Leave.ToString().ToLower();
+                await notificationDispatcher.SendNotificationAsync(apartmentRequest.TenantId, notificationMessage,
+                    notificationType, apartmentRequest.Status);
+
+                await notificationService.SendNotificationToUser(new NotifyUserRequest()
+                {
+                    UserId = apartmentRequest.TenantId,
+                    Title = "Leave Request",
+                    Body = notificationMessage
+                });
+
+                await emailService.SendEmailAsync(apartmentRequest.Tenant.Email!, "Apartment Exit", notificationMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send notification");
+        }
+
+        return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, notificationMessage);
     }
 
     private async Task HandleApprovedRequest(ApartmentRequest apartmentRequest, RentTransaction latestTransaction,
-        string userEmail)
+        string userEmail, string notificationMessage)
     {
         try
         {
@@ -112,11 +137,6 @@ public class LeaveRequestHandler(
 
             await rentTransactionRepository.AddRentTransactionAsync(rentTransaction);
 
-            // Trigger Notification
-            var notificationMessage = $"Your request to leave '{apartment.Title}' has been approved";
-            await notificationDispatcher.SendNotificationAsync(apartmentRequest.TenantId, notificationMessage,
-                notificationType);
-
             // Store it in the Db
             var notification = new Notification
             {
@@ -126,8 +146,6 @@ public class LeaveRequestHandler(
                 IsRead = false
             };
             await notificationRepository.AddNotificationAsync(notification);
-
-            await emailService.SendEmailAsync(tenant.Email!, "Apartment Exit", notificationMessage);
         }
         catch
         {
@@ -140,7 +158,16 @@ public class LeaveRequestHandler(
     {
         try
         {
+            var requestType = ApartmentRequestType.Leave.ToString();
+
             logger.LogInformation("Attempting to leave Apartment with Id = {ApartmentId}", apartment.Id);
+
+            var existingRequest =
+                await apartmentRequestRepository.GetApartmentRequestWithStatusAsync(apartment.Id,
+                    currentUser.Id, requestType);
+
+            if (existingRequest != null)
+                return ServiceResult<string>.ErrorResult(StatusCodes.Status401Unauthorized, "Request exists already!");
 
             // Create a leave tenant request record
             var leaveRequest = new ApartmentRequest(ApartmentRequestType.Leave.ToString())

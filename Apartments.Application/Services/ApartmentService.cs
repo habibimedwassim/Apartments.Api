@@ -1,6 +1,7 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.ApartmentDtos;
 using Apartments.Application.Dtos.ApartmentPhotoDtos;
+using Apartments.Application.Dtos.UserDtos;
 using Apartments.Application.IServices;
 using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
@@ -244,5 +245,14 @@ public class ApartmentService(
         var apartmentDtos = mapper.Map<IEnumerable<ApartmentDto>>(apartments);
 
         return apartmentDtos;
+    }
+
+    public async Task<ServiceResult<ApartmentIdDto>> GetCurrentApartmentId()
+    {
+        var currentUser = userContext.GetCurrentUser();
+
+        int? currentApartmentId = await apartmentRepository.GetCurrentApartmentId(currentUser.Id);
+
+        return ServiceResult<ApartmentIdDto>.SuccessResult(new ApartmentIdDto { Id = currentApartmentId });
     }
 }

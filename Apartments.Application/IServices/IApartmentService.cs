@@ -1,5 +1,6 @@
 ﻿using Apartments.Application.Common;
 using Apartments.Application.Dtos.ApartmentDtos;
+using Apartments.Application.Dtos.UserDtos;
 using Apartments.Domain.Common;
 using Apartments.Domain.QueryFilters;
 
@@ -16,4 +17,5 @@ public interface IApartmentService
     Task<PagedResult<ApartmentDto>> GetOwnedApartmentsPaged(ApartmentQueryFilter apartmentQueryFilter);
     Task<PagedResult<ApartmentDto>> GetOwnedApartmentsPaged(int ownerId, int pageNumber);
     Task<IEnumerable<ApartmentDto>> GetBookmarkedApartments(List<int> apartmentsIds);
+    Task<ServiceResult<ApartmentIdDto>> GetCurrentApartmentId();
 }

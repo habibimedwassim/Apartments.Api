@@ -204,4 +204,10 @@ public class ApartmentRepository(ApplicationDbContext dbContext)
         return await _dbContext.Apartments.Include(x => x.ApartmentPhotos)
             .Where(x => apartmentsIds.Contains(x.Id)).ToListAsync();
     }
+
+    public async Task<int?> GetCurrentApartmentId(string id)
+    {
+        var apartment = await _dbContext.Apartments.FirstOrDefaultAsync(x => x.TenantId == id);
+        return apartment?.Id;
+    }
 }
