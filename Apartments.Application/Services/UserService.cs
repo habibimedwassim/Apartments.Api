@@ -74,7 +74,7 @@ public class UserService(
     public async Task<ServiceResult<UserDto>> UpdateUserDetails(UpdateUserDto updateAppUserDto)
     {
         await using var transaction = await userRepository.BeginTransactionAsync();
-        var oldAvatarUrl = string.Empty;
+        string? oldAvatarUrl = null;
         try
         {
             var currentUser = userContext.GetCurrentUser();
@@ -96,23 +96,34 @@ public class UserService(
                     return ServiceResult<UserDto>.ErrorResult(StatusCodes.Status400BadRequest, "Phone Number exists already!");
                 }
             }
-            oldAvatarUrl = user.Avatar;
-            var originalRecord = mapper.Map<User>(user);
 
+            oldAvatarUrl = user.Avatar;
+
+            var originalRecord = mapper.Map<User>(user);
             mapper.Map(updateAppUserDto, user);
 
-            var avatarUrl = await azureBlobStorageService.UploadSingleFileAsync(updateAppUserDto.Avatar);
-            if (avatarUrl != null)
+            if (updateAppUserDto.Avatar != null)
             {
-                user.Avatar = avatarUrl;
+                var avatarUrl = await azureBlobStorageService.UploadSingleFileAsync(updateAppUserDto.Avatar);
+                if (avatarUrl != null)
+                {
+                    user.Avatar = avatarUrl;
+                }
             }
 
             await userRepository.UpdateAsync(originalRecord, user, currentUser.Email);
 
             var userDto = mapper.Map<UserDto>(user);
-            userDto.Avatar = user.Avatar;
 
             await transaction.CommitAsync();
+
+            if (updateAppUserDto.Avatar != null && !string.IsNullOrEmpty(oldAvatarUrl))
+            {
+                await azureBlobStorageService.DeleteAsync(oldAvatarUrl);
+            }
+
+            var currentApartment = await apartmentRepository.GetApartmentByTenantId(currentUser.Id);
+            userDto.CurrentApartment = mapper.Map<ApartmentDto>(currentApartment);
 
             logger.LogInformation("User details updated successfully for {UserId}.", user.Id);
 
@@ -125,13 +136,6 @@ public class UserService(
             await transaction.RollbackAsync();
 
             return ServiceResult<UserDto>.ErrorResult(StatusCodes.Status500InternalServerError, "User not updated");
-        }
-        finally 
-        {
-            if (!string.IsNullOrEmpty(oldAvatarUrl))
-            {
-                await azureBlobStorageService.DeleteAsync(oldAvatarUrl);
-            }
         }
     }
     public async Task<ServiceResult<string>> UpdateUserPassword(ChangePasswordDto changePasswordDto)
