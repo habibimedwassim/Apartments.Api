@@ -50,7 +50,8 @@ public class ApartmentService(
                         throw new NotFoundException(nameof(Apartment), id.ToString());
 
         var apartmentDto = mapper.Map<ApartmentDto>(apartment);
-
+        apartmentDto.OwnerEmail = apartment.Owner.Email;
+        apartmentDto.OwnerPhone = apartment.Owner.PhoneNumber;
         return ServiceResult<ApartmentDto>.SuccessResult(apartmentDto);
     }
 

@@ -123,7 +123,7 @@ public class ApartmentRequestService(
 
         var emailMessage = notificationMessage + 
                             $"<br/>For more details, you can contact {owner.Email} or give them a call at +216-{owner.PhoneNumber}";
-        await emailService.SendEmailAsync(tenant.Email!, "Meeting Scheduled", notificationMessage);
+        await emailService.SendEmailAsync(tenant.Email!, "Meeting Scheduled", emailMessage);
 
         await notificationService.SendNotificationToUser(new NotifyUserRequest()
         {

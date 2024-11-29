@@ -22,6 +22,7 @@ public class UserReportService(
     INotificationRepository notificationRepository,
     IAzureBlobStorageService azureBlobStorageService,
     IUserReportRepository userReportRepository,
+    IApartmentRepository apartmentRepository,
     IUserRepository userRepository
     ) : IUserReportService
 {
@@ -37,11 +38,15 @@ public class UserReportService(
             logger.LogInformation("User: {UserEmail} creating new report for {TargetRole}", currentUser.Email, targetRole);
 
             string? targetId = null;
-            if (createUserReportDto.TargetId.HasValue)
+            if (createUserReportDto.ApartmentId.HasValue)
             {
-                var targetUser = await userRepository.GetBySysIdAsync(createUserReportDto.TargetId.Value) ??
-                                 throw new NotFoundException("Target User not found");
-                targetId = targetUser.Id;
+                var apartment = await apartmentRepository.GetApartmentByIdAsync(createUserReportDto.ApartmentId.Value)
+                                 ?? throw new NotFoundException("Apartment not found");
+                if(apartment.TenantId != currentUser.Id)
+                {
+                    return ServiceResult<string>.ErrorResult(StatusCodes.Status403Forbidden, "You cannot report to this apartment owner");
+                }
+                targetId = apartment.OwnerId;
             }
 
             var attachmentUrl = await azureBlobStorageService.UploadSingleFileAsync(createUserReportDto.Attachment);

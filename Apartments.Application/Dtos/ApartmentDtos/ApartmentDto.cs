@@ -17,4 +17,7 @@ public class ApartmentDto
     public DateOnly? AvailableFrom { get; set; }
     public List<ApartmentPhotoDto> ApartmentPhotos { get; set; } = [];
     public bool IsDeleted { get; set; }
+    public string? OwnerEmail { get; set; }
+    public string? OwnerPhone { get; set; }
+    public int OwnerSysId { get; set; }
 }

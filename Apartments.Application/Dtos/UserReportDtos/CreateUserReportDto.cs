@@ -4,7 +4,7 @@ namespace Apartments.Application.Dtos.UserReportDtos;
 
 public class CreateUserReportDto
 {
-    public int? TargetId { get; set; }
+    public int? ApartmentId { get; set; }
     public string TargetRole { get; set; } = default!;
     public string Message { get; set; } = default!;
     public IFormFile? Attachment { get; set; }
