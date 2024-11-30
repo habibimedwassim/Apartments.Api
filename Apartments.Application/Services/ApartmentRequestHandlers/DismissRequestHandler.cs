@@ -23,7 +23,8 @@ public class DismissRequestHandler(
     IEmailService emailService,
     IApartmentRepository apartmentRepository,
     IRentTransactionRepository rentTransactionRepository,
-    IApartmentRequestRepository apartmentRequestRepository
+    IApartmentRequestRepository apartmentRequestRepository,
+    INotificationUtilities notificationUtilities
 ) : IDismissRequestHandler
 {
     public async Task<ServiceResult<string>> DismissTenant(CurrentUser currentUser, Apartment apartment, User tenant,
@@ -42,7 +43,7 @@ public class DismissRequestHandler(
             var originalApartment = mapper.Map<Apartment>(apartment);
             apartment.IsOccupied = false;
             apartment.TenantId = null;
-            apartment.AvailableFrom = requestDate;
+            apartment.AvailableFrom = requestDate.AddDays(1);
             await apartmentRepository.UpdateApartmentAsync(originalApartment, apartment, currentUser.Email);
 
             // Create a dismiss tenant request record
@@ -73,14 +74,6 @@ public class DismissRequestHandler(
             await rentTransactionRepository.AddRentTransactionAsync(rentTransaction);
 
             await transaction.CommitAsync();
-
-            // Notify tenant about the dismissal
-            var ownerFullName = CoreUtilities.ConstructUserFullName(apartment.Owner.FirstName, apartment.Owner.LastName);
-            var message =
-                $"You have been dismissed from the apartment titled: ({apartment.Title}) owned by {ownerFullName}, you have until ({requestDate.ToString(AppConstants.DateFormat)}) to clear the apartment. Reason: {dismissRequest.Reason}";
-            await emailService.SendEmailAsync(tenant.Email!, "Dismissed from Apartment", message);
-
-            return ServiceResult<string>.SuccessResult("Tenant dismissed successfully");
         }
         catch
         {
@@ -88,5 +81,32 @@ public class DismissRequestHandler(
             return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError,
                 "Failed to dismiss the tenant");
         }
+
+        try
+        {
+            var notificationModel = new NotificationModel()
+            {
+                UserId = tenant.Id,
+                Email = tenant.Email!,
+                Title = "Dismissed from Apartment",
+                Message = $"You have been dismissed from the apartment titled: ({apartment.Title})",
+                NotificationType = NotificationType.Dismiss.ToString().ToLower(),
+                SendEmail = false,
+                Status = RequestStatus.Approved
+            };
+
+            await notificationUtilities.SendNotificationAsync(notificationModel);
+
+            var ownerFullName = CoreUtilities.ConstructUserFullName(apartment.Owner.FirstName, apartment.Owner.LastName);
+            var message =
+                $"You have been dismissed from the apartment titled: ({apartment.Title}) owned by {ownerFullName}, you have until ({dismissRequest.RequestDate!.Value.ToString(AppConstants.DateFormat)}) to clear the apartment. Reason: {dismissRequest.Reason}";
+            await emailService.SendEmailAsync(tenant.Email!, "Dismissed from Apartment", message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send notification");
+        }
+
+        return ServiceResult<string>.SuccessResult("Tenant dismissed successfully");
     }
 }

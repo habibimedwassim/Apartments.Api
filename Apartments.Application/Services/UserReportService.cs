@@ -23,7 +23,8 @@ public class UserReportService(
     IAzureBlobStorageService azureBlobStorageService,
     IUserReportRepository userReportRepository,
     IApartmentRepository apartmentRepository,
-    IUserRepository userRepository
+    IUserRepository userRepository,
+    INotificationUtilities notificationUtilities
     ) : IUserReportService
 {
     public async Task<ServiceResult<string>> CreateUserReport(CreateUserReportDto createUserReportDto)
@@ -209,58 +210,106 @@ public class UserReportService(
 
     public async Task<ServiceResult<string>> UpdateUserReport(int id, UpdateUserReportDto updateReportDto)
     {
+        logger.LogInformation($"Updating User Report: {id}");
+
+        var currentUser = userContext.GetCurrentUser();
+
+        // Validate status
         if (!string.IsNullOrEmpty(updateReportDto.Status))
         {
             var statusEnum = CoreUtilities.ValidateEnum<ReportStatus>(updateReportDto.Status);
             updateReportDto.Status = statusEnum.ToString();
         }
 
+        // Fetch and validate report
+        var report = await userReportRepository.GetReportByIdAsync(id) ??
+                         throw new NotFoundException("Report not found");
+
+        if (!authorizationManager.AuthorizeUserReport(currentUser, ResourceOperation.Update, report))
+        {
+            throw new ForbiddenException();
+        }
+
+        bool statusChanged = updateReportDto.Status != report.Status && updateReportDto.Status != null;
+
         await using var transaction = await userRepository.BeginTransactionAsync();
         try
         {
-            logger.LogInformation($"Updating User Report: {id}");
+            // Update report with new details
+            await PerformReportUpdate(report, updateReportDto, currentUser.Email);
 
-            var currentUser = userContext.GetCurrentUser();
-
-            var report = await userReportRepository.GetReportByIdAsync(id) ??
-                         throw new NotFoundException("Report not found");
-
-            if(!authorizationManager.AuthorizeUserReport(currentUser, ResourceOperation.Update, report))
-            {
-                throw new ForbiddenException();
-            }
-
-            var attachmentUrl = report.AttachmentUrl;
-            if(updateReportDto.Attachment != null)
-            {
-                var uploadedAttachment = await azureBlobStorageService.UploadSingleFileAsync(updateReportDto.Attachment);
-                if (uploadedAttachment != null) 
-                {
-                    attachmentUrl = uploadedAttachment;
-                }
-            }
-
-            var originalRecord = mapper.Map<UserReport>(report);
-            mapper.Map(updateReportDto, report);
-            report.AttachmentUrl = attachmentUrl;
-
-            if (updateReportDto.Status == ReportStatus.Resolved.ToString())
-            {
-                report.ResolvedDate = updateReportDto.ResolvedDate ?? DateTime.UtcNow;
-            }
-
-            await userReportRepository.UpdateAsync(originalRecord, report, currentUser.Email);
             await transaction.CommitAsync();
-
-            return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, "Report updated successfully!");
-
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            logger.LogError(ex, ex.Message);
-            return ServiceResult<string>.InfoResult(StatusCodes.Status500InternalServerError,
+            logger.LogError(ex, $"Error updating report {id} by {currentUser.Email}: {ex.Message}");
+            return ServiceResult<string>.ErrorResult(StatusCodes.Status500InternalServerError,
                 "Failed updating the Report!");
+        }
+
+        // Notify user about the status change
+        if (statusChanged)
+        {
+            await NotifyUserOfStatusChange(report, updateReportDto.Status!);
+        }
+
+        return ServiceResult<string>.InfoResult(StatusCodes.Status200OK, $"Report updated successfully to {report.Status}!");
+    }
+
+    private async Task PerformReportUpdate(UserReport report, UpdateUserReportDto updateReportDto, string updatedBy)
+    {
+        var attachmentUrl = report.AttachmentUrl;
+
+        if (updateReportDto.Attachment != null)
+        {
+            var uploadedAttachment = await azureBlobStorageService.UploadSingleFileAsync(updateReportDto.Attachment);
+            if (!string.IsNullOrEmpty(uploadedAttachment))
+            {
+                attachmentUrl = uploadedAttachment;
+            }
+        }
+
+        var originalRecord = mapper.Map<UserReport>(report);
+        mapper.Map(updateReportDto, report);
+        report.AttachmentUrl = attachmentUrl;
+
+        if (updateReportDto.Status == ReportStatus.Resolved.ToString())
+        {
+            report.ResolvedDate = updateReportDto.ResolvedDate ?? DateTime.UtcNow;
+        }
+
+        await userReportRepository.UpdateAsync(originalRecord, report, updatedBy);
+    }
+
+    private async Task NotifyUserOfStatusChange(UserReport report, string newStatus)
+    {
+        try
+        {
+            var message = newStatus switch
+            {
+                nameof(ReportStatus.InProgress) => "Your report is now in progress.",
+                nameof(ReportStatus.Resolved) => "Your report has been resolved.",
+                nameof(ReportStatus.Closed) => "Your report has been closed.",
+                _ => "Your report status has been updated."
+            };
+
+            var notificationModel = new NotificationModel
+            {
+                UserId = report.ReporterId,
+                Email = report.Reporter.Email!,
+                Title = "Report Update",
+                Message = message,
+                NotificationType = NotificationType.Report.ToString().ToLower(),
+                SendFirebase = report.Reporter.Role == UserRoles.User,
+                SendEmail = newStatus == nameof(ReportStatus.Resolved)
+            };
+
+            await notificationUtilities.SendNotificationAsync(notificationModel);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, $"Failed to notify user {report.Reporter.Email} about report status change: {ex.Message}");
         }
     }
 

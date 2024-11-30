@@ -21,6 +21,7 @@ public class UserReportController(IUserReportService userReportService) : Contro
 
         return Ok(result.Data);
     }
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetReportById([FromRoute] int id)
     {

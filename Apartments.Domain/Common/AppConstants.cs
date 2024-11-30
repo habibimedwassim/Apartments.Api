@@ -92,7 +92,8 @@ public enum NotificationType
     Rent,
     Leave,
     Report,
-    Payment
+    Payment,
+    Dismiss
 }
 
 public enum PaymentRequestAction

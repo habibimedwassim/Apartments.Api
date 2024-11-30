@@ -39,6 +39,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IFcmService, FcmService>();
+        services.AddScoped<INotificationUtilities, NotificationUtilities>();
 
         services.AddHttpContextAccessor();
 

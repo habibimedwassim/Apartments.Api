@@ -2,6 +2,7 @@
 using Apartments.Application.Dtos.ApartmentRequestDtos;
 using Apartments.Application.Dtos.NotificationDtos;
 using Apartments.Application.IServices;
+using Apartments.Application.Utilities;
 using Apartments.Domain.Common;
 using Apartments.Domain.Entities;
 using Apartments.Domain.Exceptions;
@@ -28,9 +29,7 @@ public class LeaveRequestHandler(
     IApartmentRequestRepository apartmentRequestRepository,
     IApartmentRepository apartmentRepository,
     IRentTransactionRepository rentTransactionRepository,
-    INotificationRepository notificationRepository,
-    INotificationService notificationService,
-    INotificationDispatcher notificationDispatcher
+    INotificationUtilities notificationUtilities
 ) : ILeaveRequestHandler
 {
     public async Task<ServiceResult<string>> ApproveReject(CurrentUser currentUser, ApartmentRequest apartmentRequest,
@@ -55,13 +54,13 @@ public class LeaveRequestHandler(
             if (requestAction == RequestAction.Approve)
             {
                 apartmentRequest.Status = RequestStatus.Approved;
-                notificationMessage = "Leave Request approved successfully.";
+                notificationMessage = "Leave Request approved.";
                 await HandleApprovedRequest(apartmentRequest, latestTransaction, currentUser.Email, notificationMessage);
             }
             else
             {
                 apartmentRequest.Status = RequestStatus.Rejected;
-                notificationMessage = "Leave Request rejected";
+                notificationMessage = "Leave Request rejected.";
             }
 
             await apartmentRequestRepository.UpdateApartmentRequestAsync(originalRequest, apartmentRequest,
@@ -83,18 +82,17 @@ public class LeaveRequestHandler(
         {
             if (!string.IsNullOrEmpty(notificationMessage))
             {
-                var notificationType = NotificationType.Leave.ToString().ToLower();
-                await notificationDispatcher.SendNotificationAsync(apartmentRequest.TenantId, notificationMessage,
-                    notificationType, apartmentRequest.Status);
-
-                await notificationService.SendNotificationToUser(new NotifyUserRequest()
+                var notificationModel = new NotificationModel()
                 {
                     UserId = apartmentRequest.TenantId,
+                    Email = apartmentRequest.Tenant.Email!,
                     Title = "Leave Request",
-                    Body = notificationMessage
-                });
+                    Message = notificationMessage,
+                    NotificationType = NotificationType.Leave.ToString().ToLower(),
+                    Status = apartmentRequest.Status
+                };
 
-                await emailService.SendEmailAsync(apartmentRequest.Tenant.Email!, "Apartment Exit", notificationMessage);
+                await notificationUtilities.SendNotificationAsync(notificationModel);
             }
         }
         catch (Exception ex)
@@ -119,7 +117,7 @@ public class LeaveRequestHandler(
             var originalApartment = mapper.Map<Apartment>(apartment);
             apartment.IsOccupied = false;
             apartment.TenantId = null;
-            apartment.AvailableFrom = dateFrom;
+            apartment.AvailableFrom = dateFrom.AddDays(1);
             await apartmentRepository.UpdateApartmentAsync(originalApartment, apartment, userEmail);
 
             // Update latest transaction
@@ -137,15 +135,15 @@ public class LeaveRequestHandler(
 
             await rentTransactionRepository.AddRentTransactionAsync(rentTransaction);
 
-            // Store it in the Db
-            var notification = new Notification
-            {
-                UserId = tenant.Id,
-                Message = notificationMessage,
-                Type = notificationType,
-                IsRead = false
-            };
-            await notificationRepository.AddNotificationAsync(notification);
+            //// Store it in the Db
+            //var notification = new Notification
+            //{
+            //    UserId = tenant.Id,
+            //    Message = notificationMessage,
+            //    Type = notificationType,
+            //    IsRead = false
+            //};
+            //await notificationRepository.AddNotificationAsync(notification);
         }
         catch
         {
@@ -186,20 +184,20 @@ public class LeaveRequestHandler(
             await emailService.SendEmailAsync(apartment.Owner.Email!, "Request to leave Apartment", message);
 
             // Trigger Notification
-            var notificationType = NotificationType.Leave.ToString().ToLower();
             var notificationMessage = $"The tenant of the apartment '{apartment.Title}' has requested to leave";
-            await notificationDispatcher.SendNotificationAsync(apartment.OwnerId,
-                notificationMessage, notificationType);
 
-            // Store it in the Db
-            var notification = new Notification
+            var notificationModel = new NotificationModel()
             {
                 UserId = apartment.OwnerId,
+                Email = apartment.Owner.Email!,
+                Title = "Leave Request",
                 Message = notificationMessage,
-                Type = notificationType,
-                IsRead = false
+                NotificationType = NotificationType.Leave.ToString().ToLower(),
+                SendFirebase = false,
+                SendEmail = false
             };
-            await notificationRepository.AddNotificationAsync(notification);
+
+            await notificationUtilities.SendNotificationAsync(notificationModel);
 
             return ServiceResult<string>.SuccessResult("Leave request sent successfully");
         }
