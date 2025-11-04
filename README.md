@@ -1,54 +1,48 @@
-# Apartments.Api
+# Apartments API
 
-.NET backend for the renting app. API controllers, SignalR notifications, EF Core migrations, and seeders.
+A .NET 8-based REST API for managing apartments, including user authentication, property listings, and integrations with Azure Blob Storage and Firebase.
 
-Requirements
-- .NET SDK 7+ (or version used by the solution)
-- A database (configured via connection string in appsettings.*.json or environment variables)
+## Features
 
-Quick start (local)
-1. Restore and build
-   dotnet restore
-   dotnet build
+- User management and JWT-based authentication
+- Apartment/property CRUD operations
+- Image storage via Azure Blob Storage
+- Push notifications via Firebase
+- Database seeding for development
+- Middleware for error handling and logging
 
-2. Configure database connection
-   Update Apartments.API/appsettings.Development.json or set environment variable for the connection string.
+## Prerequisites
 
-3. Apply EF migrations (if using CLI)
-   dotnet ef database update --project Apartments.Application --startup-project Apartments.API
+- .NET 8 SDK
+- SQL Server (or compatible database)
+- (Optional) Azure Storage account for blob storage
+- (Optional) Firebase service account for notifications
 
-4. Run the API
-   dotnet run --project Apartments.API
+## Installation
 
-## Configuration
+1. Clone the repository.
+2. Copy example configuration:
+   - On Linux/macOS: `cp Apartments.API/appsettings.example.json Apartments.API/appsettings.Development.json`
+   - On Windows: `Copy-Item Apartments.API\appsettings.example.json Apartments.API\appsettings.Development.json`
+3. Edit [Apartments.API/appsettings.Development.json](Apartments.API/appsettings.Development.json) to configure:
+   - Database connection string (`ApartmentsDb`)
+   - Azure Blob settings (connection string and container)
+   - JWT settings (Key, Issuer, Audience)
+   - Firebase credentials path (or set `GOOGLE_APPLICATION_CREDENTIALS` env var)
+4. Ensure database is set up; the app will run seeder on startup (see [`IAppSeeder`](Apartments.Infrastructure/Extensions/ServiceCollectionExtensions.cs)).
 
-Copy appsettings.example.json to appsettings.json and adjust non-secret defaults.
-Put real secrets in environment variables or dotnet user-secrets.
+## Usage
 
-Using user-secrets (development):
-cd Apartments.API
-dotnet user-secrets init
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=...;Database=...;Username=...;Password=..."
-dotnet user-secrets set "Jwt:Secret" "CHANGE_ME"
-dotnet user-secrets set "AzureBlob:ConnectionString" "..."
+- Build: `dotnet build Apartments.sln`
+- Run: `dotnet run --project Apartments.API/Apartments.API.csproj`
+- API endpoints are defined in [Apartments.API/Controllers/](Apartments.API/Controllers/)
 
-Firebase:
-- Save your service account JSON locally (not committed).
-- Set either appsettings Firebase:CredentialsPath or env var GOOGLE_APPLICATION_CREDENTIALS to its path.
+## Security Notes
 
-## Run
-dotnet restore
-dotnet run --project Apartments.API
+- Sensitive data is removed from the repo. Use example files and environment variables for real credentials.
+- Do not commit private keys, API keys, or production secrets.
+- Firebase credentials template: [Apartments.API/Templates/firebase-adminsdk.example.json](Apartments.API/Templates/firebase-adminsdk.example.json)
 
-Notes
-- Program entry: Apartments.API/Program.cs
-- CORS and app services configured in Extensions/WebApplicationBuilderExtensions.cs
-- SignalR hub path: /notifications
-- Seeder runs on startup when configured in Program.cs — ensure DB is reachable before running.
+## License
 
-Development tips
-- Use Visual Studio or VS Code with C# extension for debugging.
-- To run migrations, use the .NET EF tools and point to the correct projects.
-
-License & Contributing
-- See repository LICENSE if present.
+MIT License (see [LICENSE](LICENSE)).
