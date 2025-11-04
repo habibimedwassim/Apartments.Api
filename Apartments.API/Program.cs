@@ -9,7 +9,6 @@ using Apartments.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks()
@@ -19,6 +18,17 @@ builder.Services.AddHealthChecks()
 builder.AddPresentation();
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
+// Example: resolve Firebase credentials path from config or env var
+var firebaseCredPath = builder.Configuration["Firebase:CredentialsPath"]
+                      ?? Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
+
+// TODO: pass firebaseCredPath into your Firebase initialization if applicable
 
 var app = builder.Build();
 
